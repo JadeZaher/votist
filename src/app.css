@@ -2,9 +2,7 @@
 @plugin "daisyui" {
     logs: true;
     root: ":root";
-    include: button, badge, input, card;
-    exclude: badge;
-    themes: light --default, dark --prefersdark, cupcake;
+    themes: swimminghorse --default;
 }
 @plugin "daisyui/theme" {
   name: 'swimminghorse';

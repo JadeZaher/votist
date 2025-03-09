@@ -1,6 +1,9 @@
 <script lang="ts">
     import { ChevronLeft, ChevronRight, MessageCircle, Share2, BookOpen } from 'lucide-svelte';
     import logo from '$lib/assets/logo/votist-logo.png'
+    import san_rafael from '$lib/proposals/san-rafael.png'
+    import housing1 from '$lib/proposals/housing1.png'
+    import { toImageUrl } from '../../util/image';
     
     const proposals = [
       {
@@ -13,7 +16,7 @@
           "187 residential units",
           "157 parking spaces"
         ],
-        image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Home_01.png-D5TpyuP69waMgNQn4jTz5H8PFSaiMN.jpeg",
+        image: housing1,
         votes: {
           yes: 15,
           neutral: 3,
@@ -30,7 +33,7 @@
           "187 residential units",
           "157 parking spaces"
         ],
-        image: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Home_01.png-D5TpyuP69waMgNQn4jTz5H8PFSaiMN.jpeg",
+        image: housing1,
         votes: {
           yes: 15,
           neutral: 3,
@@ -58,23 +61,22 @@
  
   
     <!-- Hero Section -->
-    <div class="relative h-[400px] bg-[#2B7B9B] text-white">
-      <div class="container mx-auto px-4 py-12">
-        <h1 class="text-6xl font-bold mb-4 text-primary">San Rafael California</h1>
-        <h2 class="text-3xl font-semibold mb-4">Growth, Housing, and the Future We Decide</h2>
-        <p class="max-w-3xl">
-          San Rafael is growing, but housing isn’t keeping up. With the world’s population expected to surpass 9 billion by 2040 
-          and 11 billion by 2100, urban centers everywhere are struggling to expand while preserving their identity, resources, 
-          and livability. 
-          <br><br/>
-          How should San Rafael grow to meet the future? 
-        </p>
+    <div class="container mx-auto px-4 py-12">
+      <h1 class="text-6xl font-bold text-primary z-10 text-left">San Rafael California</h1>
+        <div class="relative h-[400px] bg-[#2B7B9B] text-white overflow-clip gradient-bg" style="--bg: {toImageUrl(san_rafael)}">
+          
+          <div class='m-4'>
+
+            <h2 class="text-3xl font-semibold mb-4">Growth, Housing, and the Future We Decide</h2>
+            <p class="max-w-3xl">
+              San Rafael is growing, but housing isn’t keeping up. With the world’s population expected to surpass 9 billion by 2040 
+              and 11 billion by 2100, urban centers everywhere are struggling to expand while preserving their identity, resources, 
+              and livability. 
+              <br><br/>
+              How should San Rafael grow to meet the future? 
+            </p>
+          </div>
       </div>
-      <img
-        src={proposals[0].image || "/placeholder.svg"}
-        alt="San Rafael cityscape"
-        class="absolute inset-0 w-full h-full object-cover mix-blend-overlay z-0"
-      />
     </div>
   
     <!-- Proposals Grid -->
@@ -235,3 +237,11 @@
       </div>
     </div>
   </div>
+
+  <style lang="post-css">
+    .gradient-bg {
+      background-image: var(--bg);
+      opacity: 0.94;
+      @apply bg-[100%];
+    }
+</style>
