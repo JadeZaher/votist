@@ -4,6 +4,8 @@
     import san_rafael from '$lib/proposals/san-rafael.png'
     import housing1 from '$lib/proposals/housing1.png'
     import { toImageUrl } from '../../util/image';
+    import HeroCard from '$lib/components/HeroCard.svelte';
+    import VotingProgressBar from '$lib/components/VotingProgressBar.svelte';
     
     const proposals = [
       {
@@ -57,27 +59,8 @@
   </script>
   
   <div class="min-h-screen bg-base-100">
-    <!-- Header -->
- 
-  
     <!-- Hero Section -->
-    <div class="container mx-auto px-4 py-12">
-      <h1 class="text-6xl font-bold text-primary z-10 text-left">San Rafael California</h1>
-        <div class="relative h-[400px] bg-[#2B7B9B] text-white overflow-clip gradient-bg" style="--bg: {toImageUrl(san_rafael)}">
-          
-          <div class='m-4'>
-
-            <h2 class="text-3xl font-semibold mb-4">Growth, Housing, and the Future We Decide</h2>
-            <p class="max-w-3xl">
-              San Rafael is growing, but housing isn’t keeping up. With the world’s population expected to surpass 9 billion by 2040 
-              and 11 billion by 2100, urban centers everywhere are struggling to expand while preserving their identity, resources, 
-              and livability. 
-              <br><br/>
-              How should San Rafael grow to meet the future? 
-            </p>
-          </div>
-      </div>
-    </div>
+    <HeroCard/>
   
     <!-- Proposals Grid -->
     <div class="container mx-auto px-4 py-8">
@@ -91,11 +74,8 @@
               <h3 class="card-title">{proposal.title}</h3>
               <p>{proposal.description}</p>
               <div class="flex justify-between mt-4">
-                <div class="stats">
-                  <div class="stat-value text-success">{proposal.votes.yes}</div>
-                  <div class="stat-value text-warning">{proposal.votes.neutral}</div>
-                  <div class="stat-value text-error">{proposal.votes.no}</div>
-                </div>
+                <div class="w-full">
+                  <VotingProgressBar yesVotes={proposal.votes.yes} noVotes={proposal.votes.no} neutralVotes={proposal.votes.neutral} />                </div>
               </div>
             </div>
           </div>
@@ -238,10 +218,3 @@
     </div>
   </div>
 
-  <style lang="post-css">
-    .gradient-bg {
-      background-image: var(--bg);
-      opacity: 0.94;
-      @apply bg-[100%];
-    }
-</style>
