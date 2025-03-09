@@ -22,8 +22,5 @@ export default {
     },
   },
 
-  plugins: [typography, forms, containerQueries,     require('daisyui')  ],
-  daisyui: {
-    themes: ["light"],
-  }
+  plugins: [typography, forms, containerQueries],
 } satisfies Config;

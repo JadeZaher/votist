@@ -24,7 +24,7 @@
 		"@tailwindcss/forms": "^0.5.10",
 		"@tailwindcss/typography": "^0.5.16",
 		"autoprefixer": "^10.4.20",
-		"daisyui": "^4.12.24",
+		"daisyui": "^5.0.0",
 		"drizzle-kit": "^0.30.2",
 		"lucide-svelte": "^0.477.0",
 		"svelte": "^5.0.0",
