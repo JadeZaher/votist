@@ -9,3 +9,40 @@
         color: black;
     }
 }
+
+@plugin "daisyui";
+@plugin "daisyui/theme" {
+    name: "swimminghorse";
+    default: true;
+    prefersdark: false;
+    color-scheme: "light";
+    --color-base-100: oklch(98% 0.002 247.839);
+    --color-base-200: oklch(96% 0.003 264.542);
+    --color-base-300: oklch(92% 0.006 264.531);
+    --color-base-content: oklch(21% 0.034 264.665);
+    --color-primary: #377D8C;
+    --color-primary-content: oklch(98% 0 0);
+    --color-secondary: #003366;
+    --color-secondary-content: oklch(97% 0.014 308.299);
+    --color-accent: #80538D;
+    --color-accent-content: oklch(98% 0.002 247.839);
+    --color-neutral: #669999;
+    --color-neutral-content: oklch(98% 0.002 247.839);
+    --color-info: #2F5DA2;
+    --color-info-content: oklch(98% 0.001 106.423);
+    --color-success: #4B0082;
+    --color-success-content: oklch(96% 0.001 286.375);
+    --color-warning: oklch(85% 0.199 91.936);
+    --color-warning-content: oklch(28% 0.066 53.813);
+    --color-error: oklch(71% 0.194 13.428);
+    --color-error-content: oklch(27% 0.105 12.094);
+    --radius-selector: 2rem;
+    --radius-field: 0.5rem;
+    --radius-box: 0.5rem;
+    --size-selector: 0.21875rem;
+    --size-field: 0.21875rem;
+    --border: 0.5px;
+    --depth: 1;
+    --noise: 1;
+  }
+  

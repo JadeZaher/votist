@@ -8,12 +8,22 @@ export default {
 
   theme: {
     extend: {
-      
+      colors:{
+        'votistBlue':"#377D8C"
+        ,'knowledge':'#003366'
+        ,'charisma':'#80538D'
+        ,'votist':'#669999'
+        ,'scholar':'#2F5DA2'
+        ,'mentor':'#4B0082'
+      },
       fontFamily: {
         raleway: ['Raleway', 'sans-serif'],
       },
     },
   },
 
-  plugins: [typography, forms, containerQueries,     require('daisyui')  ]
+  plugins: [typography, forms, containerQueries,     require('daisyui')  ],
+  daisyui: {
+    themes: ["light"],
+  }
 } satisfies Config;
