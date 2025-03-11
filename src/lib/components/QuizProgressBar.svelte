@@ -2,61 +2,76 @@
   export let currentStep = 1;
 </script>
 
-<div class="w-full">
-  <div class="flex justify-between text-xl mb-2">
-    <span class="text-teal-700 font-bold">Votist</span>
-    <span class="text-gray-600 font-bold">Scholar</span>
-    <span class="text-gray-600 font-bold">Mentor</span>
+<!-- Progress Tracker -->
+<div class="mt-12 px-4">
+  <!-- Progress Labels -->
+  <div class="flex justify-between mb-2">
+    <div class="text-teal-700 font-bold">Votist</div>
+    <div class="text-teal-700 font-bold">Scholar</div>
+    <div class="text-teal-700 font-bold">Mentor</div>
   </div>
-  <div class="relative h-2 bg-teal-700 rounded-full mb-2">
-    <!-- Quiz step indicators -->
-    <div class="absolute -top-2 left-0 w-4 h-4 bg-gray-300 rounded-full"></div>
-    <div class="absolute -top-2 left-1/5 w-4 h-4 bg-gray-300 rounded-full"></div>
-    <div class="absolute -top-2 left-2/5 w-4 h-4 bg-gray-300 rounded-full"></div>
-    <div class="absolute -top-2 left-3/5 w-4 h-4 bg-gray-500 rounded-full"></div>
-    <div class="absolute -top-2 left-4/5 w-4 h-4 bg-gray-500 rounded-full"></div>
-    <div class="absolute -top-2 right-0 w-4 h-4 bg-black rounded-full"></div>
+
+  <!-- Progress Bar -->
+  <div class="relative">
+    <div class="absolute top-1/2 w-full h-2 bg-teal-700 -translate-y-1/2"></div>
+      <!-- Votist Section -->
+      <div class="flex justify-between ">
+        <div class="w-6 h-6 bg-gray-300 rounded-full border-teal-700 z-10"></div>
+        <div class="w-6 h-6 bg-gray-300 rounded-full border-teal-700 z-10"></div>
+        <div class="w-6 h-6 bg-gray-300 rounded-full border-teal-700 z-10"></div>
+
+        <div class="w-6 h-6 bg-gray-500 rounded-full border-teal-700 z-10"></div>
+        <div class="w-6 h-6 bg-gray-500 rounded-full border-teal-700 z-10"></div>
+        <div class="w-6 h-6 bg-gray-500 rounded-full border-teal-700 z-10"></div>
+        <div class="w-6 h-6 bg-gray-500 rounded-full border-teal-700 z-10"></div>
+
+        <div class="w-6 h-6 bg-black rounded-full border-teal-700 z-10"></div>
+        <div class="w-6 h-6 bg-black rounded-full border-teal-700 z-10"></div>
+        <div class="w-6 h-6 bg-black rounded-full border-teal-700 z-10"></div>
+      </div>
   </div>
-  <div class="flex justify-between text-sm">
-    <div class="text-center">
-      <div>Quiz 01</div>
-      <div>Location</div>
+
+  <!-- Quiz Labels -->
+  <div class="grid grid-cols-10 mt-2 text-sm w-full text-center">
+    <div class="text-teal-700">
+      <p class="font-bold">Quiz 01</p>
+      <p>Location</p>
     </div>
-    <div class="text-center">
-      <div>Quiz 02</div>
-      <div>Location</div>
+    <div class="text-teal-700">
+      <p class="font-bold">Quiz 02</p>
+      <p>Location</p>
     </div>
-    <div class="text-center">
-      <div>Quiz 03</div>
-      <div>Location</div>
+    <div class="text-teal-700">
+      <p class="font-bold">Quiz 03</p>
+      <p>Location</p>
     </div>
-    <div class="text-center">
-      <div>Quiz 04</div>
-      <div>Codes</div>
+    <div class="text-teal-700">
+      <p class="font-bold">Quiz 04</p>
+      <p>Codes</p>
     </div>
-    <div class="text-center">
-      <div>Quiz 05</div>
-      <div>Codes</div>
+    <div class="text-teal-700">
+      <p class="font-bold">Quiz 05</p>
+      <p>Codes</p>
     </div>
-    <div class="text-center">
-      <div>Quiz 06</div>
-      <div>Codes</div>
+    <div class="text-teal-700">
+      <p class="font-bold">Quiz 06</p>
+      <p>Codes</p>
     </div>
-    <div class="text-center">
-      <div>Quiz 07</div>
-      <div>Codes</div>
+    <div class="text-teal-700">
+      <p class="font-bold">Quiz 07</p>
+      <p>Codes</p>
     </div>
-    <div class="text-center">
-      <div>Quiz 08</div>
-      <div>Codes</div>
+    <div class="text-teal-700">
+      <p class="font-bold">Quiz 08</p>
+      <p>Codes</p>
     </div>
-    <div class="text-center">
-      <div>Quiz 09</div>
-      <div>Codes</div>
+    <div class="text-teal-700">
+      <p class="font-bold">Quiz 09</p>
+      <p>Codes</p>
     </div>
-    <div class="text-center">
-      <div>Quiz 10</div>
-      <div>Codes</div>
+    <div class="text-teal-700">
+      <p class="font-bold">Quiz 10</p>
+      <p>Codes</p>
     </div>
   </div>
 </div>
