@@ -1,5 +1,4 @@
 <script>
-  export let currentStep = 1;
 </script>
 
 <!-- Progress Tracker -->
