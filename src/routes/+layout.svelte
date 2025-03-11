@@ -1,6 +1,6 @@
 <script lang="ts">
 	import '../app.css';
-    import logo from '$lib/assets/logo/votist-logo.png'
+  import logo from '$lib/assets/logo/votist-logo.png'
     
 	let { children } = $props();
 </script>
