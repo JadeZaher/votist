@@ -1,4 +1,3 @@
-// src/routes/auth/register/phone/+page.svelte
 <script lang="ts">
   import logo from '$lib/assets/logo/logo-white.png';
   import { goto } from '$app/navigation';
