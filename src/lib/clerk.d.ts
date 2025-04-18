@@ -1,35 +1,25 @@
-declare module '@clerk/clerk-js' {
-    export class Clerk {
-      constructor(publishableKey: string);
-      load(options?: {
-        afterSignIn?: (session: any) => void;
-        afterSignOut?: () => void;
-      }): Promise<void>;
-      signOut(): Promise<void>;
-      setActive(options: { session: string }): Promise<void>;
-      
-      client: {
-        signUp: {
-          create(options: {
-            emailAddress: string;
-            password: string;
-            firstName?: string;
-            lastName?: string;
-            phoneNumber?: string;
-          }): Promise<any>;
-        };
-        signIn: {
-          create(options: {
-            identifier?: string;
-            password?: string;
-            strategy?: string;
-          }): Promise<any>;
-          forgotPassword: {
-            create(email: string): Promise<void>;
-          };
-        };
-      };
-  
-      user: any;
-    }
+// This file is now primarily for documentation
+// Most types are now imported directly from @clerk/types
+
+declare module '@clerk/types' {
+  // Additional type extensions can be added here if needed
+  export interface ClerkOptions {
+    afterSignInUrl?: string;
+    afterSignUpUrl?: string;
   }
+
+  export interface SignUpCreateParams {
+    emailAddress: string;
+    password: string;
+    firstName?: string;
+    lastName?: string;
+    phoneNumber?: string;
+  }
+
+  export interface SignInCreateParams {
+    identifier?: string;
+    password?: string;
+    strategy?: 'email_link' | 'google' | 'github' | 'apple';
+    redirectUrl?: string;
+  }
+}
