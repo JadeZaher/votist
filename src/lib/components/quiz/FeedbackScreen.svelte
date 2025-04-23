@@ -17,30 +17,24 @@
     }
 </script>
 
-<div class="bg-white rounded-lg shadow-md p-6">
-    <div class="mb-8">
-        <!-- svelte-ignore a11y_img_redundant_alt -->
-        <!-- <img 
-        src={currentQuestion.image} 
-        alt="Quiz question image" 
-        class="w-full h-64 object-cover rounded-md mb-4"
-      /> -->
-        <video
-            class="z-[-1] size-full max-w-xl origin-left -translate-x-4 scale-[160%] lg:max-w-[34vw]"
+<div class="bg-white rounded-lg shadow-md p-12 justify-center w-2/3 align-middle text-center mx-auto">
+    <div class="mb-24">
+       <video
+            class="z-[-1] size-full max-w-xl  mx-auto -translate-x-4 scale-[120%] lg:max-w-[34vw]"
             src={currentQuestion.video}
             autoplay
             playsinline
             loop
             muted
         ></video>
-        <h3 class="text-teal-700 text-2xl font-bold text-center mb-6">
+        <h3 class="text-teal-700 text-5xl font-bold text-center my-16">
             {currentQuestion.question}
         </h3>
 
-        <div class="space-y-4">
+        <div class="space-y-4  text-3xl">
             {#each currentQuestion.options as option}
                 <button
-                    class="w-full p-4 text-white font-medium rounded-md transition duration-150 text-center
+                    class="w-2/3 p-4 text-white font-medium rounded-md transition duration-150 text-center
               {$selectedAnswer === option ? 'bg-teal-700' : 'bg-teal-600'} 
               {option === currentQuestion.correctAnswer ? 'bg-green-600' : ''}"
                     disabled={true}
@@ -99,7 +93,7 @@
             </div>
         {/if}
 
-        <div class="mt-6 text-right">
+        <div class="mt-6 text-right text-2xl font-bold">
             <button
                 class="px-6 py-2 bg-teal-600 text-white rounded-md shadow-sm hover:bg-teal-700 transition duration-150"
                 on:click={handleNextQuestion}

@@ -10,11 +10,11 @@
     }
   </script>
   
-  <div class="bg-white rounded-lg shadow-md p-6">
+  <div class="bg-white rounded-lg shadow-md p-12 justify-center w-2/3 align-middle text-center mx-auto">
     <div class="text-center py-8">
-      <h2 class="text-teal-700 text-2xl font-bold mb-4">Completed! San Rafael, CA: Location</h2>
+      <h2 class="text-teal-700 text-5xl font-bold mb-14">Completed! San Rafael, CA: Location</h2>
       
-      <div class="flex justify-center space-x-8 mb-8">
+      <div class="flex justify-center space-x-8 mb-20 text-teal-700 text-3xl font-bold">
         <div class="flex items-center">
           <div class="w-8 h-8 rounded-full bg-yellow-500 flex items-center justify-center text-white">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -41,7 +41,7 @@
         </div>
       </div>
       
-      <div class="flex justify-center space-x-4 mb-8">
+      <div class="flex justify-left space-x-4 mb-8 font-bold px-40">
         <button 
           class="px-6 py-2 bg-teal-600 text-white rounded-md shadow-sm hover:bg-teal-700 transition duration-150 flex items-center"
           on:click={handleVoteClick}
@@ -56,7 +56,7 @@
         <div class="text-2xl text-yellow-500 font-bold">Vote Now</div>
       </div>
       
-      <div class="flex justify-center space-x-4">
+      <div class="flex justify-left space-x-4 font-bold px-40">
         <button 
           class="px-6 py-2 bg-teal-600 text-white rounded-md shadow-sm hover:bg-teal-700 transition duration-150"
           on:click={handleNextQuizClick}
