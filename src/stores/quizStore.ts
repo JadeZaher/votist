@@ -1,4 +1,5 @@
 import { writable } from 'svelte/store';
+import sanRafaelVideo from '$lib/assets/1.mp4'
 
 // Types
 export type QuizQuestion = {
@@ -6,7 +7,7 @@ export type QuizQuestion = {
   question: string;
   options: string[];
   correctAnswer: string;
-  image: string;
+  video: string;
 };
 
 export type QuizLevel = {
@@ -29,21 +30,21 @@ const initialQuestions: QuizQuestion[] = [
     question: "What city is this?",
     options: ["San Rafael", "Larkspur", "Novato"],
     correctAnswer: "San Rafael",
-    image: "/san-rafael-canal.jpg"
+    video: sanRafaelVideo
   },
   {
     id: 2,
     question: "San Rafael is in which County?",
     options: ["Alameda", "Sonoma", "Marin"],
     correctAnswer: "Marin",
-    image: "/san-rafael-canal.jpg"
+    video: sanRafaelVideo
   },
   {
     id: 3,
     question: "What is this location?",
     options: ["Northgate", "Mission San Rafael", "Brete Harte"],
     correctAnswer: "Mission San Rafael",
-    image: "/san-rafael-canal.jpg"
+    video: sanRafaelVideo
   }
 ];
 
