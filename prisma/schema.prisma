@@ -1,0 +1,21 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/@prisma-generated/client"
+}
+
+generator markdown {
+  provider = "prisma-markdown"
+  output   = "./generated/ERD.md"
+  title    = "Executive Function App"
+}
+
+generator zod {
+  provider         = "zod-prisma-types"
+  output           = "./generated/zod"
+  useMultipleFiles = true
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
