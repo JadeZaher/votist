@@ -60,7 +60,7 @@
       <div class="flex items-center mt-8 w-full">
         <div class="flex w-1/2">
           <div
-            class="w-8 h-8 rounded-full flex items-center justify-center text-white"
+            class="w-8 h-8 rounded-full flex items-center justify-center text-white "
           >
             <img src={knowledgeIco} alt="knowledge" class="w-full" />
           </div>
@@ -73,7 +73,7 @@
           >
             <img src={statusIco} alt="status" class="w-full" />
           </div>
-          <span class="ml-2 text-lg text-gray-400"
+          <span class="ml-2 text-lg font-bold text-teal-700 "
             >Status = <span class="text-teal-700">Votist</span></span
           >
         </div>
