@@ -6,10 +6,10 @@
     userStatus,
   } from "../../../stores/quizStore";
   import LevelsList from "./LevelsList.svelte";
-  import voteIco from '$lib/assets/quiz/Isolation_Mode.svg'
-  import knowledgeIco from '$lib/assets/quiz/Knowlege Icon.svg'
-  import discussIco from '$lib/assets/quiz/Group 8.svg'
-  import statusIco from '$lib/assets/quiz/Status Icon.svg'
+  import voteIco from "$lib/assets/quiz/Isolation_Mode.svg";
+  import knowledgeIco from "$lib/assets/quiz/Knowlege Icon.svg";
+  import discussIco from "$lib/assets/quiz/Group 8.svg";
+  import statusIco from "$lib/assets/quiz/Status Icon.svg";
 
   const startQuiz = () => {
     goToPage("question");
@@ -33,46 +33,50 @@
     </div>
 
     <div
-      class="mt-8 px-20 py-8 rounded-lg inline-block text-left shadow-[3px_4px_4px_0px_rgba(0,0,0,0.25)]"
+      class="mt-8 px-12 w-1/3 py-8 rounded-lg inline-block text-left shadow-[3px_4px_4px_0px_rgba(0,0,0,0.25)]"
     >
       <p class="text-3xl font-medium text-yellow-500 text-center">
         4 Questions
       </p>
-      <div class="flex items-center mt-4">
-        <div class="flex">
+      <div class="flex items-center mt-4 w-full">
+        <div class="flex w-1/2">
           <div
-            class="w-8 h-8 rounded-full  flex items-center justify-center text-white"
+            class="w-8 h-8 rounded-full flex items-center justify-center text-white"
           >
-          <img src={voteIco} alt="vote" class="w-full" />
+            <img src={voteIco} alt="vote" class="w-full" />
           </div>
-          <span class="ml-2 text-lg">+1</span>
-          <span class="ml-2 text-lg text-teal-700">Vote</span>
+          <span class="ml-2 text-xl text-teal-700 font-bold">+1</span>
+          <span class="ml-2 text-xl font-bold text-teal-700">Vote</span>
         </div>
-        <div class="flex">
-          <div
-            class="ml-4 w-8 h-8 flex items-center justify-center text-white"
-          >
-          <img src={discussIco} alt="discussion" class="w-full" />
+        <div class="flex w-1/2">
+          <div class="ml-4 w-8 h-8 flex items-center justify-center text-white">
+            <img src={discussIco} alt="discussion" class="w-full" />
           </div>
-          <span class="text-teal-700">Join the discussion</span>
+          <span class="text-xl font-bold text-teal-700 ml-3"
+            >Join the discussion</span
+          >
         </div>
       </div>
-      <div class="flex items-center mt-2">
-        <div
-          class="w-8 h-8 rounded-full flex items-center justify-center text-white"
-        >
-        <img src={knowledgeIco} alt="knowledge" class="w-full" />
+      <div class="flex items-center mt-8 w-full">
+        <div class="flex w-1/2">
+          <div
+            class="w-8 h-8 rounded-full flex items-center justify-center text-white"
+          >
+            <img src={knowledgeIco} alt="knowledge" class="w-full" />
+          </div>
+          <span class="ml-2 text-xl font-bold text-teal-700">+1</span>
+          <span class="ml-2 text-xl font-bold text-teal-700">Knowledge</span>
         </div>
-        <span class="ml-2 text-lg">+1</span>
-        <span class="ml-2 text-lg text-teal-700">Knowledge</span>
-        <div
-          class="ml-4 w-8 h-8 rounded-full bg-gray-400 flex items-center justify-center text-white"
-        >
-        <img src={statusIco} alt="status" class="w-full" />
+        <div class="flex w-1/2">
+          <div
+            class="ml-4 w-8 h-8 rounded-full bg-gray-400 flex items-center justify-center text-white"
+          >
+            <img src={statusIco} alt="status" class="w-full" />
+          </div>
+          <span class="ml-2 text-lg text-gray-400"
+            >Status = <span class="text-teal-700">Votist</span></span
+          >
         </div>
-        <span class="ml-2 text-lg text-gray-400"
-          >Status = <span class="text-teal-700">Votist</span></span
-        >
       </div>
     </div>
   </div>
