@@ -19,3 +19,15 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model Assembly {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  status      String   @default("draft") // draft, active, closed
+  topic       String
+  location    String?
+  votes       Int      @default(0)
+}

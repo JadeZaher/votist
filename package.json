@@ -6,7 +6,7 @@
 	"scripts": {
 		"dev": "vite dev",
 		"clean": "rm -rf .svelte-kit build",
-		"build": "npm run clean && prisma generate && prisma migrate deploy && vite build",
+		"build": "npm run clean && prisma generate && vite build",
 		"preview": "vite preview",
 		"test": "npm run test:integration && npm run test:unit",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
