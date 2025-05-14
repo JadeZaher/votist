@@ -1,4 +1,4 @@
-<script lang="ts">
+<!-- <script lang="ts">
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
@@ -32,4 +32,4 @@
 			<slot />
 		</div>
 	</div>
-</div>
+</div> -->

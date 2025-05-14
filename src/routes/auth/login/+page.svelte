@@ -1,4 +1,4 @@
-<script lang="ts">
+<!-- <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { signIn } from '$lib/clerk';
 	import { z } from 'zod';
@@ -94,4 +94,4 @@
 	<div class="border-t border-gray-200 mt-8 pt-6 text-center">
 		<p>Don't have an account? <a href="/auth/register/name" class="text-teal-600">Sign Up</a></p>
 	</div>
-</div>
+</div> -->

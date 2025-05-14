@@ -1,4 +1,4 @@
-<script lang="ts">
+<!-- <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { z } from 'zod';
 
@@ -166,4 +166,4 @@
 			{/if}
 		</button>
 	</div>
-</div>
+</div> -->

@@ -1,4 +1,4 @@
-<script lang="ts">
+<!-- <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { initClerk, signInWithOAuth } from '$lib/clerk';
 	import { onMount } from 'svelte';
@@ -66,4 +66,4 @@
 			Anonymous
 		</button>
 	</div>
-</div>
+</div> -->

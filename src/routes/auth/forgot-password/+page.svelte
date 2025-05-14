@@ -1,4 +1,4 @@
-<script lang="ts">
+<!-- <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { z } from 'zod';
 	import { resetPassword } from '$lib/clerk';
@@ -97,4 +97,4 @@
 			{/if}
 		</button>
 	</div>
-</div>
+</div> -->

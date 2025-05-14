@@ -1,4 +1,4 @@
-<script lang="ts">
+<!-- <script lang="ts">
   import logo from '$lib/assets/logo/logo-white.png';
   import { goto } from '$app/navigation';
   
@@ -41,7 +41,6 @@
       <h1 class="text-3xl font-bold mb-6">Phone number .... or</h1>
       
       <div class="mb-8">
-        <!-- svelte-ignore a11y_label_has_associated_control -->
         <label class="block text-gray-700 mb-2">?</label>
         <input 
           type="text" 
@@ -52,7 +51,6 @@
       </div>
       
       <div class="mb-6">
-        <!-- svelte-ignore a11y_label_has_associated_control -->
         <label class="block text-gray-700 mb-2">?</label>
         <div class="flex items-center">
           <input 
@@ -80,4 +78,4 @@
       </div>
     </div>
   </div>
-</div>
+</div> -->
