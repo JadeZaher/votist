@@ -16,7 +16,9 @@
 		</a>
 	</div>
 	<div class="absolute bottom-8 text-center text-sm">
-		<p>Votist is a project of Translucent Studios LLC</p>
+		<a href="https://www.tstudios.com">
+			<p>Votist is a project of Translucent Studios LLC</p>
+		</a>
 	</div>
 </div>
 

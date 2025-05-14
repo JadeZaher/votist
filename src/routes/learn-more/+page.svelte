@@ -73,6 +73,8 @@
 	</section>
 
 	<footer class="mt-16 text-center text-sm text-gray-600">
-		<p>Votist is a project of Translucent Studios LLC.</p>
+		<a href="https://www.tstudios.com">
+			<p>Votist is a project of Translucent Studios LLC</p>
+		</a>
 	</footer>
 </div>
