@@ -5,7 +5,8 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
-		"build": "prisma migrate deploy && vite build",
+		"clean": "rm -rf .svelte-kit build",
+		"build": "npm run clean && prisma generate && prisma migrate deploy && vite build",
 		"preview": "vite preview",
 		"test": "npm run test:integration && npm run test:unit",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
