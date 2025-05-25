@@ -8,39 +8,38 @@
   }
 </script>
 
-<div class="w-full h-[818px] relative bg-base-100">
-  <div class="max-w-[1920px] mx-auto relative">
-    <div class="absolute left-1/2 -translate-x-1/2 top-[171px]">
-      <div class="flex items-start gap-8">
+<div class="w-full min-h-screen bg-base-100">
+  <div class="container mx-auto px-4">
+    <div class="pt-8 md:pt-[171px]">
+      <div class="flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-8">
         <img 
           src={coffeeSVG} 
           alt="coffee" 
-          class="w-28 h-32"
+          class="w-20 h-24 md:w-28 md:h-32"
         />
-        <div class="w-[890px]">
-          <h3 class="text-base-content text-5xl font-medium mb-2">
+        <div class="w-full md:w-[890px] text-center md:text-left">
+          <h3 class="text-base-content text-3xl md:text-5xl font-medium mb-2">
             Good effort
           </h3>
-          <p class="text-primary text-4xl font-medium">
+          <p class="text-primary text-2xl md:text-4xl font-medium">
             Learn more about this topic in the Research Tab
           </p>
         </div>
-        <!-- TODO: Make this go to the Research tab when clicked -->
       </div>
 
-      <div class="mt-20">
-        <h2 class="text-primary text-6xl font-medium italic mb-8">
+      <div class="mt-12 md:mt-20 text-center md:text-left">
+        <h2 class="text-primary text-4xl md:text-6xl font-medium italic mb-6 md:mb-8">
           Try again!
         </h2>
 
-        <div class="flex items-center gap-8">
+        <div class="flex flex-col md:flex-row items-center gap-4 md:gap-8">
           <button
-            class="btn btn-primary text-3xl font-medium min-w-[160px] h-14 shadow-[5px_2.5px_7.5px_0px_rgba(0,0,0,0.25)]"
+            class="btn btn-primary text-xl md:text-3xl font-medium min-w-[160px] h-14 shadow-[5px_2.5px_7.5px_0px_rgba(0,0,0,0.25)]"
             on:click={handleTryAgain}
           >
             Start
           </button>
-          <span class="text-primary text-6xl font-medium">
+          <span class="text-primary text-3xl md:text-6xl font-medium">
             San Rafael, Location
           </span>
         </div>
