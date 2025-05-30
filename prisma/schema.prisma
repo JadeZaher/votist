@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../node_modules/@prisma-generated/client"
+  output   = "../node_modules/.prisma/client"
 }
 
 generator markdown {
@@ -30,4 +30,60 @@ model Assembly {
   topic       String
   location    String?
   votes       Int      @default(0)
+}
+
+enum QuizDifficulty {
+  VOTIST
+  SCHOLAR
+  MENTOR
+}
+
+model Quiz {
+  id          String         @id @default(cuid())
+  title       String
+  description String
+  difficulty  QuizDifficulty @default(VOTIST)
+  questions   Question[]
+  enabled     Boolean        @default(true)
+  completions QuizCompletion[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model Question {
+  id            String    @id @default(cuid())
+  quizId        String
+  quiz          Quiz      @relation(fields: [quizId], references: [id])
+  text          String
+  options       Option[]
+  correctAnswer String
+  points        Int       @default(1)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Option {
+  id          String      @id @default(cuid())
+  questionId  String
+  question    Question    @relation(fields: [questionId], references: [id])
+  text        String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model QuizCompletion {
+  id          String    @id @default(cuid())
+  userId      String    // Clerk user ID
+  quizId      String
+  quiz        Quiz      @relation(fields: [quizId], references: [id])
+  score       Int
+  answers     Json      // Stores the user's answers
+  completed   Boolean   @default(false)
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([userId, quizId])  // One completion per user per quiz
+  @@index([userId])           // Index for faster user-based queries
 }
