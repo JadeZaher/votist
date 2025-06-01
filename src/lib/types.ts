@@ -1,30 +1,35 @@
-import type { Prisma } from '@prisma/client';
+import { QuizDifficulty as PrismaQuizDifficulty } from '@prisma/client';
 
-export enum QuizDifficulty {
-	VOTIST = 'VOTIST',
-	SCHOLAR = 'SCHOLAR',
-	MENTOR = 'MENTOR'
+// Re-export the Prisma enum instead of creating our own
+export { PrismaQuizDifficulty as QuizDifficulty };
+
+export interface Option {
+	id: string;
+	text: string;
+	questionId?: string;
+	createdAt?: Date; 
+	updatedAt?: Date; 
+	isCorrect?: boolean; 
 }
 
-export type Quiz = {
+export interface Question {
+	id: string;
+	text: string;
+	points: number;
+	correctOptionId: string | null;
+	quizId: string;
+	options: Option[];
+	createdAt?: Date; 
+	updatedAt?: Date; 
+}
+
+export interface Quiz {
 	id: string;
 	title: string;
 	description: string;
-	difficulty: QuizDifficulty;
+	difficulty: string;
 	enabled: boolean;
-	createdAt: Date;
-	updatedAt: Date;
-	questions?: Question[];
-};
-
-export type Question = {
-	id: string;
-	text: string;
-	options: Option[];
-};
-
-export type Option = {
-	id: string;
-	text: string;
-	isCorrect: boolean;
-};
+	questions: Question[];
+	createdAt?: Date;
+	updatedAt?: Date;
+}

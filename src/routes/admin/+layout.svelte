@@ -1,43 +1,22 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import type { Quiz } from '$lib/types';
-	import QuizForm from './quizzes/components/QuizForm.svelte';
-	import QuizList from './quizzes/components/QuizList.svelte';
-
-	let showForm = false;
-	let quizzes: Quiz[] = [];
-	let loading = true;
-
-	onMount(async () => {
-		const response = await fetch('/api/quizzes');
-		quizzes = await response.json();
-		loading = false;
-	});
+    import { page } from '$app/stores';
 </script>
 
-<div class="container mx-auto p-4">
-	<div class="mb-6 flex items-center justify-between">
-		<h1 class="text-3xl font-bold">Quiz Management</h1>
-		<button class="btn btn-primary" on:click={() => (showForm = !showForm)}>
-			{showForm ? 'Show Quiz List' : 'Create New Quiz'}
-		</button>
-	</div>
+<div class="min-h-screen">
+    <div class="navbar bg-base-200">
+        <div class="flex-1">
+            <a href="/admin" class="btn btn-ghost text-xl">Admin Panel</a>
+        </div>
+        <div class="flex-none">
+            <ul class="menu menu-horizontal px-1">
+                <li>
+                    <a href="/admin/quizzes" class:active={$page.url.pathname.includes('/quizzes')}>Quizzes</a>
+                </li>
+            </ul>
+        </div>
+    </div>
 
-	<div class="divider"></div>
-
-	{#if loading}
-		<div class="flex justify-center">
-			<span class="loading loading-spinner loading-lg"></span>
-		</div>
-	{:else if showForm}
-		<QuizForm
-			on:saved={() => {
-				showForm = false;
-				// Refresh quiz list
-				window.location.reload();
-			}}
-		/>
-	{:else}
-		<QuizList {quizzes} />
-	{/if}
+    <div class="container mx-auto p-4">
+        <slot />
+    </div>
 </div>

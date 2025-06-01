@@ -2,13 +2,27 @@ import { json } from '@sveltejs/kit';
 import { prisma } from '$lib/server/db/prisma';
 import type { RequestHandler } from '@sveltejs/kit';
 
+// Get all quizzes
 export const GET: RequestHandler = async () => {
 	try {
 		const quizzes = await prisma.quiz.findMany({
-			include: {
+			select: {
+				id: true,
+				title: true,
+				description: true,
+				difficulty: true,
+				enabled: true,
 				questions: {
-					include: {
-						options: true
+					select: {
+						id: true,
+						text: true,
+						correctOptionId: true,
+						points: true,
+						_count: {
+							select: {
+								options: true
+							}
+						}
 					}
 				}
 			}
@@ -21,6 +35,7 @@ export const GET: RequestHandler = async () => {
 	}
 };
 
+// Create a new quiz
 export const POST: RequestHandler = async ({ request }) => {
 	try {
 		const data = await request.json();
@@ -34,13 +49,13 @@ export const POST: RequestHandler = async ({ request }) => {
 				questions: {
 					create: data.questions.map((q: any) => ({
 						text: q.text,
-						correctAnswer: q.correctAnswer,
 						points: q.points,
 						options: {
-							create: q.options.map((opt: string) => ({
-								text: opt
+							create: q.options.map((opt: any) => ({
+								text: opt.text
 							}))
-						}
+						},
+						correctOptionId: q.correctOptionId
 					}))
 				}
 			},

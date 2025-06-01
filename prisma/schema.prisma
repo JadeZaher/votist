@@ -39,51 +39,53 @@ enum QuizDifficulty {
 }
 
 model Quiz {
-  id          String         @id @default(cuid())
+  id          String           @id @default(cuid())
   title       String
   description String
-  difficulty  QuizDifficulty @default(VOTIST)
+  difficulty  QuizDifficulty   @default(VOTIST)
   questions   Question[]
-  enabled     Boolean        @default(true)
+  enabled     Boolean          @default(true)
   completions QuizCompletion[]
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 }
 
 model Question {
-  id            String    @id @default(cuid())
-  quizId        String
-  quiz          Quiz      @relation(fields: [quizId], references: [id])
-  text          String
-  options       Option[]
-  correctAnswer String
-  points        Int       @default(1)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id              String   @id @default(cuid())
+  text            String
+  correctOptionId String? @unique
+  correctOption   Option?  @relation("correctAnswer", fields: [correctOptionId], references: [id])
+  options         Option[]
+  points          Int      @default(1)
+  quizId          String
+  quiz            Quiz     @relation(fields: [quizId], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model Option {
-  id          String      @id @default(cuid())
-  questionId  String
-  question    Question    @relation(fields: [questionId], references: [id])
-  text        String
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id                 String    @id @default(cuid())
+  text               String
+  questionId         String
+  question           Question  @relation(fields: [questionId], references: [id])
+  correctForQuestion Question? @relation("correctAnswer")
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 }
 
 model QuizCompletion {
   id          String    @id @default(cuid())
-  userId      String    // Clerk user ID
+  userId      String // Clerk user ID
   quizId      String
   quiz        Quiz      @relation(fields: [quizId], references: [id])
   score       Int
-  answers     Json      // Stores the user's answers
+  answers     Json // Stores the user's answers
   completed   Boolean   @default(false)
   startedAt   DateTime  @default(now())
   completedAt DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  @@unique([userId, quizId])  // One completion per user per quiz
-  @@index([userId])           // Index for faster user-based queries
+  @@unique([userId, quizId]) // One completion per user per quiz
+  @@index([userId]) // Index for faster user-based queries
 }

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Quiz } from '$lib/types';
+	import { goto } from '$app/navigation';
 
 	export let quizzes: Quiz[];
 
@@ -60,9 +61,14 @@
 					</td>
 					<td>
 						<div class="flex gap-2">
-							<a href="/admin/quizzes/{quiz.id}/edit" class="btn btn-sm"> Edit </a>
+							<a 
+									href="/admin/quizzes/{quiz.id}/edit"
+									class="btn btn-sm"
+							>
+									Edit
+							</a>
 							<button class="btn btn-sm btn-error" on:click={() => handleDelete(quiz.id)}>
-								Delete
+									Delete
 							</button>
 						</div>
 					</td>
