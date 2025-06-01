@@ -16,11 +16,16 @@ export const GET: RequestHandler = async () => {
 					select: {
 						id: true,
 						text: true,
-						correctOptionId: true,
 						points: true,
 						_count: {
 							select: {
 								options: true
+							}
+						},
+						options: {
+							select: {
+								id: true,
+								text: true
 							}
 						}
 					}
