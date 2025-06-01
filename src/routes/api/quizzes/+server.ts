@@ -45,6 +45,14 @@ export const POST: RequestHandler = async ({ request }) => {
 	try {
 		const data = await request.json();
 
+		if (!data.title || !data.description || !data.difficulty) {
+			return new Response('Missing required fields', { status: 400 });
+		}
+
+		if (!Array.isArray(data.questions) || data.questions.length === 0) {
+			return new Response('At least one question is required', { status: 400 });
+		}
+
 		const quiz = await prisma.quiz.create({
 			data: {
 				title: data.title,
@@ -54,13 +62,12 @@ export const POST: RequestHandler = async ({ request }) => {
 				questions: {
 					create: data.questions.map((q: any) => ({
 						text: q.text,
-						points: q.points,
+						points: q.points || 1,
 						options: {
 							create: q.options.map((opt: any) => ({
 								text: opt.text
 							}))
-						},
-						correctOptionId: q.correctOptionId
+						}
 					}))
 				}
 			},

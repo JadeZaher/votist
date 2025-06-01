@@ -17,6 +17,17 @@
 	];
 
 	async function handleSubmit() {
+		const formattedQuestions = questions.map((q) => ({
+			text: q.text,
+			points: q.points,
+			options: q.options
+				.filter((opt) => opt.trim() !== '')
+				.map((optionText) => ({
+					text: optionText
+				})),
+			correctOptionId: null // This will be set after creation
+		}));
+
 		const response = await fetch('/api/quizzes', {
 			method: 'POST',
 			headers: {
@@ -26,12 +37,17 @@
 				title,
 				description,
 				difficulty,
-				questions
+				questions: formattedQuestions
 			})
 		});
 
 		if (response.ok) {
 			dispatch('saved');
+		} else {
+			const error = await response.text();
+			console.error('Error creating quiz:', error);
+			alert('Failed to create quiz. Please try again.');
+			dispatch('error', { message: error });
 		}
 	}
 
