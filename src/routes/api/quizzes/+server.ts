@@ -11,12 +11,12 @@ export const GET: RequestHandler = async () => {
 				title: true,
 				description: true,
 				difficulty: true,
+				points: true,
 				enabled: true,
 				questions: {
 					select: {
 						id: true,
 						text: true,
-						points: true,
 						_count: {
 							select: {
 								options: true
@@ -45,7 +45,8 @@ export const POST: RequestHandler = async ({ request }) => {
 	try {
 		const data = await request.json();
 
-		if (!data.title || !data.description || !data.difficulty) {
+		// Validate required fields
+		if (!data.title || !data.description || !data.difficulty || !data.points) {
 			return new Response('Missing required fields', { status: 400 });
 		}
 
@@ -58,14 +59,17 @@ export const POST: RequestHandler = async ({ request }) => {
 				title: data.title,
 				description: data.description,
 				difficulty: data.difficulty,
+				points: data.points,
 				enabled: true,
 				questions: {
 					create: data.questions.map((q: any) => ({
 						text: q.text,
-						points: q.points || 1,
+						correctOptionId: q.correctOptionId,
 						options: {
 							create: q.options.map((opt: any) => ({
-								text: opt.text
+								text: opt.text,
+								isCorrect: opt.isCorrect || false,
+								isNoOpinion: opt.isNoOpinion || false
 							}))
 						}
 					}))
@@ -74,7 +78,14 @@ export const POST: RequestHandler = async ({ request }) => {
 			include: {
 				questions: {
 					include: {
-						options: true
+						options: {
+							select: {
+								id: true,
+								text: true,
+								isCorrect: true,
+								isNoOpinion: true
+							}
+						}
 					}
 				}
 			}

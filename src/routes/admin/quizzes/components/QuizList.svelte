@@ -1,6 +1,5 @@
 <script lang="ts">
 	import type { Quiz } from '$lib/types';
-	import { goto } from '$app/navigation';
 
 	export let quizzes: Quiz[];
 
@@ -38,6 +37,7 @@
 				<th>Title</th>
 				<th>Difficulty</th>
 				<th>Questions</th>
+				<th>Points</th>
 				<th>Status</th>
 				<th>Actions</th>
 			</tr>
@@ -53,6 +53,11 @@
 					</td>
 					<td>{quiz.questions?.length || 0} questions</td>
 					<td>
+						<div class="badge badge-neutral">
+							{quiz.points} points
+						</div>
+					</td>
+					<td>
 						<button class="btn btn-sm btn-ghost" on:click={() => toggleStatus(quiz)}>
 							<div class="badge badge-{quiz.enabled ? 'success' : 'ghost'}">
 								{quiz.enabled ? 'Active' : 'Disabled'}
@@ -61,14 +66,9 @@
 					</td>
 					<td>
 						<div class="flex gap-2">
-							<a 
-									href="/admin/quizzes/{quiz.id}/edit"
-									class="btn btn-sm"
-							>
-									Edit
-							</a>
+							<a href="/admin/quizzes/{quiz.id}/edit" class="btn btn-sm">Edit</a>
 							<button class="btn btn-sm btn-error" on:click={() => handleDelete(quiz.id)}>
-									Delete
+								Delete
 							</button>
 						</div>
 					</td>

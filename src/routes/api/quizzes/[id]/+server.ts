@@ -13,34 +13,36 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 				description: data.description,
 				difficulty: data.difficulty,
 				enabled: data.enabled,
+				points: data.points,
 				questions: {
 					upsert: data.questions.map((q: any) => ({
-						where: { id: q.id },
+						where: { id: q.id || '' },
 						create: {
 							text: q.text,
-							correctAnswer: q.correctAnswer,
-							points: q.points,
+							correctOptionId: q.correctOptionId,
 							options: {
 								create: q.options.map((opt: any) => ({
 									text: opt.text,
-									isCorrect: opt.isCorrect
+									isCorrect: opt.isCorrect || false,
+									isNoOpinion: opt.isNoOpinion || false
 								}))
 							}
 						},
 						update: {
 							text: q.text,
-							correctAnswer: q.correctAnswer,
-							points: q.points,
+							correctOptionId: q.correctOptionId,
 							options: {
 								upsert: q.options.map((opt: any) => ({
-									where: { id: opt.id },
+									where: { id: opt.id || '' },
 									create: {
 										text: opt.text,
-										isCorrect: opt.isCorrect
+										isCorrect: opt.isCorrect || false,
+										isNoOpinion: opt.isNoOpinion || false
 									},
 									update: {
 										text: opt.text,
-										isCorrect: opt.isCorrect
+										isCorrect: opt.isCorrect || false,
+										isNoOpinion: opt.isNoOpinion || false
 									}
 								}))
 							}
@@ -48,24 +50,10 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 					}))
 				}
 			},
-			select: {
-				id: true,
-				title: true,
-				description: true,
-				difficulty: true,
-				enabled: true,
+			include: {
 				questions: {
-					select: {
-						id: true,
-						text: true,
-						correctOptionId: true,
-						points: true,
-						options: {
-							select: {
-								id: true,
-								text: true
-							}
-						}
+					include: {
+						options: true
 					}
 				}
 			}
