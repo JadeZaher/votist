@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { QuizDifficulty, type Quiz, type Question, type Option } from '$lib/types';
+	import { QuizDifficulty } from '@prisma/client';
+	import type { Quiz, Question, Option } from '$lib/types';
 
 	export let quiz: Quiz;
 
@@ -10,9 +11,8 @@
 		const newQuestion: Question = {
 			id: crypto.randomUUID(),
 			text: '',
-			points: 1,
 			quizId: quiz.id,
-			correctOptionId: null,
+			correctOptionId: undefined,
 			options: []
 		};
 		questions = [...questions, newQuestion];
@@ -22,11 +22,40 @@
 		const newOption: Option = {
 			id: crypto.randomUUID(),
 			text: '',
-			isCorrect: false
+			isCorrect: false,
+			isNoOpinion: false
 		};
 
 		questions = questions.map((q, i) =>
 			i === questionIndex ? { ...q, options: [...q.options, newOption] } : q
+		);
+	}
+
+	function handleNoOpinionChange(questionIndex: number, optionIndex: number) {
+		questions = questions.map((q, i) =>
+			i === questionIndex
+				? {
+						...q,
+						options: q.options.map((opt, j) => {
+							if (j === optionIndex) {
+								// If turning on "no opinion", remove isCorrect
+								if (!opt.isNoOpinion) {
+									return {
+										...opt,
+										isNoOpinion: true,
+										isCorrect: false
+									};
+								}
+								// If turning off "no opinion", just remove the flag
+								return {
+									...opt,
+									isNoOpinion: false
+								};
+							}
+							return opt;
+						})
+					}
+				: q
 		);
 	}
 
@@ -61,6 +90,7 @@
 				title: quiz.title,
 				description: quiz.description,
 				difficulty: quiz.difficulty,
+				points: quiz.points,
 				questions: questions
 			})
 		});
@@ -116,6 +146,20 @@
 			</select>
 		</div>
 
+		<div class="form-control w-full">
+			<label class="label" for="points">
+				<span class="label-text">Quiz Points</span>
+			</label>
+			<input
+				id="points"
+				type="number"
+				class="input input-bordered w-full"
+				bind:value={quiz.points}
+				min="1"
+				required
+			/>
+		</div>
+
 		<div class="divider">Questions</div>
 
 		{#each questions as question, questionIndex}
@@ -160,13 +204,25 @@
 										placeholder="Option {optionIndex + 1}"
 										required
 									/>
-									<input
-										type="radio"
-										name="correct-{questionIndex}"
-										class="radio radio-primary"
-										checked={option.isCorrect}
-										on:change={() => setCorrectOption(questionIndex, optionIndex)}
-									/>
+									<div class="flex items-center gap-2">
+										<input
+											type="radio"
+											name="correct-{questionIndex}"
+											class="radio radio-primary"
+											checked={option.isCorrect}
+											disabled={option.isNoOpinion}
+											on:change={() => setCorrectOption(questionIndex, optionIndex)}
+										/>
+										<label class="label cursor-pointer">
+											<input
+												type="checkbox"
+												class="checkbox checkbox-sm"
+												bind:checked={option.isNoOpinion}
+												on:change={() => handleNoOpinionChange(questionIndex, optionIndex)}
+											/>
+											<span class="label-text ml-2">No opinion</span>
+										</label>
+									</div>
 									{#if question.options.length > 2}
 										<button
 											type="button"
@@ -186,19 +242,6 @@
 								Add Option
 							</button>
 						</div>
-					</div>
-
-					<div class="form-control">
-						<label class="label" for="points-{questionIndex}">
-							<span class="label-text">Points</span>
-						</label>
-						<input
-							type="number"
-							class="input input-bordered w-full"
-							bind:value={question.points}
-							min="1"
-							required
-						/>
 					</div>
 				</div>
 			</div>

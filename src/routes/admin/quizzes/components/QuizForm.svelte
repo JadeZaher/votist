@@ -1,31 +1,40 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import { QuizDifficulty } from '$lib/types';
+	import { QuizDifficulty } from '@prisma/client';
 
 	const dispatch = createEventDispatcher();
+
+	interface QuizQuestion {
+		text: string;
+		options: {
+			text: string;
+			isCorrect: boolean;
+			isNoOpinion: boolean;
+		}[];
+		correctOptionId: string | null;
+	}
 
 	let title = '';
 	let description = '';
 	let difficulty: QuizDifficulty = QuizDifficulty.VOTIST;
-	let questions = [
+	let points = 1;
+	let questions: QuizQuestion[] = [
 		{
 			text: '',
-			options: ['', '', '', ''],
-			correctAnswer: '',
-			points: 1
+			options: [{ text: '', isCorrect: false, isNoOpinion: false }],
+			correctOptionId: null
 		}
 	];
 
 	async function handleSubmit() {
 		const formattedQuestions = questions.map((q) => ({
 			text: q.text,
-			points: q.points,
-			options: q.options
-				.filter((opt) => opt.trim() !== '')
-				.map((optionText) => ({
-					text: optionText
-				})),
-			correctOptionId: null // This will be set after creation
+			options: q.options.map((opt) => ({
+				text: opt.text,
+				isCorrect: opt.isCorrect,
+				isNoOpinion: opt.isNoOpinion
+			})),
+			correctOptionId: q.correctOptionId
 		}));
 
 		const response = await fetch('/api/quizzes', {
@@ -37,6 +46,7 @@
 				title,
 				description,
 				difficulty,
+				points,
 				questions: formattedQuestions
 			})
 		});
@@ -56,15 +66,63 @@
 			...questions,
 			{
 				text: '',
-				options: ['', '', '', ''],
-				correctAnswer: '',
-				points: 1
+				options: [
+					{ text: '', isCorrect: false, isNoOpinion: false },
+					{ text: 'I have no opinion', isCorrect: false, isNoOpinion: true }
+				],
+				correctOptionId: null
 			}
 		];
 	}
 
+	function addOption(questionIndex: number, isNoOpinion = false) {
+		questions = questions.map((q, i) =>
+			i === questionIndex
+				? {
+						...q,
+						options: [
+							...q.options,
+							{
+								text: isNoOpinion ? 'I have no opinion' : '',
+								isCorrect: false,
+								isNoOpinion: isNoOpinion
+							}
+						]
+					}
+				: q
+		);
+	}
+
+	function setCorrectOption(questionIndex: number, optionIndex: number) {
+		questions = questions.map((q, i) =>
+			i === questionIndex
+				? {
+						...q,
+						correctOptionId: q.options[optionIndex].text,
+						options: q.options.map((opt, j) => ({
+							...opt,
+							isCorrect: j === optionIndex
+						}))
+					}
+				: q
+		);
+	}
+
 	function removeQuestion(index: number) {
-		questions = questions.filter((_, i) => i !== index);
+		if (questions.length <= 1) {
+			return;
+		}
+
+		if (!confirm('Are you sure you want to remove this question?')) {
+			return;
+		}
+
+		questions = questions
+			.filter((_, i) => i !== index)
+			.map((question, newIndex) => ({
+				...question,
+				sequence: newIndex + 1
+			}));
 	}
 </script>
 
@@ -99,17 +157,32 @@
 		</select>
 	</div>
 
+	<div class="form-control w-full">
+		<label class="label" for="points">
+			<span class="label-text">Quiz Points</span>
+		</label>
+		<input
+			id="points"
+			type="number"
+			class="input input-bordered w-full"
+			bind:value={points}
+			min="1"
+			required
+		/>
+	</div>
+
 	<div class="divider">Questions</div>
 
-	{#each questions as question, i}
+	{#each questions as question, questionIndex}
 		<div class="card bg-base-200 p-4">
 			<div class="mb-4 flex items-center justify-between">
-				<h3 class="font-bold">Question {i + 1}</h3>
+				<h3 class="font-bold">Question {questionIndex + 1}</h3>
 				{#if questions.length > 1}
 					<button
 						type="button"
-						class="btn btn-sm btn-ghost btn-circle"
-						on:click={() => removeQuestion(i)}
+						class="btn btn-sm btn-error btn-circle"
+						on:click={() => removeQuestion(questionIndex)}
+						aria-label="Remove question"
 					>
 						×
 					</button>
@@ -118,9 +191,11 @@
 
 			<div class="space-y-4">
 				<div class="form-control">
-					<label class="label" for={'question-text-' + i}>Question Text</label>
+					<label class="label" for={'question-text-' + questionIndex}>
+						<span class="label-text">Question Text</span>
+					</label>
 					<input
-						id={'question-text-' + i}
+						id={'question-text-' + questionIndex}
 						type="text"
 						class="input input-bordered w-full"
 						bind:value={question.text}
@@ -129,49 +204,63 @@
 				</div>
 
 				<div class="form-control">
-					<label class="label" for={'question-options-' + i}>Options</label>
-					{#each question.options as _, j}
-						<div class="mt-2 flex gap-2">
+					<label class="label" for={'options-' + questionIndex}>
+						<span class="label-text">Options</span>
+					</label>
+					{#each question.options.filter((opt) => !opt.isNoOpinion) as option, optionIndex}
+						<div class="mt-2 flex items-center gap-2">
 							<input
 								type="text"
-								class="input input-bordered w-full"
-								bind:value={question.options[j]}
-								placeholder="Option {j + 1}"
+								class="input input-bordered flex-1"
+								bind:value={option.text}
+								placeholder="Option {optionIndex + 1}"
 								required
 							/>
+							<div class="flex items-center gap-2">
+								<input
+									type="radio"
+									name="correct-{questionIndex}"
+									class="radio radio-primary"
+									checked={option.isCorrect}
+									on:change={() => setCorrectOption(questionIndex, optionIndex)}
+								/>
+							</div>
 						</div>
 					{/each}
-				</div>
 
-				<div class="form-control">
-					<label class="label" for={'correct-answer-' + i}>
-						<span class="label-text">Correct Answer</span>
-					</label>
-					<select
-						class="select select-bordered w-full"
-						bind:value={question.correctAnswer}
-						required
+					<!-- No Opinion Option -->
+					<div class="mt-4 flex items-center gap-2">
+						<label class="label flex cursor-pointer items-center gap-2">
+							<input
+								type="checkbox"
+								class="checkbox checkbox-primary"
+								checked={question.options.some((opt) => opt.isNoOpinion)}
+								on:change={(e) => {
+									if (e.currentTarget.checked) {
+										addOption(questionIndex, true);
+									} else {
+										questions = questions.map((q, i) =>
+											i === questionIndex
+												? {
+														...q,
+														options: q.options.filter((opt) => !opt.isNoOpinion)
+													}
+												: q
+										);
+									}
+								}}
+							/>
+							<span class="label-text">Include "No Opinion" option</span>
+						</label>
+					</div>
+
+					<button
+						type="button"
+						class="btn btn-ghost btn-sm mt-2"
+						on:click={() => addOption(questionIndex)}
 					>
-						<option value="">Select correct answer</option>
-						{#each question.options as option}
-							{#if option}
-								<option value={option}>{option}</option>
-							{/if}
-						{/each}
-					</select>
-				</div>
-
-				<div class="form-control">
-					<label class="label" for={'points-' + i}>
-						<span class="label-text">Points</span>
-					</label>
-					<input
-						type="number"
-						class="input input-bordered w-full"
-						bind:value={question.points}
-						min="1"
-						required
-					/>
+						Add Option
+					</button>
 				</div>
 			</div>
 		</div>

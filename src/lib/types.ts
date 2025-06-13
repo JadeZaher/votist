@@ -9,15 +9,14 @@ interface BaseEntity {
 
 interface Option extends BaseEntity {
 	text: string;
+	isCorrect: boolean;
+	isNoOpinion: boolean;
 	questionId?: string;
-	isNoOpinion?: boolean;
-	isCorrect?: boolean;
 }
 
 interface Question extends BaseEntity {
 	text: string;
-	points: number;
-	correctOptionId: string | null;
+	correctOptionId?: string;
 	quizId: string;
 	options: Option[];
 }
@@ -27,9 +26,10 @@ interface Quiz extends BaseEntity {
 	description: string;
 	difficulty: QuizDifficulty;
 	enabled: boolean;
+	points: number;
 	questions: Question[];
+	prerequisiteId?: string | null;
 	sequence: number;
-	prerequisiteId?: string;
 }
 
 interface QuizProgress {
@@ -40,6 +40,7 @@ interface QuizProgress {
 
 interface QuizWithProgress extends Quiz {
 	status: QuizStatus;
+	prerequisiteId?: string | undefined;
 }
 
 export type {
