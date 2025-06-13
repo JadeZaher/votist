@@ -1,35 +1,54 @@
-import { QuizDifficulty as PrismaQuizDifficulty } from '@prisma/client';
+import type { QuizDifficulty, QuizStatus } from '@prisma/client';
 
-// Re-export the Prisma enum instead of creating our own
-export { PrismaQuizDifficulty as QuizDifficulty };
-
-export interface Option {
+// Base types
+interface BaseEntity {
 	id: string;
-	text: string;
-	questionId?: string;
-	createdAt?: Date; 
-	updatedAt?: Date; 
-	isCorrect?: boolean; 
+	createdAt?: Date;
+	updatedAt?: Date;
 }
 
-export interface Question {
-	id: string;
+interface Option extends BaseEntity {
+	text: string;
+	questionId?: string;
+	isNoOpinion?: boolean;
+	isCorrect?: boolean;
+}
+
+interface Question extends BaseEntity {
 	text: string;
 	points: number;
 	correctOptionId: string | null;
 	quizId: string;
 	options: Option[];
-	createdAt?: Date; 
-	updatedAt?: Date; 
 }
 
-export interface Quiz {
-	id: string;
+interface Quiz extends BaseEntity {
 	title: string;
 	description: string;
-	difficulty: string;
+	difficulty: QuizDifficulty;
 	enabled: boolean;
 	questions: Question[];
-	createdAt?: Date;
-	updatedAt?: Date;
+	sequence: number;
+	prerequisiteId?: string;
 }
+
+interface QuizProgress {
+	quizId: string;
+	userId: string;
+	status: QuizStatus;
+}
+
+interface QuizWithProgress extends Quiz {
+	status: QuizStatus;
+}
+
+export type {
+	BaseEntity,
+	Option,
+	Question,
+	Quiz,
+	QuizProgress,
+	QuizWithProgress,
+	QuizDifficulty,
+	QuizStatus
+};

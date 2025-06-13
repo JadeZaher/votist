@@ -39,21 +39,29 @@ enum QuizDifficulty {
 }
 
 model Quiz {
-  id          String           @id @default(cuid())
-  title       String
-  description String
-  difficulty  QuizDifficulty   @default(VOTIST)
-  questions   Question[]
-  enabled     Boolean          @default(true)
-  completions QuizCompletion[]
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  id             String           @id @default(cuid())
+  title          String
+  description    String
+  difficulty     QuizDifficulty   @default(VOTIST)
+  sequence       Int              @default(0)
+  questions      Question[]
+  enabled        Boolean          @default(true)
+  completions    QuizCompletion[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  prerequisiteId String?
+  prerequisite   Quiz?            @relation("QuizPrerequisites", fields: [prerequisiteId], references: [id])
+  nextQuizzes    Quiz[]           @relation("QuizPrerequisites")
+  QuizProgress   QuizProgress[]
+
+  @@index([difficulty, sequence])
+  @@index([prerequisiteId])
 }
 
 model Question {
   id              String   @id @default(cuid())
   text            String
-  correctOptionId String? @unique
+  correctOptionId String?  @unique
   correctOption   Option?  @relation("correctAnswer", fields: [correctOptionId], references: [id])
   options         Option[]
   points          Int      @default(1)
@@ -69,23 +77,64 @@ model Option {
   questionId         String
   question           Question  @relation(fields: [questionId], references: [id])
   correctForQuestion Question? @relation("correctAnswer")
+  isNoOpinion        Boolean   @default(false)
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 }
 
+enum QuizStatus {
+  LOCKED
+  AVAILABLE
+  IN_PROGRESS
+  COMPLETED
+}
+
+model QuizProgress {
+  id          String     @id @default(cuid())
+  userId      String
+  quizId      String
+  quiz        Quiz       @relation(fields: [quizId], references: [id])
+  status      QuizStatus @default(LOCKED)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  User        User?      @relation(fields: [userClerkId], references: [clerkId])
+  userClerkId String?
+
+  @@unique([userId, quizId])
+  @@index([userId, status])
+}
+
+// QuizCompletion stores the actual quiz attempt data, while QuizProgress tracks the current state
+// This separation is important because:
+// 1. We can track quiz availability and prerequisites (LOCKED vs AVAILABLE states)
+// 2. We can show visual progress in the roadmap UI (using status)
+// 3. We maintain quiz attempt history separately from progression status
+// 4. Allows for multiple attempts while maintaining a clear progression path
 model QuizCompletion {
   id          String    @id @default(cuid())
-  userId      String // Clerk user ID
+  userId      String
   quizId      String
   quiz        Quiz      @relation(fields: [quizId], references: [id])
   score       Int
-  answers     Json // Stores the user's answers
+  answers     Json
   completed   Boolean   @default(false)
   startedAt   DateTime  @default(now())
   completedAt DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  User        User?     @relation(fields: [userClerkId], references: [clerkId])
+  userClerkId String?
 
-  @@unique([userId, quizId]) // One completion per user per quiz
-  @@index([userId]) // Index for faster user-based queries
+  @@unique([userId, quizId])
+  @@index([userId])
+}
+
+model User {
+  clerkId      String           @id
+  email        String?          @unique
+  isAdmin      Boolean          @default(false)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  quizProgress QuizProgress[]
+  completions  QuizCompletion[]
 }
