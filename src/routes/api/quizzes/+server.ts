@@ -13,27 +13,25 @@ export const GET: RequestHandler = async () => {
 				difficulty: true,
 				points: true,
 				enabled: true,
-				questions: {
+				_count: {
 					select: {
-						id: true,
-						text: true,
-						_count: {
-							select: {
-								options: true
-							}
-						},
-						options: {
-							select: {
-								id: true,
-								text: true
-							}
-						}
+						questions: true
 					}
 				}
 			}
 		});
 
-		return json(quizzes);
+		const formattedQuizzes = quizzes.map((quiz) => ({
+			id: quiz.id,
+			title: quiz.title,
+			description: quiz.description,
+			difficulty: quiz.difficulty,
+			points: quiz.points,
+			enabled: quiz.enabled,
+			questionCount: quiz._count.questions
+		}));
+
+		return json(formattedQuizzes);
 	} catch (error) {
 		console.error('Error fetching quizzes:', error);
 		return new Response('Internal Server Error', { status: 500 });
@@ -45,13 +43,8 @@ export const POST: RequestHandler = async ({ request }) => {
 	try {
 		const data = await request.json();
 
-		// Validate required fields
-		if (!data.title || !data.description || !data.difficulty || !data.points) {
-			return new Response('Missing required fields', { status: 400 });
-		}
-
-		if (!Array.isArray(data.questions) || data.questions.length === 0) {
-			return new Response('At least one question is required', { status: 400 });
+		if (!data.title || !data.description || !data.difficulty || !data.points || data.points < 1) {
+			return new Response('Missing required fields or invalid points value', { status: 400 });
 		}
 
 		const quiz = await prisma.quiz.create({
@@ -64,7 +57,7 @@ export const POST: RequestHandler = async ({ request }) => {
 				questions: {
 					create: data.questions.map((q: any) => ({
 						text: q.text,
-						correctOptionId: q.correctOptionId,
+						correctOptionId: q.correctOptionId || null,
 						options: {
 							create: q.options.map((opt: any) => ({
 								text: opt.text,
@@ -78,14 +71,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			include: {
 				questions: {
 					include: {
-						options: {
-							select: {
-								id: true,
-								text: true,
-								isCorrect: true,
-								isNoOpinion: true
-							}
-						}
+						options: true
 					}
 				}
 			}

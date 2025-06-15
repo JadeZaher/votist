@@ -30,6 +30,7 @@ interface Quiz extends BaseEntity {
 	questions: Question[];
 	prerequisiteId?: string | null;
 	sequence: number;
+	questionCount?: number;
 }
 
 interface QuizProgress {

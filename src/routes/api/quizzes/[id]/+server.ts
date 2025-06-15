@@ -6,6 +6,10 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 	try {
 		const data = await request.json();
 
+		if (!data.title || !data.description || !data.difficulty || !data.points || data.points < 1) {
+			return new Response('Missing required fields or invalid points value', { status: 400 });
+		}
+
 		const quiz = await prisma.quiz.update({
 			where: { id: params.id },
 			data: {
@@ -19,7 +23,7 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 						where: { id: q.id || '' },
 						create: {
 							text: q.text,
-							correctOptionId: q.correctOptionId,
+							correctOptionId: q.correctOptionId || null,
 							options: {
 								create: q.options.map((opt: any) => ({
 									text: opt.text,
@@ -30,7 +34,7 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 						},
 						update: {
 							text: q.text,
-							correctOptionId: q.correctOptionId,
+							correctOptionId: q.correctOptionId || null,
 							options: {
 								upsert: q.options.map((opt: any) => ({
 									where: { id: opt.id || '' },
