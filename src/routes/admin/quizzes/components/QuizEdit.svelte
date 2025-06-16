@@ -1,108 +1,136 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { createEventDispatcher } from 'svelte';
 	import { QuizDifficulty } from '@prisma/client';
-	import type { Quiz, Question, Option } from '$lib/types';
+	import type { Quiz } from '$lib/types';
+
+	const dispatch = createEventDispatcher();
 
 	export let quiz: Quiz;
 
-	let questions = [...quiz.questions];
-
-	function addQuestion() {
-		const newQuestion: Question = {
-			id: crypto.randomUUID(),
-			text: '',
-			quizId: quiz.id,
-			correctOptionId: undefined,
-			options: []
-		};
-		questions = [...questions, newQuestion];
-	}
-
-	function addOption(questionIndex: number) {
-		const newOption: Option = {
-			id: crypto.randomUUID(),
-			text: '',
-			isCorrect: false,
-			isNoOpinion: false
-		};
-
-		questions = questions.map((q, i) =>
-			i === questionIndex ? { ...q, options: [...q.options, newOption] } : q
-		);
-	}
-
-	function handleNoOpinionChange(questionIndex: number, optionIndex: number) {
-		questions = questions.map((q, i) =>
-			i === questionIndex
-				? {
-						...q,
-						options: q.options.map((opt, j) => {
-							if (j === optionIndex) {
-								// If turning on "no opinion", remove isCorrect
-								if (!opt.isNoOpinion) {
-									return {
-										...opt,
-										isNoOpinion: true,
-										isCorrect: false
-									};
-								}
-								// If turning off "no opinion", just remove the flag
-								return {
-									...opt,
-									isNoOpinion: false
-								};
-							}
-							return opt;
-						})
-					}
-				: q
-		);
-	}
-
-	function removeOption(questionIndex: number, optionIndex: number) {
-		questions = questions.map((q, i) =>
-			i === questionIndex ? { ...q, options: q.options.filter((_, j) => j !== optionIndex) } : q
-		);
-	}
+	let title = quiz.title;
+	let description = quiz.description;
+	let difficulty = quiz.difficulty;
+	let points = quiz.points;
+	let questions = quiz.questions.map((q) => ({
+		title: q.title,
+		description: q.description,
+		options: [
+			// First map existing regular options (non "No Opinion")
+			...q.options
+				.filter((opt) => opt.text !== 'I have no opinion')
+				.map((opt) => ({
+					id: opt.id,
+					text: opt.text,
+					isCorrect: opt.id === q.correctOptionId,
+					isNoOpinion: false
+				})),
+			// Add "No Opinion" option if it exists
+			...(q.options.some((opt) => opt.text === 'I have no opinion')
+				? [
+						{
+							id: q.options.find((opt) => opt.text === 'I have no opinion')?.id,
+							text: 'I have no opinion',
+							isCorrect: false,
+							isNoOpinion: true
+						}
+					]
+				: [])
+		],
+		correctOptionId: q.correctOptionId
+	}));
 
 	function setCorrectOption(questionIndex: number, optionIndex: number) {
 		questions = questions.map((q, i) =>
 			i === questionIndex
 				? {
 						...q,
-						correctOptionId: q.options[optionIndex].id,
+						correctOptionId: q.options[optionIndex].text,
 						options: q.options.map((opt, j) => ({
 							...opt,
-							isCorrect: j === optionIndex
+							isCorrect: j === optionIndex && !opt.isNoOpinion
 						}))
 					}
 				: q
 		);
 	}
 
-	async function handleSubmit() {
-		const response = await fetch(`/api/quizzes/${quiz.id}`, {
-			method: 'PUT',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				title: quiz.title,
-				description: quiz.description,
-				difficulty: quiz.difficulty,
-				points: quiz.points,
-				questions: questions
-			})
-		});
+	function handleNoOpinionChange(questionIndex: number, checked: boolean) {
+		questions = questions.map((q, i) =>
+			i === questionIndex
+				? {
+						...q,
+						options: [
+							...q.options.filter((opt) => !opt.isNoOpinion), // Keep regular options
+							...(checked
+								? [
+										{
+											id: q.options.find((opt) => opt.isNoOpinion)?.id, // Preserve ID if it exists
+											text: 'I have no opinion',
+											isCorrect: false,
+											isNoOpinion: true
+										}
+									]
+								: [])
+						]
+					}
+				: q
+		);
+	}
 
-		if (response.ok) {
-			goto('/admin/quizzes');
+	function showToast(message: string, type: 'success' | 'error' = 'success') {
+		const toast = document.createElement('div');
+		toast.className = `toast toast-end`;
+		toast.innerHTML = `
+			<div class="alert ${type === 'success' ? 'alert-success' : 'alert-error'}">
+				<span>${message}</span>
+			</div>
+		`;
+		document.body.appendChild(toast);
+		setTimeout(() => toast.remove(), 3000);
+	}
+
+	async function handleSubmit() {
+		try {
+			const formattedQuestions = questions.map((q) => ({
+				title: q.title,
+				description: q.description,
+				correctOptionId: q.correctOptionId,
+				options: q.options.filter(
+					(opt) => !opt.isNoOpinion || (opt.isNoOpinion && q.options.some((o) => o.isNoOpinion))
+				)
+			}));
+
+			const response = await fetch(`/api/quizzes/${quiz.id}`, {
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					title,
+					description,
+					difficulty,
+					points,
+					questions: formattedQuestions
+				})
+			});
+
+			if (response.ok) {
+				showToast('Quiz saved successfully!');
+				goto('/admin/quizzes');
+			} else {
+				const error = await response.text();
+				showToast('Failed to save quiz', 'error');
+				console.error('Error updating quiz:', error);
+			}
+		} catch (error) {
+			showToast('An error occurred', 'error');
+			console.error('Error:', error);
 		}
 	}
 
-	function removeQuestion(questionIndex: number): any {
-		if (questions.length <= 1) return; // Prevent removing the last question
-		questions = questions.filter((_, i) => i !== questionIndex);
+	function handleCancel() {
+		goto('/admin/quizzes');
 	}
 </script>
 
@@ -118,7 +146,7 @@
 				id="title"
 				type="text"
 				class="input input-bordered w-full"
-				bind:value={quiz.title}
+				bind:value={title}
 				required
 			/>
 		</div>
@@ -130,7 +158,7 @@
 			<textarea
 				id="description"
 				class="textarea textarea-bordered h-24"
-				bind:value={quiz.description}
+				bind:value={description}
 				required
 			></textarea>
 		</div>
@@ -139,10 +167,10 @@
 			<label class="label" for="difficulty">
 				<span class="label-text">Difficulty Level</span>
 			</label>
-			<select id="difficulty" class="select select-bordered w-full" bind:value={quiz.difficulty}>
-				<option value={QuizDifficulty.VOTIST}>Votist</option>
-				<option value={QuizDifficulty.SCHOLAR}>Scholar</option>
-				<option value={QuizDifficulty.MENTOR}>Mentor</option>
+			<select id="difficulty" class="select select-bordered w-full" bind:value={difficulty}>
+				{#each Object.values(QuizDifficulty) as level}
+					<option value={level}>{level}</option>
+				{/each}
 			</select>
 		</div>
 
@@ -154,7 +182,7 @@
 				id="points"
 				type="number"
 				class="input input-bordered w-full"
-				bind:value={quiz.points}
+				bind:value={points}
 				min="1"
 				required
 			/>
@@ -164,95 +192,75 @@
 
 		{#each questions as question, questionIndex}
 			<div class="card bg-base-200 p-4">
-				<div class="mb-4 flex items-center justify-between">
-					<h3 class="font-bold">Question {questionIndex + 1}</h3>
-					{#if questions.length > 1}
-						<button
-							type="button"
-							class="btn btn-sm btn-error btn-circle"
-							on:click={() => removeQuestion(questionIndex)}
-						>
-							×
-						</button>
-					{/if}
-				</div>
-
 				<div class="space-y-4">
 					<div class="form-control">
-						<label class="label" for="question-text-{questionIndex}">
-							<span class="label-text">Question Text</span>
+						<label class="label" for={'question-title-' + questionIndex}>
+							<span class="label-text">Question Title</span>
 						</label>
 						<input
+							id={'question-title-' + questionIndex}
 							type="text"
 							class="input input-bordered w-full"
-							bind:value={question.text}
+							bind:value={question.title}
 							required
 						/>
 					</div>
 
 					<div class="form-control">
-						<label class="label" for="options-{questionIndex}">
-							<span class="label-text">Options</span>
+						<label class="label" for={'question-description-' + questionIndex}>
+							<span class="label-text">Description (Optional)</span>
 						</label>
-						<div class="space-y-2">
-							{#each question.options as option, optionIndex}
-								<div class="flex items-center gap-2">
-									<input
-										type="text"
-										class="input input-bordered flex-1"
-										bind:value={option.text}
-										placeholder="Option {optionIndex + 1}"
-										required
-									/>
-									<div class="flex items-center gap-2">
-										<input
-											type="radio"
-											name="correct-{questionIndex}"
-											class="radio radio-primary"
-											checked={option.isCorrect}
-											disabled={option.isNoOpinion}
-											on:change={() => setCorrectOption(questionIndex, optionIndex)}
-										/>
-										<label class="label cursor-pointer">
-											<input
-												type="checkbox"
-												class="checkbox checkbox-sm"
-												bind:checked={option.isNoOpinion}
-												on:change={() => handleNoOpinionChange(questionIndex, optionIndex)}
-											/>
-											<span class="label-text ml-2">No opinion</span>
-										</label>
-									</div>
-									{#if question.options.length > 2}
-										<button
-											type="button"
-											class="btn btn-sm btn-ghost btn-circle"
-											on:click={() => removeOption(questionIndex, optionIndex)}
-										>
-											×
-										</button>
-									{/if}
-								</div>
-							{/each}
-							<button
-								type="button"
-								class="btn btn-sm btn-ghost"
-								on:click={() => addOption(questionIndex)}
-							>
-								Add Option
-							</button>
+						<textarea
+							id={'question-description-' + questionIndex}
+							class="textarea textarea-bordered h-24"
+							bind:value={question.description}
+							placeholder="Add additional context..."
+						></textarea>
+					</div>
+
+					<div class="form-control">
+						<label class="label" for={'question-options-' + questionIndex}>
+							<span class="label-text">Options (4 required)</span>
+						</label>
+
+						{#each question.options.slice(0, 4) as option, optionIndex}
+							<div class="join mt-2 w-full">
+								<input
+									type="text"
+									class="input input-bordered join-item w-full"
+									bind:value={option.text}
+									placeholder="Option {optionIndex + 1}"
+									required
+								/>
+								<input
+									type="radio"
+									name="correct-{questionIndex}"
+									class="radio radio-primary join-item"
+									checked={option.isCorrect}
+									on:change={() => setCorrectOption(questionIndex, optionIndex)}
+								/>
+							</div>
+						{/each}
+
+						<div class="form-control mt-4">
+							<label class="label cursor-pointer">
+								<span class="label-text">Include "No Opinion" option</span>
+								<input
+									type="checkbox"
+									class="checkbox checkbox-primary"
+									checked={question.options.some((opt) => opt.isNoOpinion)}
+									on:change={(e) => handleNoOpinionChange(questionIndex, e.currentTarget.checked)}
+								/>
+							</label>
 						</div>
 					</div>
 				</div>
 			</div>
 		{/each}
 
-		<div class="mt-8 flex justify-between gap-4">
-			<button type="button" class="btn btn-secondary" on:click={addQuestion}> Add Question </button>
-			<div class="flex gap-2">
-				<a href="/admin/quizzes" class="btn">Cancel</a>
-				<button type="submit" class="btn btn-primary">Save Changes</button>
-			</div>
+		<div class="flex justify-end gap-2">
+			<button type="button" class="btn" on:click={handleCancel}> Cancel </button>
+			<button type="submit" class="btn btn-primary"> Save Changes </button>
 		</div>
 	</form>
 </div>

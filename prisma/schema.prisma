@@ -61,7 +61,8 @@ model Quiz {
 
 model Question {
   id              String   @id @default(cuid())
-  text            String
+  title           String
+  description     String?
   correctOptionId String?  @unique
   correctOption   Option?  @relation("correctAnswer", fields: [correctOptionId], references: [id])
   options         Option[]

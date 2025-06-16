@@ -47,6 +47,16 @@ export const POST: RequestHandler = async ({ request }) => {
 			return new Response('Missing required fields or invalid points value', { status: 400 });
 		}
 
+		const invalidQuestions = data.questions.filter(
+			(q: any) => !q.options.some((opt: any) => opt.isCorrect)
+		);
+
+		if (invalidQuestions.length > 0) {
+			return new Response('Each question must have one correct answer selected', {
+				status: 400
+			});
+		}
+
 		const quiz = await prisma.quiz.create({
 			data: {
 				title: data.title,
@@ -56,8 +66,9 @@ export const POST: RequestHandler = async ({ request }) => {
 				enabled: true,
 				questions: {
 					create: data.questions.map((q: any) => ({
-						text: q.text,
-						correctOptionId: q.correctOptionId || null,
+						title: q.title || '',
+						description: q.description || '',
+						correctOptionId: null,
 						options: {
 							create: q.options.map((opt: any) => ({
 								text: opt.text,
@@ -76,6 +87,17 @@ export const POST: RequestHandler = async ({ request }) => {
 				}
 			}
 		});
+
+		// Update correct option IDs after creation
+		for (const question of quiz.questions) {
+			const correctOption = question.options.find((opt) => opt.isCorrect);
+			if (correctOption) {
+				await prisma.question.update({
+					where: { id: question.id },
+					data: { correctOptionId: correctOption.id }
+				});
+			}
+		}
 
 		return json(quiz);
 	} catch (error) {

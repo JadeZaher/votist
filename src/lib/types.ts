@@ -15,7 +15,8 @@ interface Option extends BaseEntity {
 }
 
 interface Question extends BaseEntity {
-	text: string;
+	title: string;
+	description?: string | null;
 	correctOptionId?: string;
 	quizId: string;
 	options: Option[];
@@ -44,6 +45,17 @@ interface QuizWithProgress extends Quiz {
 	prerequisiteId?: string | undefined;
 }
 
+interface QuizQuestion {
+    title: string;
+    description?: string;
+    options: {
+        text: string;
+        isCorrect: boolean;
+        isNoOpinion: boolean;
+    }[];
+    correctOptionId: string | null;
+}
+
 export type {
 	BaseEntity,
 	Option,
@@ -52,5 +64,6 @@ export type {
 	QuizProgress,
 	QuizWithProgress,
 	QuizDifficulty,
-	QuizStatus
+	QuizStatus,
+	QuizQuestion
 };
