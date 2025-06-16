@@ -9,7 +9,7 @@ services:
       - DATABASE_URL=postgresql://votist_user:votist_password@db:5432/votist_db
       - NODE_ENV=development
     volumes:
-      - /app
+      - .:/app
       - /app/node_modules
       - /app/.svelte-kit
       - /app/prisma/generated
