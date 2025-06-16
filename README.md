@@ -38,6 +38,7 @@ You can preview the production build with `npm run preview`.
 > To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
 
 ## Using Docker for Development
+
 If you prefer to use Docker for development, you can run the following command in the root of your project:
 
 ```bash
