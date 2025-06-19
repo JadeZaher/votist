@@ -11,13 +11,14 @@ export const load = (async ({ params }) => {
 				title: true,
 				description: true,
 				difficulty: true,
+				points: true,
 				enabled: true,
 				questions: {
 					select: {
 						id: true,
-						text: true,
+						title: true,
+						description: true,
 						correctOptionId: true,
-						points: true,
 						options: {
 							select: {
 								id: true,

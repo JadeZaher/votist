@@ -37,6 +37,30 @@ You can preview the production build with `npm run preview`.
 
 > To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
 
+## Using Docker for Development
+
+If you prefer to use Docker for development, you can run the following command in the root of your project:
+
+```bash
+docker compose up --build -d
+```
+
+Then, run the following command to get the Prisma zod stuff working:
+
+```bash
+npx prisma generate
+```
+
+Then, using something like [Docker Desktop](https://www.docker.com/products/docker-desktop), you can go into the `votist` container and run the following command to get the database set up:
+
+```bash
+npx prisma migrate dev
+```
+
+This command initializes the Prisma database and applies the initial migration. Make sure you have your database connection string set up in the `.env` file. This will set up your database schema and apply any migrations.
+
+Now, you can then access your application at `http://localhost:5173`.
+
 ## Clerk
 
 We are using the package here for Clerk: https://svelte-clerk.netlify.app/

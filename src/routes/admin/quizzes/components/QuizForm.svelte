@@ -5,7 +5,8 @@
 	const dispatch = createEventDispatcher();
 
 	interface QuizQuestion {
-		text: string;
+		title: string;
+		description?: string;
 		options: {
 			text: string;
 			isCorrect: boolean;
@@ -20,44 +21,63 @@
 	let points = 1;
 	let questions: QuizQuestion[] = [
 		{
-			text: '',
-			options: [{ text: '', isCorrect: false, isNoOpinion: false }],
+			title: '',
+			description: '',
+			options: Array(4)
+				.fill(null)
+				.map(() => ({
+					text: '',
+					isCorrect: false,
+					isNoOpinion: false
+				})),
 			correctOptionId: null
 		}
 	];
 
 	async function handleSubmit() {
-		const formattedQuestions = questions.map((q) => ({
-			text: q.text,
-			options: q.options.map((opt) => ({
-				text: opt.text,
-				isCorrect: opt.isCorrect,
-				isNoOpinion: opt.isNoOpinion
-			})),
-			correctOptionId: q.correctOptionId
-		}));
+		const invalidQuestions = questions.filter((q) => !q.options.some((opt) => opt.isCorrect));
 
-		const response = await fetch('/api/quizzes', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				title,
-				description,
-				difficulty,
-				points,
-				questions: formattedQuestions
-			})
-		});
+		if (invalidQuestions.length > 0) {
+			showToast('Each question must have one correct answer selected', 'error');
+			return;
+		}
 
-		if (response.ok) {
-			dispatch('saved');
-		} else {
-			const error = await response.text();
-			console.error('Error creating quiz:', error);
-			alert('Failed to create quiz. Please try again.');
-			dispatch('error', { message: error });
+		try {
+			const formattedQuestions = questions.map((q) => ({
+				title: q.title,
+				description: q.description || '',
+				options: q.options.map((opt) => ({
+					text: opt.text,
+					isCorrect: opt.isCorrect,
+					isNoOpinion: opt.isNoOpinion
+				}))
+			}));
+
+			const response = await fetch('/api/quizzes', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					title,
+					description,
+					difficulty,
+					points,
+					questions: formattedQuestions
+				})
+			});
+
+			if (response.ok) {
+				dispatch('saved');
+			} else {
+				const error = await response.text();
+				console.error('Error creating quiz:', error);
+				alert('Failed to create quiz. Please try again.');
+				dispatch('error', { message: error });
+			}
+		} catch (error) {
+			showToast('Error saving quiz', 'error');
+			console.error('Error:', error);
 		}
 	}
 
@@ -65,28 +85,61 @@
 		questions = [
 			...questions,
 			{
-				text: '',
-				options: [
-					{ text: '', isCorrect: false, isNoOpinion: false },
-					{ text: 'I have no opinion', isCorrect: false, isNoOpinion: true }
-				],
+				title: '',
+				description: '',
+				options: Array(4)
+					.fill(null)
+					.map(() => ({
+						text: '',
+						isCorrect: false,
+						isNoOpinion: false
+					})),
 				correctOptionId: null
 			}
 		];
 	}
 
 	function addOption(questionIndex: number, isNoOpinion = false) {
+		const currentQuestion = questions[questionIndex];
+		const regularOptions = currentQuestion.options.filter((opt) => !opt.isNoOpinion);
+
+		// Only add if we have less than 4 regular options
+		if (!isNoOpinion && regularOptions.length >= 4) return;
+
 		questions = questions.map((q, i) =>
 			i === questionIndex
 				? {
 						...q,
 						options: [
-							...q.options,
+							...q.options.filter((opt) => !opt.isNoOpinion),
 							{
 								text: isNoOpinion ? 'I have no opinion' : '',
 								isCorrect: false,
 								isNoOpinion: isNoOpinion
-							}
+							},
+							...(isNoOpinion ? [] : q.options.filter((opt) => opt.isNoOpinion))
+						]
+					}
+				: q
+		);
+	}
+
+	function handleNoOpinionChange(questionIndex: number, checked: boolean) {
+		questions = questions.map((q, i) =>
+			i === questionIndex
+				? {
+						...q,
+						options: [
+							...q.options.slice(0, 4), // Keep first 4 options unchanged
+							...(checked
+								? [
+										{
+											text: 'I have no opinion',
+											isCorrect: false,
+											isNoOpinion: true
+										}
+									]
+								: [])
 						]
 					}
 				: q
@@ -101,7 +154,7 @@
 						correctOptionId: q.options[optionIndex].text,
 						options: q.options.map((opt, j) => ({
 							...opt,
-							isCorrect: j === optionIndex
+							isCorrect: j === optionIndex && !opt.isNoOpinion
 						}))
 					}
 				: q
@@ -123,6 +176,11 @@
 				...question,
 				sequence: newIndex + 1
 			}));
+	}
+
+
+	function showToast(arg0: string, arg1: string) {
+		throw new Error('Function not implemented.');
 	}
 </script>
 
@@ -151,9 +209,9 @@
 			<span class="label-text">Difficulty Level</span>
 		</label>
 		<select id="difficulty" class="select select-bordered w-full" bind:value={difficulty}>
-			<option value="VOTIST">Votist</option>
-			<option value="SCHOLAR">Scholar</option>
-			<option value="MENTOR">Mentor</option>
+			{#each Object.values(QuizDifficulty) as level}
+				<option value={level}>{level}</option>
+			{/each}
 		</select>
 	</div>
 
@@ -191,83 +249,84 @@
 
 			<div class="space-y-4">
 				<div class="form-control">
-					<label class="label" for={'question-text-' + questionIndex}>
-						<span class="label-text">Question Text</span>
+					<label class="label" for={'question-title-' + questionIndex}>
+						<span class="label-text">Question Title</span>
 					</label>
 					<input
-						id={'question-text-' + questionIndex}
+						id={'question-title-' + questionIndex}
 						type="text"
 						class="input input-bordered w-full"
-						bind:value={question.text}
+						bind:value={question.title}
 						required
 					/>
 				</div>
 
 				<div class="form-control">
-					<label class="label" for={'options-' + questionIndex}>
-						<span class="label-text">Options</span>
+					<label class="label" for={'question-description-' + questionIndex}>
+						<span class="label-text">Description (Optional)</span>
 					</label>
-					{#each question.options.filter((opt) => !opt.isNoOpinion) as option, optionIndex}
-						<div class="mt-2 flex items-center gap-2">
+					<textarea
+						id={'question-description-' + questionIndex}
+						class="textarea textarea-bordered h-24"
+						bind:value={question.description}
+						placeholder="Add additional context..."
+					></textarea>
+				</div>
+
+				<div class="form-control w-full">
+					<label class="label" for={'question-options-' + questionIndex}>
+						<span class="label-text">Options (4 required)</span>
+					</label>
+
+					{#each question.options.slice(0, 4) as option, optionIndex}
+						<div class="join mt-2 w-full">
 							<input
 								type="text"
-								class="input input-bordered flex-1"
+								class="input input-bordered join-item w-full"
 								bind:value={option.text}
 								placeholder="Option {optionIndex + 1}"
 								required
 							/>
-							<div class="flex items-center gap-2">
-								<input
-									type="radio"
-									name="correct-{questionIndex}"
-									class="radio radio-primary"
-									checked={option.isCorrect}
-									on:change={() => setCorrectOption(questionIndex, optionIndex)}
-								/>
-							</div>
+							<input
+								type="radio"
+								name="correct-{questionIndex}"
+								class="radio radio-primary join-item"
+								class:radio-error={!question.options.some((opt) => opt.isCorrect)}
+								checked={option.isCorrect}
+								on:change={() => setCorrectOption(questionIndex, optionIndex)}
+								required
+							/>
 						</div>
 					{/each}
 
-					<!-- No Opinion Option -->
-					<div class="mt-4 flex items-center gap-2">
-						<label class="label flex cursor-pointer items-center gap-2">
+					<!-- No Opinion option -->
+					<div class="form-control mt-4">
+						<label class="label cursor-pointer">
+							<span class="label-text">Include "No Opinion" option</span>
 							<input
 								type="checkbox"
 								class="checkbox checkbox-primary"
 								checked={question.options.some((opt) => opt.isNoOpinion)}
-								on:change={(e) => {
-									if (e.currentTarget.checked) {
-										addOption(questionIndex, true);
-									} else {
-										questions = questions.map((q, i) =>
-											i === questionIndex
-												? {
-														...q,
-														options: q.options.filter((opt) => !opt.isNoOpinion)
-													}
-												: q
-										);
-									}
-								}}
+								on:change={(e) => handleNoOpinionChange(questionIndex, e.currentTarget.checked)}
 							/>
-							<span class="label-text">Include "No Opinion" option</span>
 						</label>
 					</div>
 
-					<button
-						type="button"
-						class="btn btn-ghost btn-sm mt-2"
-						on:click={() => addOption(questionIndex)}
-					>
-						Add Option
-					</button>
+					{#if !question.options.some((opt) => opt.isCorrect)}
+						<div class="text-error mt-2 text-sm">Please select a correct answer</div>
+					{/if}
 				</div>
 			</div>
 		</div>
 	{/each}
 
-	<div class="mt-8 flex justify-between gap-4">
-		<button type="button" class="btn btn-secondary" on:click={addQuestion}> Add Question </button>
-		<button type="submit" class="btn btn-primary"> Create Quiz </button>
+	<div class="flex justify-between">
+		<button type="button" class="btn" on:click={addQuestion}> Add Question </button>
+		<div class="join">
+			<button type="button" class="btn join-item" on:click={() => dispatch('cancel')}>
+				Cancel
+			</button>
+			<button type="submit" class="btn btn-primary join-item">Save Quiz</button>
+		</div>
 	</div>
 </form>

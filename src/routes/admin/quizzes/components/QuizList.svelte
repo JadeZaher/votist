@@ -51,7 +51,7 @@
 							{quiz.difficulty}
 						</div>
 					</td>
-					<td>{quiz.questions?.length || 0} questions</td>
+					<td>{quiz.questionCount} questions</td>
 					<td>
 						<div class="badge badge-neutral">
 							{quiz.points} points

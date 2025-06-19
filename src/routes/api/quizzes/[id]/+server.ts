@@ -6,46 +6,37 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 	try {
 		const data = await request.json();
 
+		if (!data.title || !data.description || !data.difficulty || !data.points || data.points < 1) {
+			return new Response('Missing required fields or invalid points value', { status: 400 });
+		}
+
+		await prisma.quiz.update({
+			where: { id: params.id },
+			data: {
+				questions: {
+					deleteMany: {}
+				}
+			}
+		});
+
 		const quiz = await prisma.quiz.update({
 			where: { id: params.id },
 			data: {
 				title: data.title,
 				description: data.description,
 				difficulty: data.difficulty,
-				enabled: data.enabled,
 				points: data.points,
 				questions: {
-					upsert: data.questions.map((q: any) => ({
-						where: { id: q.id || '' },
-						create: {
-							text: q.text,
-							correctOptionId: q.correctOptionId,
-							options: {
-								create: q.options.map((opt: any) => ({
-									text: opt.text,
-									isCorrect: opt.isCorrect || false,
-									isNoOpinion: opt.isNoOpinion || false
-								}))
-							}
-						},
-						update: {
-							text: q.text,
-							correctOptionId: q.correctOptionId,
-							options: {
-								upsert: q.options.map((opt: any) => ({
-									where: { id: opt.id || '' },
-									create: {
-										text: opt.text,
-										isCorrect: opt.isCorrect || false,
-										isNoOpinion: opt.isNoOpinion || false
-									},
-									update: {
-										text: opt.text,
-										isCorrect: opt.isCorrect || false,
-										isNoOpinion: opt.isNoOpinion || false
-									}
-								}))
-							}
+					create: data.questions.map((q: any) => ({
+						title: q.title,
+						description: q.description,
+						correctOptionId: null, // Set this after creating options
+						options: {
+							create: q.options.map((opt: any) => ({
+								text: opt.text,
+								isCorrect: opt.isCorrect || false,
+								isNoOpinion: opt.isNoOpinion || false
+							}))
 						}
 					}))
 				}
@@ -58,6 +49,17 @@ export const PUT: RequestHandler = async ({ params, request }) => {
 				}
 			}
 		});
+
+		// Update correct option IDs after creation
+		for (const question of quiz.questions) {
+			const correctOption = question.options.find((opt) => opt.isCorrect);
+			if (correctOption) {
+				await prisma.question.update({
+					where: { id: question.id },
+					data: { correctOptionId: correctOption.id }
+				});
+			}
+		}
 
 		return json(quiz);
 	} catch (error) {
