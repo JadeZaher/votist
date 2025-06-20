@@ -1,7 +1,16 @@
-import { sqliteTable, text, integer, unique } from 'drizzle-orm/sqlite-core';
+import { pgTable, text, timestamp, unique, pgEnum } from 'drizzle-orm/pg-core';
+
+// Define enums
+export const proposalStatusEnum = pgEnum('proposal_status', [
+	'draft',
+	'submitted',
+	'under_review',
+	'approved',
+	'rejected'
+]);
 
 // User table schema
-export const users = sqliteTable(
+export const users = pgTable(
 	'users',
 	{
 		id: text('id').primaryKey(),
@@ -10,8 +19,8 @@ export const users = sqliteTable(
 		firstName: text('first_name'),
 		lastName: text('last_name'),
 		username: text('username'),
-		createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
-		updatedAt: integer('updated_at', { mode: 'timestamp' }).defaultNow()
+		createdAt: timestamp('created_at').defaultNow(),
+		updatedAt: timestamp('updated_at').defaultNow()
 	},
 	(table) => ({
 		uniqueEmail: unique('unique_email').on(table.email)
@@ -19,14 +28,12 @@ export const users = sqliteTable(
 );
 
 // Proposal table schema
-export const proposals = sqliteTable('proposals', {
+export const proposals = pgTable('proposals', {
 	id: text('id').primaryKey(),
 	userId: text('user_id').references(() => users.id),
 	title: text('title').notNull(),
 	description: text('description'),
-	status: text('status', {
-		enum: ['draft', 'submitted', 'under_review', 'approved', 'rejected']
-	}).default('draft'),
-	createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
-	updatedAt: integer('updated_at', { mode: 'timestamp' }).defaultNow()
+	status: proposalStatusEnum('status').default('draft'),
+	createdAt: timestamp('created_at').defaultNow(),
+	updatedAt: timestamp('updated_at').defaultNow()
 });

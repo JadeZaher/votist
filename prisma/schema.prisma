@@ -6,7 +6,7 @@ generator client {
 generator markdown {
   provider = "prisma-markdown"
   output   = "./generated/ERD.md"
-  title    = "Executive Function App"
+  title    = "Votist"
 }
 
 generator zod {

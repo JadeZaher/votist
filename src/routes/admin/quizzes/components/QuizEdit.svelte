@@ -1,10 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { createEventDispatcher } from 'svelte';
-	import { QuizDifficulty } from '@prisma/client';
-	import type { Quiz } from '$lib/types';
-
-	const dispatch = createEventDispatcher();
+	import { QuizDifficulty, type Quiz } from '$lib/types';
 
 	export let quiz: Quiz;
 

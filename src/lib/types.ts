@@ -1,4 +1,16 @@
-import type { QuizDifficulty, QuizStatus } from '@prisma/client';
+// Enums
+export enum QuizDifficulty {
+	VOTIST = 'VOTIST',
+	SCHOLAR = 'SCHOLAR',
+	MENTOR = 'MENTOR'
+}
+
+export enum QuizStatus {
+	LOCKED = 'LOCKED',
+	AVAILABLE = 'AVAILABLE',
+	IN_PROGRESS = 'IN_PROGRESS',
+	COMPLETED = 'COMPLETED'
+}
 
 // Base types
 interface BaseEntity {
@@ -46,24 +58,14 @@ interface QuizWithProgress extends Quiz {
 }
 
 interface QuizQuestion {
-    title: string;
-    description?: string;
-    options: {
-        text: string;
-        isCorrect: boolean;
-        isNoOpinion: boolean;
-    }[];
-    correctOptionId: string | null;
+	title: string;
+	description?: string;
+	options: {
+		text: string;
+		isCorrect: boolean;
+		isNoOpinion: boolean;
+	}[];
+	correctOptionId: string | null;
 }
 
-export type {
-	BaseEntity,
-	Option,
-	Question,
-	Quiz,
-	QuizProgress,
-	QuizWithProgress,
-	QuizDifficulty,
-	QuizStatus,
-	QuizQuestion
-};
+export type { BaseEntity, Option, Question, Quiz, QuizProgress, QuizWithProgress, QuizQuestion };

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import { QuizDifficulty } from '@prisma/client';
+	import { QuizDifficulty } from '$lib/types';
 
 	const dispatch = createEventDispatcher();
 
@@ -177,7 +177,6 @@
 				sequence: newIndex + 1
 			}));
 	}
-
 
 	function showToast(arg0: string, arg1: string) {
 		throw new Error('Function not implemented.');

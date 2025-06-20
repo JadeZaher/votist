@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import type { QuizDifficulty } from '$lib/types';
-	import type { QuizStatus } from '@prisma/client';
+	import { QuizDifficulty, QuizStatus } from '$lib/types';
 
 	interface QuizLevel {
 		id: QuizDifficulty;
@@ -20,9 +19,9 @@
 	}
 
 	const levels: QuizLevel[] = [
-		{ id: 'VOTIST', label: 'Votist', letter: 'V', color: 'bg-votist' },
-		{ id: 'SCHOLAR', label: 'Scholar', letter: 'S', color: 'bg-cyan-800' },
-		{ id: 'MENTOR', label: 'Mentor', letter: 'M', color: 'bg-amber-400' }
+		{ id: QuizDifficulty.VOTIST, label: 'Votist', letter: 'V', color: 'bg-votist' },
+		{ id: QuizDifficulty.SCHOLAR, label: 'Scholar', letter: 'S', color: 'bg-cyan-800' },
+		{ id: QuizDifficulty.MENTOR, label: 'Mentor', letter: 'M', color: 'bg-amber-400' }
 	];
 
 	export let quizzes: QuizWithProgress[] = [];
@@ -44,7 +43,7 @@
 	$: sortedQuizzes = quizzes.sort((a, b) => a.sequence - b.sequence);
 	$: quizzesByDifficulty = sortedQuizzes.reduce(
 		(acc, quiz) => {
-			if (quiz.status !== 'LOCKED') {
+			if (quiz.status !== QuizStatus.LOCKED) {
 				acc[quiz.difficulty] = [...(acc[quiz.difficulty] || []), quiz];
 			}
 			return acc;
@@ -103,9 +102,9 @@
 					</div>
 					<span
 						class="text-2xl font-bold"
-						class:text-slate-500={level.id === 'VOTIST'}
-						class:text-cyan-800={level.id === 'SCHOLAR'}
-						class:text-amber-400={level.id === 'MENTOR'}
+						class:text-slate-500={level.id === QuizDifficulty.VOTIST}
+						class:text-cyan-800={level.id === QuizDifficulty.SCHOLAR}
+						class:text-amber-400={level.id === QuizDifficulty.MENTOR}
 					>
 						{level.label}
 					</span>
@@ -117,11 +116,11 @@
 							<div class="flex items-center gap-4">
 								<div
 									class="flex h-14 w-14 items-center justify-center rounded-[10px] {quiz.status ===
-									'AVAILABLE'
+									QuizStatus.AVAILABLE
 										? 'bg-votist'
 										: 'bg-stone-300'}"
 								>
-									{#if quiz.status === 'LOCKED'}
+									{#if quiz.status === QuizStatus.LOCKED}
 										<!-- Lock Icon -->
 										<svg
 											xmlns="http://www.w3.org/2000/svg"
@@ -137,7 +136,7 @@
 												d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
 											/>
 										</svg>
-									{:else if quiz.status === 'AVAILABLE'}
+									{:else if quiz.status === QuizStatus.AVAILABLE}
 										<!-- Available/Start Icon -->
 										<svg
 											xmlns="http://www.w3.org/2000/svg"
