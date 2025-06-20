@@ -1,15 +1,10 @@
 <script lang="ts">
 	import '../app.css';
-
-  import logo from '$lib/assets/logo/votist-logo.png'
-    
-	let { children } = $props();
-
+	import logo from '$lib/assets/logo/votist-logo.png';
 	import { ClerkProvider, SignedIn, SignedOut, UserButton } from 'svelte-clerk';
 	import type { LayoutData } from './$types';
 
-
-	export let data: LayoutData;
+	let { data } = $props<{ data: LayoutData }>();
 </script>
 
 <ClerkProvider {...data.clerk}>
