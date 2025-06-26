@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import type { QuizDifficulty } from '$lib/types';
 	import type { QuizStatus } from '@prisma/client';
 
@@ -20,149 +19,129 @@
 	}
 
 	const levels: QuizLevel[] = [
-		{ id: 'VOTIST', label: 'Votist', letter: 'V', color: 'bg-votist' },
-		{ id: 'SCHOLAR', label: 'Scholar', letter: 'S', color: 'bg-cyan-800' },
-		{ id: 'MENTOR', label: 'Mentor', letter: 'M', color: 'bg-amber-400' }
+		{ id: 'VOTIST', label: 'Votist', letter: 'V', color: 'bg-primary' },
+		{ id: 'SCHOLAR', label: 'Scholar', letter: 'S', color: 'bg-secondary' },
+		{ id: 'MENTOR', label: 'Mentor', letter: 'M', color: 'bg-accent' }
 	];
 
 	export let quizzes: QuizWithProgress[] = [];
-	let loading = true;
-	let error: string | null = null;
 
-	onMount(async () => {
-		try {
-			const response = await fetch('/api/quiz-progress');
-			if (!response.ok) throw new Error('Failed to fetch quiz progress');
-			quizzes = await response.json();
-		} catch (e) {
-			error = e instanceof Error ? e.message : 'An unknown error occurred';
-		} finally {
-			loading = false;
+	function getQuizStatusClass(quiz: QuizWithProgress): string {
+		switch (quiz.status) {
+			case 'AVAILABLE':
+				return 'bg-success';
+			case 'COMPLETED':
+				return 'bg-primary';
+			case 'IN_PROGRESS':
+				return 'bg-warning';
+			default:
+				return 'bg-base-300';
 		}
+	}
+
+	let availableQuizzes = quizzes.filter((quiz) => {
+		if (!quiz.prerequisiteId) return true; // No prerequisite
+		const prerequisite = quizzes.find((q) => q.id === quiz.prerequisiteId);
+		return prerequisite?.status === 'COMPLETED';
 	});
 
-	$: sortedQuizzes = quizzes.sort((a, b) => a.sequence - b.sequence);
-	$: quizzesByDifficulty = sortedQuizzes.reduce(
-		(acc, quiz) => {
-			if (quiz.status !== 'LOCKED') {
-				acc[quiz.difficulty] = [...(acc[quiz.difficulty] || []), quiz];
-			}
-			return acc;
-		},
-		{} as Record<QuizDifficulty, QuizWithProgress[]>
-	);
+	let sortedQuizzes = availableQuizzes.sort((a, b) => a.sequence - b.sequence);
+
+	let nextQuiz = sortedQuizzes.find((quiz) => quiz.status === 'AVAILABLE');
 </script>
 
-<div class="relative w-[1168px] overflow-hidden p-8 font-['Roboto']">
-	<h2 class="mb-8 text-3xl font-bold text-cyan-700">Housing Assembly Quiz Roadmap</h2>
+<div class="relative w-[1168px] overflow-hidden">
+	<!-- Level and Title Section -->
+	<div
+		class="absolute top-[81px] left-[121px] inline-flex items-center justify-center gap-4 rounded px-4 py-2"
+	>
+		<div class="text-center font-['Roboto'] text-xl font-bold text-cyan-800">Level 01</div>
+	</div>
+	<div
+		class="absolute top-[136px] left-[131px] h-14 w-[861px] font-['Roboto'] text-3xl font-semibold text-cyan-700"
+	>
+		San Rafael, Location
+	</div>
 
-	<div class="mb-8 flex items-center gap-4">
-		<div class="flex h-4 w-4 items-center justify-center">
+	<!-- Quiz Roadmap Title -->
+	<div
+		class="absolute top-[538px] left-[137px] font-['Roboto'] text-3xl leading-[48.24px] font-bold text-cyan-700"
+	>
+		Housing Assembly Quiz Roadmap
+	</div>
+
+	<!-- Quiz Info -->
+	<div class="absolute top-[616px] left-[147px] inline-flex items-center gap-4">
+		<!-- Book Icon -->
+		<div class="flex items-center">
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
 				fill="none"
 				viewBox="0 0 24 24"
 				stroke="currentColor"
-				class="h-4 w-4"
+				class="h-6 w-6 text-black"
 			>
 				<path
 					stroke-linecap="round"
 					stroke-linejoin="round"
 					stroke-width="2"
-					d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+					d="M12 4v16m8-16v16m-8-8h8m-8 0H4"
 				/>
 			</svg>
 		</div>
-		<span class="text-base leading-7 font-normal text-stone-900">{quizzes.length} Quizzes</span>
+		<!-- Number of Quizzes -->
+		<div class="font-['Arial'] text-base leading-7 font-normal text-stone-900">
+			{quizzes.length} Quizzes
+		</div>
 	</div>
 
-	<!-- Loading and error states -->
-	{#if loading}
-		<div class="flex justify-center p-8">
-			<span class="loading loading-spinner loading-lg"></span>
-		</div>
-	{:else if error}
-		<div class="alert alert-error">
-			<span>{error}</span>
-		</div>
-	{:else}
-		<div class="mt-8 text-center">
-			<p class="text-lg text-gray-600">Explore the quizzes to enhance your voting power!</p>
-		</div>
-	{/if}
-
-	<!-- Level Progress -->
-	<div class="space-y-12">
-		{#each levels as level}
-			<div class="space-y-6">
-				<div class="flex items-center gap-4">
-					<div
-						class="relative h-14 w-14 rounded-full {level.color} flex items-center justify-center"
-					>
-						<span class="text-2xl font-semibold text-white">{level.letter}</span>
-					</div>
-					<span
-						class="text-2xl font-bold"
-						class:text-slate-500={level.id === 'VOTIST'}
-						class:text-cyan-800={level.id === 'SCHOLAR'}
-						class:text-amber-400={level.id === 'MENTOR'}
-					>
-						{level.label}
-					</span>
-				</div>
-
-				{#if quizzesByDifficulty[level.id]}
-					<div class="ml-[91px] space-y-5">
-						{#each quizzesByDifficulty[level.id] as quiz}
-							<div class="flex items-center gap-4">
-								<div
-									class="flex h-14 w-14 items-center justify-center rounded-[10px] {quiz.status ===
-									'AVAILABLE'
-										? 'bg-votist'
-										: 'bg-stone-300'}"
-								>
-									{#if quiz.status === 'LOCKED'}
-										<!-- Lock Icon -->
-										<svg
-											xmlns="http://www.w3.org/2000/svg"
-											class="h-6 w-6 text-zinc-500"
-											fill="none"
-											viewBox="0 0 24 24"
-											stroke="currentColor"
-										>
-											<path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												stroke-width="2"
-												d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-											/>
-										</svg>
-									{:else if quiz.status === 'AVAILABLE'}
-										<!-- Available/Start Icon -->
-										<svg
-											xmlns="http://www.w3.org/2000/svg"
-											class="h-6 w-6 text-white"
-											fill="none"
-											viewBox="0 0 24 24"
-											stroke="currentColor"
-										>
-											<path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												stroke-width="2"
-												d="M9 5l7 7-7 7"
-											/>
-										</svg>
-									{/if}
-								</div>
-								<span class="text-base leading-relaxed font-normal text-black">
-									{quiz.title}
-								</span>
-							</div>
-						{/each}
-					</div>
-				{/if}
+	<!-- Levels -->
+	{#each levels as level, i}
+		<div class="absolute" style="top: {681 + i * 383}px; left: 147px;">
+			<div class="h-14 w-14 {level.color} flex items-center justify-center rounded-full">
+				<span class="font-['Roboto'] text-2xl font-semibold text-white">{level.letter}</span>
 			</div>
-		{/each}
-	</div>
+			<div
+				class="absolute top-[12px] left-[84px] font-['Arial'] text-2xl leading-loose font-bold"
+				class:text-primary={level.id === 'VOTIST'}
+				class:text-secondary={level.id === 'SCHOLAR'}
+				class:text-accent={level.id === 'MENTOR'}
+			>
+				{level.label}
+			</div>
+		</div>
+	{/each}
+
+	<!-- Quizzes -->
+	{#each sortedQuizzes as quiz, index}
+		<div class="absolute" style="top: {818 + index * 77}px; left: 238px;">
+			<div
+				class="h-14 w-14 {getQuizStatusClass(
+					quiz
+				)} rounded-[10px} flex items-center justify-center {quiz.id === nextQuiz?.id
+					? 'border-primary border-4'
+					: ''}"
+			>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					class="h-6 w-6 text-white"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke="currentColor"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M5 13l4 4L19 7"
+					/>
+				</svg>
+			</div>
+			<div
+				class="text-base-content absolute top-[12px] left-[79px] font-['Roboto'] text-base leading-relaxed font-normal"
+			>
+				{quiz.title}
+			</div>
+		</div>
+	{/each}
 </div>

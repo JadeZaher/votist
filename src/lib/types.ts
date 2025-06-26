@@ -46,14 +46,14 @@ interface QuizWithProgress extends Quiz {
 }
 
 interface QuizQuestion {
-    title: string;
-    description?: string;
-    options: {
-        text: string;
-        isCorrect: boolean;
-        isNoOpinion: boolean;
-    }[];
-    correctOptionId: string | null;
+	title: string;
+	description?: string;
+	options: {
+		text: string;
+		isCorrect: boolean;
+		isNoOpinion: boolean;
+	}[];
+	correctOptionId: string | null;
 }
 
 export type {
