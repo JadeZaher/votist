@@ -26,7 +26,10 @@
 	let canStart = quizzes.some((quiz) => quiz.status === 'AVAILABLE');
 
 	const startQuiz = () => {
-		goToPage('question');
+		const firstAvailableQuiz = quizzes.find((quiz) => quiz.status === 'AVAILABLE');
+		if (firstAvailableQuiz) {
+			goToPage(`/quiz/${firstAvailableQuiz.id}`);
+		}
 	};
 </script>
 
@@ -40,7 +43,7 @@
 		<!-- No Quizzes Available -->
 		<div class="text-center">
 			<div class="alert alert-info shadow-lg">
-				<svg
+								<svg
 					xmlns="http://www.w3.org/2000/svg"
 					fill="none"
 					viewBox="0 0 24 24"

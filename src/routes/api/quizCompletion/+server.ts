@@ -35,6 +35,28 @@ export const POST: RequestHandler = async (event: RequestEvent) => {
 				},
 				data: { status: 'COMPLETED' }
 			});
+
+			const nextQuiz = await prisma.quiz.findFirst({
+				where: { prerequisiteId: quizId },
+				orderBy: { sequence: 'asc' }
+			});
+
+			if (nextQuiz) {
+				await prisma.quizProgress.upsert({
+					where: {
+						userId_quizId: {
+							userId,
+							quizId: nextQuiz.id
+						}
+					},
+					update: { status: 'AVAILABLE' },
+					create: {
+						userId,
+						quizId: nextQuiz.id,
+						status: 'AVAILABLE'
+					}
+				});
+			}
 		}
 
 		return json(completion);

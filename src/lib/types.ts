@@ -41,8 +41,10 @@ interface QuizProgress {
 }
 
 interface QuizWithProgress extends Quiz {
+	sequence: number;
 	status: QuizStatus;
-	prerequisiteId?: string | undefined;
+	prerequisiteId?: string;
+	questionCount?: number;
 }
 
 interface QuizQuestion {

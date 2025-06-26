@@ -1,10 +1,17 @@
 import { json } from '@sveltejs/kit';
 import { prisma } from '$lib/server/db/prisma';
 import type { RequestHandler } from '@sveltejs/kit';
+import { getUser } from '$lib/server/auth';
 
 // Get all quizzes
-export const GET: RequestHandler = async () => {
+export const GET: RequestHandler = async (event) => {
 	try {
+		const { user } = await getUser(event);
+		if (!user) {
+			return new Response('Unauthorized', { status: 401 });
+		}
+		const userId = user.id;
+
 		const quizzes = await prisma.quiz.findMany({
 			select: {
 				id: true,
@@ -20,21 +27,49 @@ export const GET: RequestHandler = async () => {
 						questions: true
 					}
 				}
-			}
+			},
+			orderBy: [{ difficulty: 'asc' }, { sequence: 'asc' }]
 		});
 
-		const formattedQuizzes = quizzes.map((quiz) => ({
-			id: quiz.id,
-			title: quiz.title,
-			description: quiz.description,
-			difficulty: quiz.difficulty,
-			points: quiz.points,
-			enabled: quiz.enabled,
-			sequence: quiz.sequence,
-			prerequisiteId: quiz.prerequisiteId,
-			questionCount: quiz._count.questions,
-			status: quiz.prerequisiteId ? 'LOCKED' : 'AVAILABLE'
-		}));
+		const progress = await prisma.quizProgress.findMany({
+			where: { userId },
+			select: { quizId: true, status: true }
+		});
+
+		const progressMap = progress.reduce(
+			(map, item) => {
+				map[item.quizId] = item.status;
+				return map;
+			},
+			{} as Record<string, string>
+		);
+
+		let previousCompleted = true;
+		const formattedQuizzes = quizzes.map((quiz) => {
+			const userStatus = progressMap[quiz.id];
+			let status = 'LOCKED';
+
+			if (userStatus === 'COMPLETED') {
+				status = 'COMPLETED';
+				previousCompleted = true;
+			} else if (previousCompleted && quiz.enabled) {
+				status = 'AVAILABLE';
+				previousCompleted = false;
+			}
+
+			return {
+				id: quiz.id,
+				title: quiz.title,
+				description: quiz.description,
+				difficulty: quiz.difficulty,
+				points: quiz.points,
+				enabled: quiz.enabled,
+				sequence: quiz.sequence,
+				prerequisiteId: quiz.prerequisiteId,
+				questionCount: quiz._count.questions,
+				status
+			};
+		});
 
 		return json(formattedQuizzes);
 	} catch (error) {
