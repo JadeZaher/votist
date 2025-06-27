@@ -1,29 +1,52 @@
 <script lang="ts">
-	import logo from '$lib/assets/logo/votist-logo.png';
+	import earnVote from '$lib/assets/icons/earn-voting-power.png';
+	import logo from '$lib/assets/logo/logo-header.png';
+	import HeroSection from '$lib/components/cards/HeroSection.svelte';
+	import CenterContentCTA from '$lib/components/cards/CenterContentCTA.svelte';
+	import ImageTextSection from '$lib/components/cards/ImageTextSection.svelte';
+	import QuizFeatureCard from '$lib/components/cards/QuizFeatureCard.svelte';
+	import knowledgeispower from '$lib/assets/home/knowledge-is-power.png';
+	import sanRafael from '$lib/assets/home/san-raph-hero.png';
 </script>
 
-<div class="flex min-h-screen flex-col items-center justify-center bg-[#1B4D5C] text-white">
-	<div class="flex flex-col items-center justify-center space-y-4">
-		<img src={logo} alt="Votist Logo" class="logo-white w-32" />
-		<h1 class="text-center text-2xl font-light">
-			The platform for solution-driven civic engagement
-		</h1>
-		<p class="text-center text-sm">Proof of Concept, Summer 2025</p>
-		<a href="/learn-more" class="mt-8">
-			<button class="hover:bg-opacity-90 rounded-full bg-white px-6 py-2 text-[#1B4D5C]">
-				Learn more
-			</button>
-		</a>
-	</div>
-	<div class="absolute bottom-8 text-center text-sm">
-		<a href="https://www.tstudios.com">
-			<p>Votist is a project of Translucent Studios LLC</p>
-		</a>
-	</div>
-</div>
+<HeroSection />
 
-<style>
-	.logo-white {
-		filter: brightness(0) invert(1);
-	}
-</style>
+<CenterContentCTA
+	heading="Help Shape the Future of San Rafael"
+	boldcontent="Here, the more you know, the more impact you have."
+	content=" Votist is a platform for solution-driven civic engagement—where informed participation creates increased influence. The result? Smarter debates, better decisions, and a stronger community."
+	subContent="Ready to shape San Rafael's future? Let's get started."
+	primaryButton={{ text: 'Start', href: '/quiz' }}
+	secondaryButton={{ text: 'Earn Voting Power', href: '/learn-more', icon: earnVote }}
+/>
+
+<ImageTextSection
+	heading="On Votist, knowledge is power — your power."
+	content="Our Votist Levels ensure that every discussion is led by informed voices, not just the loudest ones. By completing these quizzes, you're not just proving what you know; you're securing your place in a community where credibility is earned."
+	imageUrl={knowledgeispower}
+	imageAlt="Quiz interface showing progress"
+	buttonText="Start"
+	buttonHref="/quiz"
+	imageOnLeft={false}
+/>
+
+<ImageTextSection
+	heading="On Votist, knowledge is power — your power."
+	content="Our Votist Levels ensure that every discussion is led by informed voices, not just the loudest ones. By completing these quizzes, you're not just proving what you know; you're securing your place in a community where credibility is earned."
+	imageUrl={knowledgeispower}
+	imageAlt="Voting interface showing options"
+	buttonText="Start"
+	buttonHref="/quiz"
+	imageOnLeft={true}
+/>
+
+<QuizFeatureCard
+	title="Knowledge is Power"
+	level="Level 01"
+	location="San Rafael, Location"
+	buttonText="Start"
+	buttonHref="/quiz"
+	backgroundImage={sanRafael}
+/>
+
+<style></style>

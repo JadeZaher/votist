@@ -16,7 +16,7 @@
 	<div class="card bg-base-100 w-96 shadow-xl">
 		<div class="card-body items-center text-center">
 			<SignedOut>
-				<h2 class="card-title">Sign In</h2>
+				<h2 class="btn btn-outline">Sign In</h2>
 				<p class="mb-4">Welcome back! Please sign in to continue.</p>
 				<SignInButton routing="path" path="/sign-in" />
 			</SignedOut>
