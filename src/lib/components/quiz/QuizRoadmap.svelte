@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { QuizDifficulty, QuizStatus } from '$lib/types';
+	import type { QuizDifficulty } from '$lib/types';
+	import type { QuizStatus } from '@prisma/client';
 
 	interface QuizLevel {
 		id: QuizDifficulty;
@@ -19,149 +19,100 @@
 	}
 
 	const levels: QuizLevel[] = [
-		{ id: QuizDifficulty.VOTIST, label: 'Votist', letter: 'V', color: 'bg-votist' },
-		{ id: QuizDifficulty.SCHOLAR, label: 'Scholar', letter: 'S', color: 'bg-cyan-800' },
-		{ id: QuizDifficulty.MENTOR, label: 'Mentor', letter: 'M', color: 'bg-amber-400' }
+		{ id: 'VOTIST', label: 'Votist', letter: 'V', color: 'bg-primary' },
+		{ id: 'SCHOLAR', label: 'Scholar', letter: 'S', color: 'bg-secondary' },
+		{ id: 'MENTOR', label: 'Mentor', letter: 'M', color: 'bg-accent' }
 	];
 
 	export let quizzes: QuizWithProgress[] = [];
-	let loading = true;
-	let error: string | null = null;
 
-	onMount(async () => {
-		try {
-			const response = await fetch('/api/quiz-progress');
-			if (!response.ok) throw new Error('Failed to fetch quiz progress');
-			quizzes = await response.json();
-		} catch (e) {
-			error = e instanceof Error ? e.message : 'An unknown error occurred';
-		} finally {
-			loading = false;
-		}
-	});
-
-	$: sortedQuizzes = quizzes.sort((a, b) => a.sequence - b.sequence);
-	$: quizzesByDifficulty = sortedQuizzes.reduce(
-		(acc, quiz) => {
-			if (quiz.status !== QuizStatus.LOCKED) {
-				acc[quiz.difficulty] = [...(acc[quiz.difficulty] || []), quiz];
-			}
-			return acc;
+	// Group quizzes by difficulty
+	let groupedQuizzes = quizzes.reduce(
+		(groups, quiz) => {
+			(groups[quiz.difficulty] = groups[quiz.difficulty] || []).push(quiz);
+			return groups;
 		},
-		{} as Record<QuizDifficulty, QuizWithProgress[]>
+		{} as Record<string, QuizWithProgress[]>
 	);
+
+	const difficultyOrder = ['VOTIST', 'SCHOLAR', 'MENTOR'];
+	groupedQuizzes = Object.fromEntries(
+		Object.entries(groupedQuizzes).sort(
+			([a], [b]) => difficultyOrder.indexOf(a) - difficultyOrder.indexOf(b)
+		)
+	);
+
+	function getQuizStatusClass(quiz: QuizWithProgress): string {
+		switch (quiz.status) {
+			case 'AVAILABLE':
+				return 'badge-success';
+			case 'COMPLETED':
+				return 'badge-primary';
+			case 'IN_PROGRESS':
+				return 'badge-warning';
+			default:
+				return 'badge-neutral';
+		}
+	}
+
+	function canTakeQuiz(quiz: QuizWithProgress): boolean {
+		return quiz.status === 'AVAILABLE';
+	}
+
+	function takeQuiz(quizId: string) {
+		// Redirect to the quiz page
+		window.location.href = `/quiz/${quizId}`;
+	}
 </script>
 
-<div class="relative w-[1168px] overflow-hidden p-8 font-['Roboto']">
-	<h2 class="mb-8 text-3xl font-bold text-cyan-700">Housing Assembly Quiz Roadmap</h2>
-
-	<div class="mb-8 flex items-center gap-4">
-		<div class="flex h-4 w-4 items-center justify-center">
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				fill="none"
-				viewBox="0 0 24 24"
-				stroke="currentColor"
-				class="h-4 w-4"
-			>
-				<path
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					stroke-width="2"
-					d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-				/>
-			</svg>
-		</div>
-		<span class="text-base leading-7 font-normal text-stone-900">{quizzes.length} Quizzes</span>
+<div class="relative w-[1168px] overflow-hidden">
+	<!-- Quiz Roadmap Title -->
+	<div
+		class="absolute left-[137px] top-[538px] font-['Roboto'] text-3xl font-bold leading-[48.24px] text-cyan-700"
+	>
+		Housing Assembly Quiz Roadmap
 	</div>
 
-	<!-- Loading and error states -->
-	{#if loading}
-		<div class="flex justify-center p-8">
-			<span class="loading loading-spinner loading-lg"></span>
-		</div>
-	{:else if error}
-		<div class="alert alert-error">
-			<span>{error}</span>
-		</div>
+	<!-- Levels -->
+	{#if quizzes.length === 0}
+		<p class="text-center text-gray-500">No quizzes available</p>
 	{:else}
-		<div class="mt-8 text-center">
-			<p class="text-lg text-gray-600">Explore the quizzes to enhance your voting power!</p>
-		</div>
-	{/if}
-
-	<!-- Level Progress -->
-	<div class="space-y-12">
-		{#each levels as level}
-			<div class="space-y-6">
-				<div class="flex items-center gap-4">
-					<div
-						class="relative h-14 w-14 rounded-full {level.color} flex items-center justify-center"
-					>
-						<span class="text-2xl font-semibold text-white">{level.letter}</span>
-					</div>
-					<span
-						class="text-2xl font-bold"
-						class:text-slate-500={level.id === QuizDifficulty.VOTIST}
-						class:text-cyan-800={level.id === QuizDifficulty.SCHOLAR}
-						class:text-amber-400={level.id === QuizDifficulty.MENTOR}
-					>
-						{level.label}
-					</span>
-				</div>
-
-				{#if quizzesByDifficulty[level.id]}
-					<div class="ml-[91px] space-y-5">
-						{#each quizzesByDifficulty[level.id] as quiz}
-							<div class="flex items-center gap-4">
-								<div
-									class="flex h-14 w-14 items-center justify-center rounded-[10px] {quiz.status ===
-									QuizStatus.AVAILABLE
-										? 'bg-votist'
-										: 'bg-stone-300'}"
-								>
-									{#if quiz.status === QuizStatus.LOCKED}
-										<!-- Lock Icon -->
-										<svg
-											xmlns="http://www.w3.org/2000/svg"
-											class="h-6 w-6 text-zinc-500"
-											fill="none"
-											viewBox="0 0 24 24"
-											stroke="currentColor"
-										>
-											<path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												stroke-width="2"
-												d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-											/>
-										</svg>
-									{:else if quiz.status === QuizStatus.AVAILABLE}
-										<!-- Available/Start Icon -->
-										<svg
-											xmlns="http://www.w3.org/2000/svg"
-											class="h-6 w-6 text-white"
-											fill="none"
-											viewBox="0 0 24 24"
-											stroke="currentColor"
-										>
-											<path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												stroke-width="2"
-												d="M9 5l7 7-7 7"
-											/>
-										</svg>
-									{/if}
-								</div>
-								<span class="text-base leading-relaxed font-normal text-black">
-									{quiz.title}
-								</span>
-							</div>
+		{#each Object.keys(groupedQuizzes) as difficulty}
+			<div class="mt-8">
+				<h2 class="text-lg font-bold">{difficulty}</h2>
+				<table class="table w-full table-fixed">
+					<thead>
+						<tr>
+							<th class="w-1/12">Order</th>
+							<th class="w-1/6">Title</th>
+							<th class="w-1/6">Status</th>
+							<th class="w-1/6">Action</th>
+						</tr>
+					</thead>
+					<tbody>
+						{#each groupedQuizzes[difficulty] as quiz, index}
+							<tr>
+								<td>{index + 1}</td>
+								<td>{quiz.title}</td>
+								<td>
+									<div class="badge {getQuizStatusClass(quiz)}">
+										{quiz.status}
+									</div>
+								</td>
+								<td>
+									<button
+										class="btn btn-primary btn-sm"
+										disabled={!canTakeQuiz(quiz)}
+										on:click={() => takeQuiz(quiz.id)}
+									>
+										Take Quiz
+									</button>
+								</td>
+							</tr>
 						{/each}
-					</div>
-				{/if}
+					</tbody>
+				</table>
 			</div>
 		{/each}
-	</div>
+	{/if}
 </div>

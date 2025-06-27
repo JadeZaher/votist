@@ -85,21 +85,17 @@ export const PATCH: RequestHandler = async ({ params, request }) => {
 	try {
 		const data = await request.json();
 
-		const quiz = await prisma.quiz.update({
+		const updatedQuiz = await prisma.quiz.update({
 			where: { id: params.id },
-			data: { enabled: data.enabled },
-			include: {
-				questions: {
-					include: {
-						options: true
-					}
-				}
+			data: {
+				sequence: data.sequence !== undefined ? data.sequence : undefined,
+				enabled: data.enabled !== undefined ? data.enabled : undefined
 			}
 		});
 
-		return json(quiz);
+		return json(updatedQuiz);
 	} catch (error) {
-		console.error('Error updating quiz status:', error);
+		console.error('Error updating quiz:', error);
 		return new Response('Internal Server Error', { status: 500 });
 	}
 };

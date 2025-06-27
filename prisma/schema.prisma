@@ -55,6 +55,7 @@ model Quiz {
   nextQuizzes    Quiz[]           @relation("QuizPrerequisites")
   QuizProgress   QuizProgress[]
 
+  @@unique([difficulty, sequence])
   @@index([difficulty, sequence])
   @@index([prerequisiteId])
 }

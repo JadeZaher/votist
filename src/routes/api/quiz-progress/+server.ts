@@ -3,7 +3,7 @@ import { prisma } from '$lib/server/db/prisma';
 import type { RequestHandler } from '@sveltejs/kit';
 
 export const GET: RequestHandler = async ({ locals }) => {
-	const { userId } = locals.auth;
+	const { userId } = await locals.auth();
 
 	if (!userId) {
 		throw error(401, 'Unauthorized');

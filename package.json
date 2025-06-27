@@ -54,6 +54,8 @@
 		"@vimeo/player": "^2.29.0",
 		"superjson": "^2.2.2",
 		"svelte-clerk": "^0.13.0",
+		"svelte-dnd-action": "^0.9.61",
+		"svelte-youtube-lite": "^1.2.1",
 		"svelte-youtube-lite": "^1.2.1",
 		"trpc-shield": "^0.4.4",
 		"trpc-sveltekit": "^3.6.3",
