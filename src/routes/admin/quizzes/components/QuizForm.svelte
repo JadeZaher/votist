@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import { QuizDifficulty } from '@prisma/client';
+	import { QuizDifficulty } from '$lib/types';
 
 	const dispatch = createEventDispatcher();
 

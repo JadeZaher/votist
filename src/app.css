@@ -36,11 +36,14 @@
 	--size-field: 0.21875rem;
 	--border: 0.5px;
 	--depth: 1;
-	--noise: 1;
+	--noise: 0;
 }
 
 @theme {
-	--color-votist-blue: #377d8c;
+	--color-votist-blue-dark: #155e75;
+	--color-votist-blue: #167b9b;
+	--color-votist-white: #f5fcff;
+	--color-votist-yellow: #f9d026;
 	--color-knowledge: #003366;
 	--color-charisma: #80538d;
 	--color-votist: #669999;
@@ -74,4 +77,7 @@
 		src: url();
 		color: black;
 	}
+}
+.body {
+	background-color: #f5fcff;
 }

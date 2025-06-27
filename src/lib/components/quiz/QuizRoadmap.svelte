@@ -68,7 +68,7 @@
 <div class="relative w-[1168px] overflow-hidden">
 	<!-- Quiz Roadmap Title -->
 	<div
-		class="absolute top-[538px] left-[137px] font-['Roboto'] text-3xl leading-[48.24px] font-bold text-cyan-700"
+		class="absolute left-[137px] top-[538px] font-['Roboto'] text-3xl font-bold leading-[48.24px] text-cyan-700"
 	>
 		Housing Assembly Quiz Roadmap
 	</div>
