@@ -4,7 +4,7 @@
 	import { ClerkProvider, SignedIn, SignedOut, UserButton } from 'svelte-clerk';
 	import type { LayoutData } from './$types';
 
-	let { data } = $props<{ data: LayoutData }>();
+	let { children, data }: { children: any; data: LayoutData } = $props();
 </script>
 
 <ClerkProvider {...data.clerk}>
