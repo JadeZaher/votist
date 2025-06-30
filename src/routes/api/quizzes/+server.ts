@@ -19,6 +19,7 @@ export const GET: RequestHandler = async (event) => {
 				description: true,
 				difficulty: true,
 				points: true,
+				passingScore: true,
 				enabled: true,
 				sequence: true,
 				prerequisiteId: true,
@@ -63,6 +64,7 @@ export const GET: RequestHandler = async (event) => {
 				description: quiz.description,
 				difficulty: quiz.difficulty,
 				points: quiz.points,
+				passingScore: quiz.passingScore,
 				enabled: quiz.enabled,
 				sequence: quiz.sequence,
 				prerequisiteId: quiz.prerequisiteId,
@@ -87,6 +89,12 @@ export const POST: RequestHandler = async ({ request }) => {
 			return new Response('Missing required fields or invalid points value', { status: 400 });
 		}
 
+		if (data.passingScore && (data.passingScore < 1 || data.passingScore > data.questions.length)) {
+			return new Response('Passing score must be between 1 and the total number of questions', {
+				status: 400
+			});
+		}
+
 		const highestSequenceQuiz = await prisma.quiz.findFirst({
 			where: { difficulty: data.difficulty },
 			orderBy: { sequence: 'desc' }
@@ -100,6 +108,7 @@ export const POST: RequestHandler = async ({ request }) => {
 				description: data.description,
 				difficulty: data.difficulty,
 				points: data.points,
+				passingScore: data.passingScore || 1,
 				enabled: true,
 				sequence: nextSequence,
 				prerequisiteId: data.prerequisiteId || null,
@@ -116,8 +125,25 @@ export const POST: RequestHandler = async ({ request }) => {
 						}
 					}))
 				}
+			},
+			include: {
+				questions: {
+					include: {
+						options: true
+					}
+				}
 			}
 		});
+
+		for (const question of quiz.questions) {
+			const correctOption = question.options.find((opt) => opt.isCorrect);
+			if (correctOption) {
+				await prisma.question.update({
+					where: { id: question.id },
+					data: { correctOptionId: correctOption.id }
+				});
+			}
+		}
 
 		return json(quiz);
 	} catch (error) {

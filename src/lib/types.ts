@@ -40,6 +40,7 @@ interface Quiz extends BaseEntity {
 	difficulty: QuizDifficulty;
 	enabled: boolean;
 	points: number;
+	passingScore: number;
 	questions: Question[];
 	prerequisiteId?: string | null;
 	sequence: number;
