@@ -3,6 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
+	import logo from '$lib/assets/logo/logo-header.png';
 
 	let identifier = '';
 	let password = '';
@@ -63,16 +64,17 @@
 	}
 </script>
 
-<div class="bg-base-200 flex min-h-screen items-center justify-center">
+<div class="bg-base-200 flex h-screen items-center justify-center p-4">
 	<SignedOut>
-		<div class="card bg-base-100 w-96 shadow-xl">
-			<div class="card-body">
-				<h2 class="card-title mb-6 justify-center text-center">Sign In</h2>
+		<div class="card bg-base-100 w-full max-w-sm shadow-xl">
+			<img src={logo} alt="VOTIST" class="h-14 mx-auto mb-6 mt-0 object-contain" />
+			<div class="card-body space-y-4 pt-0 pb-4 px-4">
+				<h2 class="text-3xl font-bold text-center text-[#1E1E1E] md:text-2xl mb-4">Sign In</h2>
 
-				<form on:submit|preventDefault={handleSignIn} class="space-y-4">
+				<form on:submit|preventDefault={handleSignIn} class="space-y-3">
 					<div class="form-control">
-						<label class="label" for="identifier">
-							<span class="label-text">Email or Username</span>
+						<label class="label pb-1" for="identifier">
+							<span class="label-text text-sm text-[#1E1E1E]">Email or Username</span>
 						</label>
 						<input
 							id="identifier"
@@ -87,14 +89,14 @@
 					</div>
 
 					<div class="form-control">
-						<label class="label" for="password">
-							<span class="label-text">Password</span>
+						<label class="label pb-1" for="password">
+							<span class="label-text text-sm text-[#1E1E1E]">Password</span>
 						</label>
 						<input
 							id="password"
 							type="password"
 							placeholder="Enter your password"
-							class="input input-bordered w-full"
+							class="input input-bordered w-full border-[#949494] focus:border-[#167B9B] focus:ring-1 focus:ring-[#167B9B]"
 							bind:value={password}
 							on:keypress={handleKeyPress}
 							disabled={loading}
@@ -103,13 +105,17 @@
 					</div>
 
 					{#if error}
-						<div class="alert alert-error">
-							<span>{error}</span>
+						<div class="alert bg-red-100 border-red-200">
+							<span class="text-red-800 font-medium">{error}</span>
 						</div>
 					{/if}
 
-					<div class="form-control mt-6">
-						<button type="submit" class="btn btn-primary w-full" disabled={loading}>
+					<div class="form-control mt-4">
+						<button 
+							type="submit" 
+							class="btn w-full bg-[#167B9B] hover:bg-[#155E75] text-white text-lg font-semibold border-none transition-colors"
+							disabled={loading}
+						>
 							{#if loading}
 								<span class="loading loading-spinner loading-sm"></span>
 								Signing in...
@@ -120,14 +126,14 @@
 					</div>
 				</form>
 
-				<div class="divider">OR</div>
+					<div class="divider text-[#949494] before:bg-[#949494] after:bg-[#949494] my-2">OR</div>
 
-				<div class="text-center">
-					<p class="text-sm">
-						Don't have an account?
-						<a href="/sign-up" class="link link-primary">Sign up</a>
-					</p>
-				</div>
+					<div class="text-center pt-1">
+						<p class="text-sm text-[#1E1E1E]">
+							Don't have an account?
+							<a href="/sign-up" class="text-[#167B9B] hover:text-[#155E75] font-medium transition-colors">Sign up</a>
+						</p>
+					</div>
 			</div>
 		</div>
 	</SignedOut>

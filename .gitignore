@@ -32,3 +32,5 @@ vite.config.ts.timestamp-*
 
 # User settings
 .vscode/user.json
+
+requirements
