@@ -25,16 +25,18 @@
 	async function handleSubmit() {
 		loading = true;
 		try {
-			const { email, password, firstName, lastName } = $signupStore;
+			const { email, password, firstName, lastName, dob, phoneNumber } = $signupStore;
 			const clerk = (window as any).Clerk;
-			
+
 			if (!clerk) throw new Error('Authentication service not available');
-			
+
 			const signUpAttempt = await clerk.client.signUp.create({
 				emailAddress: email,
 				password,
 				firstName,
-				lastName
+				lastName,
+				dob: $signupStore.dob,
+				phoneNumber: $signupStore.phoneNumber
 			});
 
 			if (signUpAttempt.status === 'complete') {
@@ -42,11 +44,12 @@
 				goto('/');
 				// Reset store after successful submission
 				signupStore.set({
-				  email: '',
-				  password: '',
-				  firstName: '',
-				  lastName: '',
-				  phoneNumber: ''
+					email: '',
+					password: '',
+					firstName: '',
+					lastName: '',
+					phoneNumber: '',
+					dob: ''
 				});
 			} else {
 				throw new Error('Account creation requires additional verification');
@@ -69,7 +72,8 @@
 	<div class="flex h-full items-center justify-start bg-white px-4 md:px-0">
 		<div class="w-full space-y-8 px-4 py-6 pb-24 md:max-w-lg md:pr-6 md:pl-20">
 			<h2 class="text-2xl font-bold text-[#1E1E1E] md:text-3xl">
-				{#if currentStep === 1}Create Account{:else if currentStep === 2}Your Name{:else}Verify Phone{/if}
+				{#if currentStep === 1}Create Account{:else if currentStep === 2}Your Name{:else}Verify
+					Phone{/if}
 			</h2>
 
 			<div class="space-y-6">
@@ -85,7 +89,6 @@
 					{prevStep}
 					{...currentStep === 3 ? { handleSubmit } : {}}
 				/>
-
 			</div>
 		</div>
 	</div>

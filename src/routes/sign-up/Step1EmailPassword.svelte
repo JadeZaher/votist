@@ -55,6 +55,18 @@
 			return false;
 		}
 
+		if (!$signupStore.dob) {
+			error = 'Please enter your date of birth';
+			return false;
+		}
+
+		const dobDate = new Date($signupStore.dob);
+		const today = new Date();
+		if (isNaN(dobDate.getTime()) || dobDate >= today) {
+			error = 'Please enter a valid date of birth';
+			return false;
+		}
+
 		return true;
 	}
 
@@ -78,10 +90,10 @@
 				on:input={handleEmailInput}
 			/>
 			{#if emailError}
-				<div class="text-red-600 text-sm mt-1">{emailError}</div>
+				<div class="mt-1 text-sm text-red-600">{emailError}</div>
 			{/if}
 			{#if checkingEmail}
-				<div class="text-sm text-[#167B9B] mt-1">Checking availability...</div>
+				<div class="mt-1 text-sm text-[#167B9B]">Checking availability...</div>
 			{/if}
 		</div>
 
@@ -96,6 +108,18 @@
 				bind:value={password}
 			/>
 		</div>
+
+		<div class="form-control">
+			<label class="label">
+				<span class="label-text font-medium text-[#1E1E1E]">Date of Birth</span>
+			</label>
+			<input
+				type="date"
+				class="input input-bordered w-full"
+				bind:value={$signupStore.dob}
+				max={new Date().toISOString().split('T')[0]}
+			/>
+		</div>
 	</div>
 
 	{#if error}
@@ -107,8 +131,8 @@
 			Already have an account?
 			<a href="/sign-in" class="text-[#167B9B] hover:text-[#155E75] hover:underline">Sign In</a>
 		</div>
-		<button 
-			on:click={handleNext} 
+		<button
+			on:click={handleNext}
 			class="btn bg-[#167B9B] text-white hover:bg-[#155E75]"
 			disabled={checkingEmail || !!emailError}
 		>

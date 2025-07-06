@@ -6,6 +6,7 @@ interface SignupData {
   firstName: string;
   lastName: string;
   phoneNumber: string;
+  dob: string;
 }
 
 export const signupStore = writable<SignupData>({
@@ -13,5 +14,6 @@ export const signupStore = writable<SignupData>({
   password: '',
   firstName: '',
   lastName: '',
-  phoneNumber: ''
+  phoneNumber: '',
+  dob: ''
 });
