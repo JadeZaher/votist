@@ -1,161 +1,92 @@
 <script lang="ts">
-	import { SignedIn, SignedOut } from 'svelte-clerk';
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
+	import logo from '$lib/assets/logo/logo-white.png';
+	import Step1EmailPassword from './Step1EmailPassword.svelte';
+	import Step2NameEntry from './Step2NameEntry.svelte';
+	import Step3Confirmation from './Step3Confirmation.svelte';
+	import { signupStore } from './signup-store';
 
-	let emailAddress = '';
-	let password = '';
-	let username = '';
+	let currentStep = 1;
 	let loading = false;
 	let error = '';
 
-	// Redirect on mount if user is already authenticated
-	onMount(async () => {
-		const { isAuthenticated } = await fetch('/sign-up').then((res) => res.json());
-		if (isAuthenticated) {
-			goto('/');
-		}
-	});
+	const steps = [Step1EmailPassword, Step2NameEntry, Step3Confirmation];
 
-	async function handleSignUp() {
-		if (!emailAddress || !password || !username) {
-			error = 'Please fill in all fields';
-			return;
-		}
+	function nextStep() {
+		if (currentStep < 3) currentStep++;
+	}
 
-		if (!browser) return;
+	function prevStep() {
+		if (currentStep > 1) currentStep--;
+	}
 
+	async function handleSubmit() {
 		loading = true;
-		error = '';
-
 		try {
+			const { email, password, firstName, lastName } = $signupStore;
 			const clerk = (window as any).Clerk;
-
-			if (!clerk) {
-				error = 'Authentication service not available';
-				loading = false;
-				return;
-			}
-
+			
+			if (!clerk) throw new Error('Authentication service not available');
+			
 			const signUpAttempt = await clerk.client.signUp.create({
-				emailAddress,
+				emailAddress: email,
 				password,
-				username
+				firstName,
+				lastName
 			});
 
 			if (signUpAttempt.status === 'complete') {
 				await clerk.setActive({ session: signUpAttempt.createdSessionId });
 				goto('/');
+				// Reset store after successful submission
+				signupStore.set({
+				  email: '',
+				  password: '',
+				  firstName: '',
+				  lastName: '',
+				  phoneNumber: ''
+				});
 			} else {
-				error = 'Please check your email for verification';
+				throw new Error('Account creation requires additional verification');
 			}
-		} catch (err: any) {
-			console.error('Sign up error:', err);
-			error = err.errors?.[0]?.message || 'Sign up failed. Please try again.';
+		} catch (err: unknown) {
+			error = err instanceof Error ? err.message : 'Failed to create account';
 		} finally {
 			loading = false;
 		}
 	}
-
-	function handleKeyPress(event: KeyboardEvent) {
-		if (event.key === 'Enter') {
-			handleSignUp();
-		}
-	}
 </script>
 
-<div class="bg-base-200 flex min-h-screen items-center justify-center">
-	<SignedOut>
-		<div class="card bg-base-100 w-96 shadow-xl">
-			<div class="card-body">
-				<h2 class="card-title mb-6 justify-center text-center">Sign Up</h2>
+<div class="grid min-h-screen w-screen grid-cols-1 md:grid-cols-[minmax(0,30%)_minmax(0,70%)]">
+	<!-- Left Column (Logo) -->
+	<div class="flex h-[40vh] items-center justify-center bg-[#167B9B] p-8 md:h-full">
+		<img src={logo} alt="VOTIST" class="h-20 object-contain md:h-24" />
+	</div>
 
-				<form on:submit|preventDefault={handleSignUp} class="space-y-4">
-					<div class="form-control">
-						<label class="label" for="username">
-							<span class="label-text">Username</span>
-						</label>
-						<input
-							id="username"
-							type="text"
-							placeholder="Choose a username"
-							class="input input-bordered w-full"
-							bind:value={username}
-							on:keypress={handleKeyPress}
-							disabled={loading}
-							required
-						/>
+	<!-- Right Column (Form) -->
+	<div class="flex h-full items-center justify-start bg-white px-4 md:px-0">
+		<div class="w-full space-y-8 px-4 py-6 pb-24 md:max-w-lg md:pr-6 md:pl-20">
+			<h2 class="text-2xl font-bold text-[#1E1E1E] md:text-3xl">
+				{#if currentStep === 1}Create Account{:else if currentStep === 2}Your Name{:else}Verify Phone{/if}
+			</h2>
+
+			<div class="space-y-6">
+				{#if error}
+					<div class="alert rounded-lg border-red-200 bg-red-100 p-3">
+						<span class="font-medium text-red-800">{error}</span>
 					</div>
+				{/if}
 
-					<div class="form-control">
-						<label class="label" for="email">
-							<span class="label-text">Email</span>
-						</label>
-						<input
-							id="email"
-							type="email"
-							placeholder="Enter your email"
-							class="input input-bordered w-full"
-							bind:value={emailAddress}
-							on:keypress={handleKeyPress}
-							disabled={loading}
-							required
-						/>
-					</div>
+				<svelte:component
+					this={steps[currentStep - 1]}
+					{nextStep}
+					{prevStep}
+					{...currentStep === 3 ? { handleSubmit } : {}}
+				/>
 
-					<div class="form-control">
-						<label class="label" for="password">
-							<span class="label-text">Password</span>
-						</label>
-						<input
-							id="password"
-							type="password"
-							placeholder="Choose a password"
-							class="input input-bordered w-full"
-							bind:value={password}
-							on:keypress={handleKeyPress}
-							disabled={loading}
-							required
-						/>
-					</div>
-
-					{#if error}
-						<div class="alert alert-error">
-							<span>{error}</span>
-						</div>
-					{/if}
-
-					<div class="form-control mt-6">
-						<button type="submit" class="btn btn-primary w-full" disabled={loading}>
-							{#if loading}
-								<span class="loading loading-spinner loading-sm"></span>
-								Creating account...
-							{:else}
-								Sign Up
-							{/if}
-						</button>
-					</div>
-				</form>
-
-				<div class="divider">OR</div>
-
-				<div class="text-center">
-					<p class="text-sm">
-						Already have an account?
-						<a href="/sign-in" class="link link-primary">Sign in</a>
-					</p>
-				</div>
 			</div>
 		</div>
-	</SignedOut>
-
-	<SignedIn>
-		<div class="card bg-base-100 w-96 shadow-xl">
-			<div class="card-body items-center text-center">
-				<p class="text-lg">Redirecting...</p>
-				<span class="loading loading-spinner loading-md"></span>
-			</div>
-		</div>
-	</SignedIn>
+	</div>
 </div>

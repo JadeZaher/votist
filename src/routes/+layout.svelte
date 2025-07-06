@@ -9,7 +9,7 @@
 </script>
 
 <ClerkProvider {...data.clerk}>
-	{#if !$page.url.pathname.startsWith('/sign-in')}
+	{#if !$page.url.pathname.startsWith('/sign-in') && !$page.url.pathname.startsWith('/sign-up')}
 	<SignedIn>
 		<div class="navbar bg-base-100">
 			<div class="navbar-start min-w-14">
@@ -32,7 +32,7 @@
 	</SignedIn>
 	{/if}
 
-	{#if !$page.url.pathname.startsWith('/sign-in')}
+	{#if !$page.url.pathname.startsWith('/sign-in') && !$page.url.pathname.startsWith('/sign-up')}
 	<SignedOut>
 		<div class="navbar bg-base-100">
 			<div class="navbar-start">
