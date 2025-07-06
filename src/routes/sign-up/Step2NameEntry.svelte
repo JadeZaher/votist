@@ -6,6 +6,10 @@
   export let prevStep: () => void;
   
   let showModal = false;
+  
+  function toggleModal() {
+    showModal = !showModal;
+  }
   let firstName = $signupStore.firstName;
   let lastName = $signupStore.lastName;
   let error = '';
@@ -28,8 +32,8 @@
 
 <div class="space-y-6">
   <div class="space-y-4">
-    <div class="text-[#167B9B] text-sm mb-4">
-      Votist requires real names. <button on:click={() => showModal = true} class="font-medium hover:underline">Why?</button>
+    <div class="text-[#6B7280] text-sm mb-4">
+      Votist requires real names. <button on:click={toggleModal} class="text-[#167B9B] hover:text-[#155E75] font-medium hover:underline">Why?</button>
     </div>
 
     <div class="grid grid-cols-2 gap-4">
