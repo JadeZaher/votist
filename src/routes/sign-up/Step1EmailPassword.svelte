@@ -111,7 +111,7 @@
 
 		<div class="form-control">
 			<label class="label">
-				<span class="label-text font-medium text-[#1E1E1E]">Date of Birth</span>
+				<span class="label-text font-medium text-[#1E1E1E]">Your birth date</span>
 			</label>
 			<input
 				type="date"

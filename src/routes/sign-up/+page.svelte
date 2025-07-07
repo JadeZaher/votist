@@ -25,18 +25,19 @@
 	async function handleSubmit() {
 		loading = true;
 		try {
-			const { email, password, firstName, lastName, dob, phoneNumber } = $signupStore;
+			const { email, password, firstName, lastName, dob, phoneNumber, captchaToken } = $signupStore;
 			const clerk = (window as any).Clerk;
 
 			if (!clerk) throw new Error('Authentication service not available');
 
-			const signUpAttempt = await clerk.client.signUp.create({
-				emailAddress: email,
-				password,
-				firstName,
-				lastName,
-				dob: $signupStore.dob,
-				phoneNumber: $signupStore.phoneNumber
+				const signUpAttempt = await clerk.client.signUp.create({
+					emailAddress: email,
+					password,
+					firstName,
+					lastName,
+					dob,
+					phoneNumber: $signupStore.phoneNumber,
+					captchaToken: $signupStore.captchaToken
 			});
 
 			if (signUpAttempt.status === 'complete') {
@@ -48,8 +49,9 @@
 					password: '',
 					firstName: '',
 					lastName: '',
+					dob: '',
 					phoneNumber: '',
-					dob: ''
+					captchaToken: ''
 				});
 			} else {
 				throw new Error('Account creation requires additional verification');
@@ -87,7 +89,7 @@
 					this={steps[currentStep - 1]}
 					{nextStep}
 					{prevStep}
-					{...currentStep === 3 ? { handleSubmit } : {}}
+					handleSubmit={currentStep === 3 ? handleSubmit : () => {}}
 				/>
 			</div>
 		</div>
