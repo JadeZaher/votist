@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from '$app/stores';
 	import '../app.css';
 	import logo from '$lib/assets/logo/logo-header.png';
 	import { ClerkProvider, SignedIn, SignedOut, UserButton } from 'svelte-clerk';
@@ -8,6 +9,7 @@
 </script>
 
 <ClerkProvider {...data.clerk}>
+	{#if !$page.url.pathname.startsWith('/sign-in') && !$page.url.pathname.startsWith('/sign-up')}
 	<SignedIn>
 		<div class="navbar bg-base-100">
 			<div class="navbar-start min-w-14">
@@ -28,7 +30,9 @@
 			</div>
 		</div>
 	</SignedIn>
+	{/if}
 
+	{#if !$page.url.pathname.startsWith('/sign-in') && !$page.url.pathname.startsWith('/sign-up')}
 	<SignedOut>
 		<div class="navbar bg-base-100">
 			<div class="navbar-start">
@@ -45,6 +49,7 @@
 			</div>
 		</div>
 	</SignedOut>
+	{/if}
 
 	{@render children()}
 
