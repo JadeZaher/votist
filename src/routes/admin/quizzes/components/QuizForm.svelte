@@ -4,14 +4,17 @@
 
 	const dispatch = createEventDispatcher();
 
-	interface QuizQuestion {
+	interface LocalOption {
+		id?: string;
+		text: string;
+		isCorrect: boolean;
+		isNoOpinion: boolean;
+	}
+
+	interface LocalQuestion {
 		title: string;
-		description?: string;
-		options: {
-			text: string;
-			isCorrect: boolean;
-			isNoOpinion: boolean;
-		}[];
+		description: string;
+		options: LocalOption[];
 		correctOptionId: string | null;
 	}
 
@@ -19,7 +22,8 @@
 	let description = '';
 	let difficulty: QuizDifficulty = QuizDifficulty.VOTIST;
 	let points = 1;
-	let questions: QuizQuestion[] = [
+	let passingScore = 1;
+	let questions: LocalQuestion[] = [
 		{
 			title: '',
 			description: '',
@@ -34,11 +38,20 @@
 		}
 	];
 
+	$: if (passingScore > questions.length) {
+		passingScore = questions.length;
+	}
+
 	async function handleSubmit() {
 		const invalidQuestions = questions.filter((q) => !q.options.some((opt) => opt.isCorrect));
 
 		if (invalidQuestions.length > 0) {
 			showToast('Each question must have one correct answer selected', 'error');
+			return;
+		}
+
+		if (passingScore < 1 || passingScore > questions.length) {
+			showToast('Passing score must be between 1 and the total number of questions', 'error');
 			return;
 		}
 
@@ -63,6 +76,7 @@
 					description,
 					difficulty,
 					points,
+					passingScore,
 					questions: formattedQuestions
 				})
 			});
@@ -89,7 +103,8 @@
 				description: '',
 				options: Array(4)
 					.fill(null)
-					.map(() => ({
+					.map((_, index) => ({
+						id: `temp-${Date.now()}-${index}`,
 						text: '',
 						isCorrect: false,
 						isNoOpinion: false
@@ -97,31 +112,6 @@
 				correctOptionId: null
 			}
 		];
-	}
-
-	function addOption(questionIndex: number, isNoOpinion = false) {
-		const currentQuestion = questions[questionIndex];
-		const regularOptions = currentQuestion.options.filter((opt) => !opt.isNoOpinion);
-
-		// Only add if we have less than 4 regular options
-		if (!isNoOpinion && regularOptions.length >= 4) return;
-
-		questions = questions.map((q, i) =>
-			i === questionIndex
-				? {
-						...q,
-						options: [
-							...q.options.filter((opt) => !opt.isNoOpinion),
-							{
-								text: isNoOpinion ? 'I have no opinion' : '',
-								isCorrect: false,
-								isNoOpinion: isNoOpinion
-							},
-							...(isNoOpinion ? [] : q.options.filter((opt) => opt.isNoOpinion))
-						]
-					}
-				: q
-		);
 	}
 
 	function handleNoOpinionChange(questionIndex: number, checked: boolean) {
@@ -178,8 +168,16 @@
 			}));
 	}
 
-	function showToast(arg0: string, arg1: string) {
-		throw new Error('Function not implemented.');
+	function showToast(message: string, type: 'success' | 'error' = 'success') {
+		const toast = document.createElement('div');
+		toast.className = `toast toast-end`;
+		toast.innerHTML = `
+            <div class="alert ${type === 'success' ? 'alert-success' : 'alert-error'}">
+                <span>${message}</span>
+            </div>
+        `;
+		document.body.appendChild(toast);
+		setTimeout(() => toast.remove(), 3000);
 	}
 </script>
 
@@ -203,29 +201,51 @@
 		></textarea>
 	</div>
 
-	<div class="form-control w-full">
-		<label class="label" for="difficulty">
-			<span class="label-text">Difficulty Level</span>
-		</label>
-		<select id="difficulty" class="select select-bordered w-full" bind:value={difficulty}>
-			{#each Object.values(QuizDifficulty) as level}
-				<option value={level}>{level}</option>
-			{/each}
-		</select>
-	</div>
+	<div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+		<div class="form-control w-full">
+			<label class="label" for="difficulty">
+				<span class="label-text">Difficulty Level</span>
+			</label>
+			<select id="difficulty" class="select select-bordered w-full" bind:value={difficulty}>
+				{#each Object.values(QuizDifficulty) as level}
+					<option value={level}>{level}</option>
+				{/each}
+			</select>
+		</div>
 
-	<div class="form-control w-full">
-		<label class="label" for="points">
-			<span class="label-text">Quiz Points</span>
-		</label>
-		<input
-			id="points"
-			type="number"
-			class="input input-bordered w-full"
-			bind:value={points}
-			min="1"
-			required
-		/>
+		<div class="form-control w-full">
+			<label class="label" for="points">
+				<span class="label-text">Quiz Points</span>
+			</label>
+			<input
+				id="points"
+				type="number"
+				class="input input-bordered w-full"
+				bind:value={points}
+				min="1"
+				required
+			/>
+		</div>
+
+		<div class="form-control w-full">
+			<label class="label" for="passing-score">
+				<span class="label-text">Minimum Correct to Pass</span>
+			</label>
+			<input
+				id="passing-score"
+				type="number"
+				class="input input-bordered w-full"
+				bind:value={passingScore}
+				min="1"
+				max={questions.length}
+				required
+			/>
+			<label class="label" for="passing-score">
+				<span class="label-text-alt"
+					>Out of {questions.length} question{questions.length !== 1 ? 's' : ''}</span
+				>
+			</label>
+		</div>
 	</div>
 
 	<div class="divider">Questions</div>

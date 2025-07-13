@@ -10,7 +10,6 @@ export const PATCH: RequestHandler = async (event: RequestEvent) => {
 		if (!user) {
 			return new Response('Unauthorized', { status: 401 });
 		}
-		const userId = user.id;
 
 		// Validate quiz ID
 		if (!event.params.quizId) {
@@ -28,15 +27,16 @@ export const PATCH: RequestHandler = async (event: RequestEvent) => {
 		const updatedProgress = await prisma.quizProgress.upsert({
 			where: {
 				userId_quizId: {
-					userId,
+					userId: user.id,
 					quizId: event.params.quizId
 				}
 			},
 			update: { status },
 			create: {
-				userId,
+				userId: user.id,
 				quizId: event.params.quizId,
-				status
+				status,
+				userClerkId: user.id
 			}
 		});
 

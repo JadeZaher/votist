@@ -11,10 +11,22 @@ export const POST: RequestHandler = async (event: RequestEvent) => {
 		}
 		const userId = user.id;
 
-		const { quizId, score, answers, completed } = await event.request.json();
+		const { quizId, score, answers, completed, passed } = await event.request.json();
 
-		const completion = await prisma.quizCompletion.create({
-			data: {
+		const completion = await prisma.quizCompletion.upsert({
+			where: {
+				userId_quizId: {
+					userId,
+					quizId
+				}
+			},
+			update: {
+				score,
+				answers,
+				completed,
+				completedAt: completed ? new Date() : null
+			},
+			create: {
 				userId,
 				quizId,
 				score,
@@ -24,38 +36,64 @@ export const POST: RequestHandler = async (event: RequestEvent) => {
 			}
 		});
 
-		// Update progress to COMPLETED if the quiz is finished
 		if (completed) {
-			await prisma.quizProgress.update({
+			const newStatus = passed ? 'COMPLETED' : 'AVAILABLE'; // Failed quizzes remain available for retry
+
+			await prisma.quizProgress.upsert({
 				where: {
 					userId_quizId: {
 						userId,
 						quizId
 					}
 				},
-				data: { status: 'COMPLETED' }
+				update: { status: newStatus },
+				create: {
+					userId,
+					quizId,
+					status: newStatus
+				}
 			});
 
-			const nextQuiz = await prisma.quiz.findFirst({
-				where: { prerequisiteId: quizId },
-				orderBy: { sequence: 'asc' }
-			});
-
-			if (nextQuiz) {
-				await prisma.quizProgress.upsert({
-					where: {
-						userId_quizId: {
-							userId,
-							quizId: nextQuiz.id
-						}
-					},
-					update: { status: 'AVAILABLE' },
-					create: {
-						userId,
-						quizId: nextQuiz.id,
-						status: 'AVAILABLE'
-					}
+			if (passed) {
+				let nextQuiz = await prisma.quiz.findFirst({
+					where: { prerequisiteId: quizId, enabled: true },
+					orderBy: { sequence: 'asc' }
 				});
+
+				if (!nextQuiz) {
+					const currentQuiz = await prisma.quiz.findUnique({
+						where: { id: quizId },
+						select: { difficulty: true, sequence: true }
+					});
+
+					if (currentQuiz) {
+						nextQuiz = await prisma.quiz.findFirst({
+							where: {
+								difficulty: currentQuiz.difficulty,
+								sequence: { gt: currentQuiz.sequence },
+								enabled: true
+							},
+							orderBy: { sequence: 'asc' }
+						});
+					}
+				}
+
+				if (nextQuiz) {
+					await prisma.quizProgress.upsert({
+						where: {
+							userId_quizId: {
+								userId,
+								quizId: nextQuiz.id
+							}
+						},
+						update: { status: 'AVAILABLE' },
+						create: {
+							userId,
+							quizId: nextQuiz.id,
+							status: 'AVAILABLE'
+						}
+					});
+				}
 			}
 		}
 
