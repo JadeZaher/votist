@@ -1,22 +1,16 @@
 <script lang="ts">
-	import { currentPage } from '../../stores/quizStore';
-	import StartScreen from '$lib/components/quiz/StartScreen.svelte';
-	import QuestionScreen from '$lib/components/quiz/QuestionScreen.svelte';
-	import FeedbackScreen from '$lib/components/quiz/FeedbackScreen.svelte';
-	import CompletedScreen from '$lib/components/quiz/CompletedScreen.svelte';
-	import TryAgainScreen from '$lib/components/quiz/TryAgainScreen.svelte';
+	import QuizRoadmap from '$lib/components/quiz/QuizRoadmap.svelte';
+	import type { QuizWithProgress } from '$lib/types';
+
+	interface PageData {
+		quizzes: QuizWithProgress[];
+	}
+
+	let { data }: { data: PageData } = $props();
 </script>
 
-<div class="top-0 flex w-full bg-white">
-	{#if $currentPage === 'start'}
-		<StartScreen />
-	{:else if $currentPage === 'question'}
-		<QuestionScreen />
-	{:else if $currentPage === 'feedback'}
-		<FeedbackScreen />
-	{:else if $currentPage === 'completed'}
-		<CompletedScreen />
-	{:else if $currentPage === 'tryAgain'}
-		<TryAgainScreen />
-	{/if}
+<div class="bg-base-100 min-h-screen py-8">
+	<div class="container mx-auto px-4">
+		<QuizRoadmap quizzes={data.quizzes} />
+	</div>
 </div>

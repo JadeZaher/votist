@@ -60,15 +60,4 @@ interface QuizWithProgress extends Quiz {
 	questionCount?: number;
 }
 
-interface QuizQuestion {
-	title: string;
-	description?: string;
-	options: {
-		text: string;
-		isCorrect: boolean;
-		isNoOpinion: boolean;
-	}[];
-	correctOptionId: string | null;
-}
-
-export type { BaseEntity, Option, Question, Quiz, QuizProgress, QuizWithProgress, QuizQuestion };
+export type { BaseEntity, Option, Question, Quiz, QuizProgress, QuizWithProgress };

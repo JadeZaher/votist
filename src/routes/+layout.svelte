@@ -46,7 +46,7 @@
 		</div>
 	</SignedOut>
 
-	{@render children()}
+	{@render children?.()}
 
 	<footer class="border-t border-gray-200 py-12">
 		<div class="mx-auto max-w-7xl px-4">
