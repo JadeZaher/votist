@@ -26,7 +26,7 @@
 
 	function handleNext() {
 		if (!validate()) return;
-		// Store updated automatically via bindings
+		$signupStore = { ...$signupStore, firstName, lastName };
 		nextStep();
 	}
 </script>
@@ -42,7 +42,7 @@
 
 		<div class="grid grid-cols-2 gap-4">
 			<div class="form-control">
-				<label class="label">
+      <label class="label" for="firstName">
 					<span class="label-text font-medium text-[#1E1E1E]">First Name</span>
 				</label>
 				<input
@@ -54,7 +54,7 @@
 			</div>
 
 			<div class="form-control">
-				<label class="label">
+				<label class="label" for="lastName">
 					<span class="label-text font-medium text-[#1E1E1E]">Last Name</span>
 				</label>
 				<input
