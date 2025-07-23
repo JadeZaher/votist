@@ -75,7 +75,7 @@
 			</SignedOut>
 		{/if}
 
-		{@render children()}
+	{@render children?.()}
 
 		<Footer />
 	{/if}

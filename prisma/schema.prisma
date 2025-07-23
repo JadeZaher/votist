@@ -45,6 +45,7 @@ model Quiz {
   difficulty     QuizDifficulty   @default(VOTIST)
   sequence       Int              @default(0)
   points         Int              @default(1)
+  passingScore   Int              @default(1)
   questions      Question[]
   enabled        Boolean          @default(true)
   completions    QuizCompletion[]

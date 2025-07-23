@@ -7,7 +7,9 @@
 	let title = quiz.title;
 	let description = quiz.description;
 	let difficulty = quiz.difficulty;
-	let points = quiz.points;
+	let points = Number(quiz.points);
+	let passingScore = Number(quiz.passingScore) || 1;
+
 	let questions = quiz.questions.map((q) => ({
 		title: q.title,
 		description: q.description,
@@ -35,6 +37,42 @@
 		],
 		correctOptionId: q.correctOptionId
 	}));
+
+	$: if (passingScore > questions.length) {
+		passingScore = questions.length;
+	}
+
+	function addQuestion() {
+		questions = [
+			...questions,
+			{
+				title: '',
+				description: '',
+				options: Array(4)
+					.fill(null)
+					.map(() => ({
+						id: undefined,
+						text: '',
+						isCorrect: false,
+						isNoOpinion: false
+					})),
+				correctOptionId: undefined
+			}
+		];
+	}
+
+	function removeQuestion(index: number) {
+		if (questions.length <= 1) {
+			showToast('Quiz must have at least one question', 'error');
+			return;
+		}
+
+		if (!confirm('Are you sure you want to remove this question?')) {
+			return;
+		}
+
+		questions = questions.filter((_, i) => i !== index);
+	}
 
 	function setCorrectOption(questionIndex: number, optionIndex: number) {
 		questions = questions.map((q, i) =>
@@ -78,15 +116,27 @@
 		const toast = document.createElement('div');
 		toast.className = `toast toast-end`;
 		toast.innerHTML = `
-			<div class="alert ${type === 'success' ? 'alert-success' : 'alert-error'}">
-				<span>${message}</span>
-			</div>
-		`;
+            <div class="alert ${type === 'success' ? 'alert-success' : 'alert-error'}">
+                <span>${message}</span>
+            </div>
+        `;
 		document.body.appendChild(toast);
 		setTimeout(() => toast.remove(), 3000);
 	}
 
 	async function handleSubmit() {
+		const invalidQuestions = questions.filter((q) => !q.options.some((opt) => opt.isCorrect));
+
+		if (invalidQuestions.length > 0) {
+			showToast('Each question must have one correct answer selected', 'error');
+			return;
+		}
+
+		if (passingScore < 1 || passingScore > questions.length) {
+			showToast('Passing score must be between 1 and the total number of questions', 'error');
+			return;
+		}
+
 		try {
 			const formattedQuestions = questions.map((q) => ({
 				title: q.title,
@@ -107,6 +157,7 @@
 					description,
 					difficulty,
 					points,
+					passingScore,
 					questions: formattedQuestions
 				})
 			});
@@ -159,29 +210,51 @@
 			></textarea>
 		</div>
 
-		<div class="form-control w-full">
-			<label class="label" for="difficulty">
-				<span class="label-text">Difficulty Level</span>
-			</label>
-			<select id="difficulty" class="select select-bordered w-full" bind:value={difficulty}>
-				{#each Object.values(QuizDifficulty) as level}
-					<option value={level}>{level}</option>
-				{/each}
-			</select>
-		</div>
+		<div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+			<div class="form-control w-full">
+				<label class="label" for="difficulty">
+					<span class="label-text">Difficulty Level</span>
+				</label>
+				<select id="difficulty" class="select select-bordered w-full" bind:value={difficulty}>
+					{#each Object.values(QuizDifficulty) as level}
+						<option value={level}>{level}</option>
+					{/each}
+				</select>
+			</div>
 
-		<div class="form-control w-full">
-			<label class="label" for="points">
-				<span class="label-text">Quiz Points</span>
-			</label>
-			<input
-				id="points"
-				type="number"
-				class="input input-bordered w-full"
-				bind:value={points}
-				min="1"
-				required
-			/>
+			<div class="form-control w-full">
+				<label class="label" for="points">
+					<span class="label-text">Quiz Points</span>
+				</label>
+				<input
+					id="points"
+					type="number"
+					class="input input-bordered w-full"
+					bind:value={points}
+					min="1"
+					required
+				/>
+			</div>
+
+			<div class="form-control w-full">
+				<label class="label" for="passing-score">
+					<span class="label-text">Minimum Correct to Pass</span>
+				</label>
+				<input
+					id="passing-score"
+					type="number"
+					class="input input-bordered w-full"
+					bind:value={passingScore}
+					min="1"
+					max={questions.length}
+					required
+				/>
+				<label class="label" for="passing-score">
+					<span class="label-text-alt"
+						>Out of {questions.length} question{questions.length !== 1 ? 's' : ''}</span
+					>
+				</label>
+			</div>
 		</div>
 
 		<div class="divider">Questions</div>
@@ -189,6 +262,19 @@
 		{#each questions as question, questionIndex}
 			<div class="card bg-base-200 p-4">
 				<div class="space-y-4">
+					<div class="flex items-center justify-between">
+						<h3 class="text-lg font-medium">Question {questionIndex + 1}</h3>
+						{#if questions.length > 1}
+							<button
+								type="button"
+								class="btn btn-error btn-sm"
+								on:click={() => removeQuestion(questionIndex)}
+							>
+								Remove Question
+							</button>
+						{/if}
+					</div>
+
 					<div class="form-control">
 						<label class="label" for={'question-title-' + questionIndex}>
 							<span class="label-text">Question Title</span>
@@ -254,9 +340,13 @@
 			</div>
 		{/each}
 
+		<div class="flex justify-center">
+			<button type="button" class="btn btn-secondary" on:click={addQuestion}> Add Question </button>
+		</div>
+
 		<div class="flex justify-end gap-2">
-			<button type="button" class="btn" on:click={handleCancel}> Cancel </button>
-			<button type="submit" class="btn btn-primary"> Save Changes </button>
+			<button type="button" class="btn" on:click={handleCancel}>Cancel</button>
+			<button type="submit" class="btn btn-primary">Save Changes</button>
 		</div>
 	</form>
 </div>
