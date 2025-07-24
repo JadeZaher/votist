@@ -1,5 +1,11 @@
 <script lang="ts">
 	import { SignOutButton, SignedIn } from 'svelte-clerk';
+	import { goto } from '$app/navigation';
+
+	function handleSignOut() {
+		// Redirect to sign-in after sign out
+		goto('/sign-in');
+	}
 </script>
 
 <div class="flex min-h-screen items-center justify-center">
@@ -9,10 +15,10 @@
 			<p class="mb-4">Are you sure you want to sign out?</p>
 			<SignedIn>
 				<div class="card-actions">
-					<SignOutButton>
-						<button class="btn btn-error">Sign Out</button>
+					<SignOutButton afterSignOutUrl="/sign-in">
+						<button class="btn btn-error" on:click={handleSignOut}>Sign Out</button>
 					</SignOutButton>
-					<a href="/" class="btn btn-ghost">Cancel</a>
+					<a href="/dashboard" class="btn btn-ghost">Cancel</a>
 				</div>
 			</SignedIn>
 		</div>

@@ -13,7 +13,7 @@
 	onMount(async () => {
 		const { isAuthenticated } = await fetch('/sign-in').then((res) => res.json());
 		if (isAuthenticated) {
-			goto('/');
+			goto('/dashboard');
 		}
 	});
 
@@ -41,7 +41,7 @@
 
 			if (signInAttempt.status === 'complete') {
 				await clerk.setActive({ session: signInAttempt.createdSessionId });
-				goto('/');
+				goto('/dashboard');
 			} else {
 				error = 'Sign in requires additional verification';
 			}

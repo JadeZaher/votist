@@ -8,6 +8,14 @@
 	import Step3Confirmation from './Step3Confirmation.svelte';
 	import { signupStore } from './signup-store';
 
+	// Check if user is already authenticated
+	onMount(async () => {
+		const { isAuthenticated } = await fetch('/sign-in').then((res) => res.json());
+		if (isAuthenticated) {
+			goto('/dashboard');
+		}
+	});
+
 	let currentStep = 1;
 	let loading = false;
 	let error = '';
@@ -30,19 +38,19 @@
 
 			if (!clerk) throw new Error('Authentication service not available');
 
-				const signUpAttempt = await clerk.client.signUp.create({
-					emailAddress: email,
-					password,
-					firstName,
-					lastName,
-					dob,
-					phoneNumber: $signupStore.phoneNumber,
-					captchaToken: $signupStore.captchaToken
+			const signUpAttempt = await clerk.client.signUp.create({
+				emailAddress: email,
+				password,
+				firstName,
+				lastName,
+				dob,
+				phoneNumber: $signupStore.phoneNumber,
+				captchaToken: $signupStore.captchaToken
 			});
 
 			if (signUpAttempt.status === 'complete') {
 				await clerk.setActive({ session: signUpAttempt.createdSessionId });
-				goto('/');
+				goto('/dashboard');
 				// Reset store after successful submission
 				signupStore.set({
 					email: '',

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { signupStore } from './signup-store';
+  import { get } from 'svelte/store';
 
   export let handleSubmit: () => void;
   let phone = '';
@@ -16,11 +17,14 @@
     document.head.appendChild(script);
 
     // Initialize hCaptcha
-    ;(window as any).hcaptchaReady = () => {
+    (window as any).hcaptchaReady = () => {
       hcaptchaWidget = (window as any).hcaptcha.render('hcaptcha', {
         sitekey: import.meta.env.VITE_HCAPTCHA_SITEKEY,
         callback: (token: string) => {
-          signupStore.update(store => ({ ...store, captchaToken: token }));
+          signupStore.update(state => ({
+            ...state,
+            captchaToken: token
+          }));
         }
       });
     };
@@ -28,11 +32,12 @@
 
   function validate() {
     error = '';
+    const currentState = get(signupStore);
     if (!phone.match(/^\+\d{10,15}$/)) {
       error = 'Please enter a valid international phone number starting with +';
       return false;
     }
-    if (!$signupStore.captchaToken) {
+    if (!currentState.captchaToken) {
       error = 'Please complete the CAPTCHA verification';
       return false;
     }
@@ -41,7 +46,10 @@
 
   function handleFinalSubmit() {
     if (!validate()) return;
-    signupStore.update(store => ({ ...store, phoneNumber: phone }));
+    signupStore.update(state => ({
+      ...state,
+      phoneNumber: phone
+    }));
     handleSubmit();
   }
 </script>
@@ -67,10 +75,10 @@
     <div class="text-red-600 text-sm">{error}</div>
   {/if}
 
-  <div class="flex justify-end">
+  <div class="flex w-full justify-end">
     <button
       on:click={handleFinalSubmit}
-      class="btn bg-[#167B9B] hover:bg-[#155E75] text-white w-fit"
+      class="btn bg-primary text-white hover:bg-primary-dark w-fit px-8"
     >
       Sign Up
     </button>
