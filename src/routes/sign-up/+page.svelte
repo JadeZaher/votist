@@ -12,7 +12,7 @@
 	onMount(async () => {
 		const { isAuthenticated } = await fetch('/sign-in').then((res) => res.json());
 		if (isAuthenticated) {
-			goto('/dashboard');
+			goto('/');
 		}
 	});
 
@@ -33,7 +33,7 @@
 	async function handleSubmit() {
 		loading = true;
 		try {
-			const { email, password, firstName, lastName, dob, phoneNumber, captchaToken } = $signupStore;
+			const { email, password, firstName, lastName, dob, phoneNumber } = $signupStore;
 			const clerk = (window as any).Clerk;
 
 			if (!clerk) throw new Error('Authentication service not available');
@@ -44,13 +44,11 @@
 				firstName,
 				lastName,
 				dob,
-				phoneNumber: $signupStore.phoneNumber,
-				captchaToken: $signupStore.captchaToken
+				phoneNumber: $signupStore.phoneNumber
 			});
 
 			if (signUpAttempt.status === 'complete') {
 				await clerk.setActive({ session: signUpAttempt.createdSessionId });
-				goto('/dashboard');
 				// Reset store after successful submission
 				signupStore.set({
 					email: '',
@@ -58,8 +56,7 @@
 					firstName: '',
 					lastName: '',
 					dob: '',
-					phoneNumber: '',
-					captchaToken: ''
+					phoneNumber: ''
 				});
 			} else {
 				throw new Error('Account creation requires additional verification');

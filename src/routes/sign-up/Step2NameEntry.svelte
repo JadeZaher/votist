@@ -16,7 +16,7 @@
 
 	function validate() {
 		error = '';
-		
+
 		if (!firstName.trim() || !lastName.trim()) {
 			error = 'Please enter your full name';
 			return false;
@@ -42,7 +42,7 @@
 
 		<div class="grid grid-cols-2 gap-4">
 			<div class="form-control">
-      <label class="label" for="firstName">
+				<label class="label" for="firstName">
 					<span class="label-text font-medium text-[#1E1E1E]">First Name</span>
 				</label>
 				<input
@@ -64,7 +64,6 @@
 					bind:value={lastName}
 				/>
 			</div>
-
 		</div>
 	</div>
 
