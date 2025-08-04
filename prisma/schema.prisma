@@ -44,6 +44,7 @@ model Quiz {
   description          String
   passingScore         Int
   associatedMaterialId String?
+  order                Int        @default(0) // Order of the quiz for sorting
   questions            Question[]
   createdAt            DateTime   @default(now())
   updatedAt            DateTime   @updatedAt
