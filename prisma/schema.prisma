@@ -43,6 +43,7 @@ model Quiz {
   title                String
   description          String
   passingScore         Int
+  difficulty           QuizDifficulty? @default(VOTIST)
   associatedMaterialId String?
   order                Int        @default(0) // Order of the quiz for sorting
   questions            Question[]
