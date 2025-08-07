@@ -1,62 +1,70 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { QuizDifficulty, type Quiz } from '$lib/types';
+	import type { Quiz } from '$lib/types';
 
 	export let quiz: Quiz;
 
-	let title = quiz.title;
-	let description = quiz.description;
-	let difficulty = quiz.difficulty;
-	let points = Number(quiz.points);
-	let passingScore = Number(quiz.passingScore) || 1;
+	let title = quiz?.title ?? '';
+	let description = quiz?.description ?? '';
+	let passingScore = Number(quiz?.passingScore) || 1;
+	let associatedMaterialId = quiz?.associatedMaterialId || '';
+	let order = typeof quiz?.order === 'number' ? quiz.order : 0;
+	let difficulty = quiz?.difficulty ?? 'VOTIST';
+	let questions = Array.isArray(quiz?.questions)
+		? quiz.questions.map((q: any) => {
+				let opts: any[] = [];
+				if (Array.isArray(q.options)) {
+					opts = q.options;
+				} else if (
+					q.options &&
+					typeof q.options === 'object' &&
+					Object.keys(q.options).length > 0
+				) {
+					opts = Object.values(q.options);
+				}
 
-	let questions = quiz.questions.map((q) => ({
-		title: q.title,
-		description: q.description,
-		options: [
-			// First map existing regular options (non "No Opinion")
-			...q.options
-				.filter((opt) => opt.text !== 'I have no opinion')
-				.map((opt) => ({
-					id: opt.id,
-					text: opt.text,
-					isCorrect: opt.id === q.correctOptionId,
-					isNoOpinion: false
-				})),
-			// Add "No Opinion" option if it exists
-			...(q.options.some((opt) => opt.text === 'I have no opinion')
-				? [
-						{
-							id: q.options.find((opt) => opt.text === 'I have no opinion')?.id,
-							text: 'I have no opinion',
-							isCorrect: false,
-							isNoOpinion: true
+				opts = opts
+					.filter((opt) => typeof opt === 'object' || typeof opt === 'string')
+					.map((opt: any) => {
+						if (typeof opt === 'string') {
+							return {
+								text: opt,
+								isCorrect: Array.isArray(q.correctAnswer)
+									? q.correctAnswer.includes(opt)
+									: q.correctAnswer === opt,
+								isNoOpinion: opt === 'I have no opinion'
+							};
 						}
-					]
-				: [])
-		],
-		correctOptionId: q.correctOptionId
-	}));
+						return {
+							text: opt?.text ?? '',
+							isCorrect: !!opt?.isCorrect,
+							isNoOpinion: !!opt?.isNoOpinion
+						};
+					});
 
-	$: if (passingScore > questions.length) {
-		passingScore = questions.length;
-	}
+				return {
+					id: q.id,
+					text: q.text ?? '',
+					type: q.type ?? 'single',
+					options: opts
+				};
+			})
+		: [];
 
 	function addQuestion() {
 		questions = [
 			...questions,
 			{
-				title: '',
-				description: '',
+				id: crypto.randomUUID(),
+				text: '',
+				type: 'single',
 				options: Array(4)
 					.fill(null)
-					.map(() => ({
-						id: undefined,
+					.map((): { text: string; isCorrect: boolean; isNoOpinion: boolean } => ({
 						text: '',
 						isCorrect: false,
 						isNoOpinion: false
-					})),
-				correctOptionId: undefined
+					}))
 			}
 		];
 	}
@@ -79,8 +87,7 @@
 			i === questionIndex
 				? {
 						...q,
-						correctOptionId: q.options[optionIndex].text,
-						options: q.options.map((opt, j) => ({
+						options: q.options.map((opt: any, j: number) => ({
 							...opt,
 							isCorrect: j === optionIndex && !opt.isNoOpinion
 						}))
@@ -95,11 +102,10 @@
 				? {
 						...q,
 						options: [
-							...q.options.filter((opt) => !opt.isNoOpinion), // Keep regular options
+							...q.options.filter((opt: any) => !opt.isNoOpinion),
 							...(checked
 								? [
 										{
-											id: q.options.find((opt) => opt.isNoOpinion)?.id, // Preserve ID if it exists
 											text: 'I have no opinion',
 											isCorrect: false,
 											isNoOpinion: true
@@ -116,19 +122,29 @@
 		const toast = document.createElement('div');
 		toast.className = `toast toast-end`;
 		toast.innerHTML = `
-            <div class="alert ${type === 'success' ? 'alert-success' : 'alert-error'}">
-                <span>${message}</span>
-            </div>
-        `;
+			<div class="alert ${type === 'success' ? 'alert-success' : 'alert-error'}">
+				<span>${message}</span>
+			</div>
+		`;
 		document.body.appendChild(toast);
 		setTimeout(() => toast.remove(), 3000);
 	}
 
 	async function handleSubmit() {
-		const invalidQuestions = questions.filter((q) => !q.options.some((opt) => opt.isCorrect));
+		const invalidQuestions = questions.filter(
+			(q) =>
+				!q.text.trim() ||
+				!Array.isArray(q.options) ||
+				q.options.length === 0 ||
+				!q.options.some((opt) => opt.text.trim()) ||
+				!q.options.some((opt) => opt.isCorrect)
+		);
 
 		if (invalidQuestions.length > 0) {
-			showToast('Each question must have one correct answer selected', 'error');
+			showToast(
+				'Each question must have text, at least one option, and a correct answer.',
+				'error'
+			);
 			return;
 		}
 
@@ -138,14 +154,16 @@
 		}
 
 		try {
-			const formattedQuestions = questions.map((q) => ({
-				title: q.title,
-				description: q.description,
-				correctOptionId: q.correctOptionId,
-				options: q.options.filter(
-					(opt) => !opt.isNoOpinion || (opt.isNoOpinion && q.options.some((o) => o.isNoOpinion))
-				)
-			}));
+			const formattedQuestions = questions.map((q) => {
+				const correct = q.options.find((opt: any) => opt.isCorrect);
+				return {
+					id: q.id,
+					text: q.text,
+					type: q.type,
+					options: q.options,
+					correctAnswer: correct || null
+				};
+			});
 
 			const response = await fetch(`/api/quizzes/${quiz.id}`, {
 				method: 'PUT',
@@ -155,10 +173,11 @@
 				body: JSON.stringify({
 					title,
 					description,
-					difficulty,
-					points,
 					passingScore,
-					questions: formattedQuestions
+					associatedMaterialId: associatedMaterialId || undefined,
+					order,
+					questions: formattedQuestions,
+					difficulty
 				})
 			});
 
@@ -185,6 +204,20 @@
 	<h2 class="mb-4 text-2xl font-bold">Edit Quiz</h2>
 
 	<form on:submit|preventDefault={handleSubmit} class="space-y-6">
+		<div class="form-control w-full max-w-xs">
+			<label class="label" for="order">
+				<span class="label-text">Quiz Sequence Order</span>
+			</label>
+			<div
+				id="order"
+				class="input input-bordered bg-base-200 w-full cursor-not-allowed select-none"
+			>
+				{order}
+			</div>
+			<label class="label" for="order">
+				<span class="label-text-alt">Order is managed in the quiz list</span>
+			</label>
+		</div>
 		<div class="form-control w-full">
 			<label class="label" for="title">
 				<span class="label-text">Quiz Title</span>
@@ -210,51 +243,40 @@
 			></textarea>
 		</div>
 
-		<div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-			<div class="form-control w-full">
-				<label class="label" for="difficulty">
-					<span class="label-text">Difficulty Level</span>
-				</label>
-				<select id="difficulty" class="select select-bordered w-full" bind:value={difficulty}>
-					{#each Object.values(QuizDifficulty) as level}
-						<option value={level}>{level}</option>
-					{/each}
-				</select>
-			</div>
+		<div class="form-control w-full max-w-xs">
+			<label class="label" for="passing-score">
+				<span class="label-text">Minimum Correct to Pass</span>
+			</label>
+			<input
+				id="passing-score"
+				type="number"
+				class="input input-bordered w-full"
+				bind:value={passingScore}
+				min="1"
+				max={questions.length}
+				required
+			/>
+			<label class="label" for="passing-score">
+				<span class="label-text-alt"
+					>Out of {questions.length} question{questions.length !== 1 ? 's' : ''}</span
+				>
+			</label>
+		</div>
 
-			<div class="form-control w-full">
-				<label class="label" for="points">
-					<span class="label-text">Quiz Points</span>
-				</label>
-				<input
-					id="points"
-					type="number"
-					class="input input-bordered w-full"
-					bind:value={points}
-					min="1"
-					required
-				/>
-			</div>
-
-			<div class="form-control w-full">
-				<label class="label" for="passing-score">
-					<span class="label-text">Minimum Correct to Pass</span>
-				</label>
-				<input
-					id="passing-score"
-					type="number"
-					class="input input-bordered w-full"
-					bind:value={passingScore}
-					min="1"
-					max={questions.length}
-					required
-				/>
-				<label class="label" for="passing-score">
-					<span class="label-text-alt"
-						>Out of {questions.length} question{questions.length !== 1 ? 's' : ''}</span
-					>
-				</label>
-			</div>
+		<div class="form-control w-full max-w-xs">
+			<label class="label" for="difficulty">
+				<span class="label-text">Difficulty</span>
+			</label>
+			<select
+				id="difficulty"
+				class="select select-bordered w-full"
+				bind:value={difficulty}
+				required
+			>
+				<option value="VOTIST">VOTIST</option>
+				<option value="SCHOLAR">SCHOLAR</option>
+				<option value="MENTOR">MENTOR</option>
+			</select>
 		</div>
 
 		<div class="divider">Questions</div>
@@ -276,28 +298,16 @@
 					</div>
 
 					<div class="form-control">
-						<label class="label" for={'question-title-' + questionIndex}>
-							<span class="label-text">Question Title</span>
+						<label class="label" for={'question-text-' + questionIndex}>
+							<span class="label-text">Question Text</span>
 						</label>
 						<input
-							id={'question-title-' + questionIndex}
+							id={'question-text-' + questionIndex}
 							type="text"
 							class="input input-bordered w-full"
-							bind:value={question.title}
+							bind:value={question.text}
 							required
 						/>
-					</div>
-
-					<div class="form-control">
-						<label class="label" for={'question-description-' + questionIndex}>
-							<span class="label-text">Description (Optional)</span>
-						</label>
-						<textarea
-							id={'question-description-' + questionIndex}
-							class="textarea textarea-bordered h-24"
-							bind:value={question.description}
-							placeholder="Add additional context..."
-						></textarea>
 					</div>
 
 					<div class="form-control">
@@ -311,12 +321,12 @@
 									type="text"
 									class="input input-bordered join-item w-full"
 									bind:value={option.text}
-									placeholder="Option {optionIndex + 1}"
+									placeholder={`Option ${optionIndex + 1}`}
 									required
 								/>
 								<input
 									type="radio"
-									name="correct-{questionIndex}"
+									name={`correct-${questionIndex}`}
 									class="radio radio-primary join-item"
 									checked={option.isCorrect}
 									on:change={() => setCorrectOption(questionIndex, optionIndex)}
@@ -330,7 +340,7 @@
 								<input
 									type="checkbox"
 									class="checkbox checkbox-primary"
-									checked={question.options.some((opt) => opt.isNoOpinion)}
+									checked={question.options.some((opt: any) => opt.isNoOpinion)}
 									on:change={(e) => handleNoOpinionChange(questionIndex, e.currentTarget.checked)}
 								/>
 							</label>

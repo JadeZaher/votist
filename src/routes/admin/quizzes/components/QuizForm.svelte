@@ -1,40 +1,39 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import { QuizDifficulty } from '$lib/types';
 
-	const dispatch = createEventDispatcher();
+	const dispatch = createEventDispatcher<{
+		saved: void;
+		cancel: void;
+		error: { message: string };
+	}>();
 
 	interface LocalOption {
-		id?: string;
 		text: string;
 		isCorrect: boolean;
 		isNoOpinion: boolean;
 	}
 
 	interface LocalQuestion {
-		title: string;
-		description: string;
+		text: string;
+		type: string;
 		options: LocalOption[];
-		correctOptionId: string | null;
 	}
 
 	let title = '';
 	let description = '';
-	let difficulty: QuizDifficulty = QuizDifficulty.VOTIST;
-	let points = 1;
 	let passingScore = 1;
+	let associatedMaterialId: string = '';
 	let questions: LocalQuestion[] = [
 		{
-			title: '',
-			description: '',
+			text: '',
+			type: 'single-choice',
 			options: Array(4)
 				.fill(null)
 				.map(() => ({
 					text: '',
 					isCorrect: false,
 					isNoOpinion: false
-				})),
-			correctOptionId: null
+				}))
 		}
 	];
 
@@ -56,15 +55,15 @@
 		}
 
 		try {
-			const formattedQuestions = questions.map((q) => ({
-				title: q.title,
-				description: q.description || '',
-				options: q.options.map((opt) => ({
-					text: opt.text,
-					isCorrect: opt.isCorrect,
-					isNoOpinion: opt.isNoOpinion
-				}))
-			}));
+			const formattedQuestions = questions.map((q) => {
+				const correct = q.options.find((opt) => opt.isCorrect);
+				return {
+					text: q.text,
+					type: q.type,
+					options: q.options,
+					correctAnswer: correct ? { ...correct } : null
+				};
+			});
 
 			const response = await fetch('/api/quizzes', {
 				method: 'POST',
@@ -74,9 +73,8 @@
 				body: JSON.stringify({
 					title,
 					description,
-					difficulty,
-					points,
 					passingScore,
+					associatedMaterialId: associatedMaterialId || undefined,
 					questions: formattedQuestions
 				})
 			});
@@ -99,17 +97,15 @@
 		questions = [
 			...questions,
 			{
-				title: '',
-				description: '',
+				text: '',
+				type: 'single-choice',
 				options: Array(4)
 					.fill(null)
-					.map((_, index) => ({
-						id: `temp-${Date.now()}-${index}`,
+					.map(() => ({
 						text: '',
 						isCorrect: false,
 						isNoOpinion: false
-					})),
-				correctOptionId: null
+					}))
 			}
 		];
 	}
@@ -120,7 +116,7 @@
 				? {
 						...q,
 						options: [
-							...q.options.slice(0, 4), // Keep first 4 options unchanged
+							...q.options.slice(0, 4),
 							...(checked
 								? [
 										{
@@ -141,7 +137,6 @@
 			i === questionIndex
 				? {
 						...q,
-						correctOptionId: q.options[optionIndex].text,
 						options: q.options.map((opt, j) => ({
 							...opt,
 							isCorrect: j === optionIndex && !opt.isNoOpinion
@@ -160,12 +155,7 @@
 			return;
 		}
 
-		questions = questions
-			.filter((_, i) => i !== index)
-			.map((question, newIndex) => ({
-				...question,
-				sequence: newIndex + 1
-			}));
+		questions = questions.filter((_, i) => i !== index);
 	}
 
 	function showToast(message: string, type: 'success' | 'error' = 'success') {
@@ -201,51 +191,24 @@
 		></textarea>
 	</div>
 
-	<div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-		<div class="form-control w-full">
-			<label class="label" for="difficulty">
-				<span class="label-text">Difficulty Level</span>
-			</label>
-			<select id="difficulty" class="select select-bordered w-full" bind:value={difficulty}>
-				{#each Object.values(QuizDifficulty) as level}
-					<option value={level}>{level}</option>
-				{/each}
-			</select>
-		</div>
-
-		<div class="form-control w-full">
-			<label class="label" for="points">
-				<span class="label-text">Quiz Points</span>
-			</label>
-			<input
-				id="points"
-				type="number"
-				class="input input-bordered w-full"
-				bind:value={points}
-				min="1"
-				required
-			/>
-		</div>
-
-		<div class="form-control w-full">
-			<label class="label" for="passing-score">
-				<span class="label-text">Minimum Correct to Pass</span>
-			</label>
-			<input
-				id="passing-score"
-				type="number"
-				class="input input-bordered w-full"
-				bind:value={passingScore}
-				min="1"
-				max={questions.length}
-				required
-			/>
-			<label class="label" for="passing-score">
-				<span class="label-text-alt"
-					>Out of {questions.length} question{questions.length !== 1 ? 's' : ''}</span
-				>
-			</label>
-		</div>
+	<div class="form-control w-full">
+		<label class="label" for="passing-score">
+			<span class="label-text">Minimum Correct to Pass</span>
+		</label>
+		<input
+			id="passing-score"
+			type="number"
+			class="input input-bordered w-full"
+			bind:value={passingScore}
+			min="1"
+			max={questions.length}
+			required
+		/>
+		<label class="label" for="passing-score">
+			<span class="label-text-alt"
+				>Out of {questions.length} question{questions.length !== 1 ? 's' : ''}</span
+			>
+		</label>
 	</div>
 
 	<div class="divider">Questions</div>
@@ -269,27 +232,15 @@
 			<div class="space-y-4">
 				<div class="form-control">
 					<label class="label" for={'question-title-' + questionIndex}>
-						<span class="label-text">Question Title</span>
+						<span class="label-text">Question Text</span>
 					</label>
 					<input
 						id={'question-title-' + questionIndex}
 						type="text"
 						class="input input-bordered w-full"
-						bind:value={question.title}
+						bind:value={question.text}
 						required
 					/>
-				</div>
-
-				<div class="form-control">
-					<label class="label" for={'question-description-' + questionIndex}>
-						<span class="label-text">Description (Optional)</span>
-					</label>
-					<textarea
-						id={'question-description-' + questionIndex}
-						class="textarea textarea-bordered h-24"
-						bind:value={question.description}
-						placeholder="Add additional context..."
-					></textarea>
 				</div>
 
 				<div class="form-control w-full">

@@ -1,10 +1,4 @@
 // Enums
-export enum QuizDifficulty {
-	VOTIST = 'VOTIST',
-	SCHOLAR = 'SCHOLAR',
-	MENTOR = 'MENTOR'
-}
-
 export enum QuizStatus {
 	LOCKED = 'LOCKED',
 	AVAILABLE = 'AVAILABLE',
@@ -19,45 +13,37 @@ interface BaseEntity {
 	updatedAt?: Date;
 }
 
-interface Option extends BaseEntity {
+interface Option {
 	text: string;
 	isCorrect: boolean;
 	isNoOpinion: boolean;
-	questionId?: string;
 }
 
 interface Question extends BaseEntity {
-	title: string;
-	description?: string | null;
-	correctOptionId?: string;
 	quizId: string;
+	text: string;
+	type: string;
 	options: Option[];
+	correctAnswer: Option | null;
 }
 
 interface Quiz extends BaseEntity {
+	order: any;
 	title: string;
 	description: string;
-	difficulty: QuizDifficulty;
-	enabled: boolean;
-	points: number;
 	passingScore: number;
+	associatedMaterialId?: string | null;
 	questions: Question[];
-	prerequisiteId?: string | null;
-	sequence: number;
-	questionCount?: number;
+	difficulty?: 'VOTIST' | 'SCHOLAR' | 'MENTOR';
 }
 
-interface QuizProgress {
-	quizId: string;
+interface UserProgress extends BaseEntity {
 	userId: string;
-	status: QuizStatus;
+	materialId: string;
+	quizId: string;
+	quizScore: number;
+	isCompleted: boolean;
+	completedAt?: Date | null;
 }
 
-interface QuizWithProgress extends Quiz {
-	sequence: number;
-	status: QuizStatus;
-	prerequisiteId?: string;
-	questionCount?: number;
-}
-
-export type { BaseEntity, Option, Question, Quiz, QuizProgress, QuizWithProgress };
+export type { BaseEntity, Question, Quiz, UserProgress };

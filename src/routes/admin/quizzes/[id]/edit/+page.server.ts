@@ -10,21 +10,15 @@ export const load = (async ({ params }) => {
 				id: true,
 				title: true,
 				description: true,
-				difficulty: true,
-				points: true,
-				enabled: true,
+				passingScore: true,
+				associatedMaterialId: true,
 				questions: {
 					select: {
 						id: true,
-						title: true,
-						description: true,
-						correctOptionId: true,
-						options: {
-							select: {
-								id: true,
-								text: true
-							}
-						}
+						text: true,
+						type: true,
+						options: true,
+						correctAnswer: true
 					}
 				}
 			}
