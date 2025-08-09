@@ -46,4 +46,4 @@ interface UserProgress extends BaseEntity {
 	completedAt?: Date | null;
 }
 
-export type { BaseEntity, Question, Quiz, UserProgress };
+	export type { BaseEntity, Question, Quiz, UserProgress, Option };
