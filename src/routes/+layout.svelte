@@ -12,8 +12,7 @@
 	const navItems = [
 		{ name: 'Home', path: '/', icon: 'home' },
 		{ name: 'Assembly', path: '/vote', icon: 'vote' },
-		{ name: 'Level Up', path: '/san-rafael', icon: 'level' },
-		{ name: 'Profile', path: '/profile', icon: 'profile', plusOne: true }
+		{ name: 'Level Up', path: '/san-rafael', icon: 'level' }
 	];
 
 	let { children, data }: { children: any; data: LayoutData } = $props();
@@ -22,9 +21,9 @@
 <ClerkProvider {...data.clerk}>
 	<SignedIn>
 		<!-- Main layout below header -->
-		<div class="fixed z-10 min-h-screen bg-white">
+		<div class="fixed z-10 min-h-screen border-gray-200 bg-white">
 			<!-- Top horizontal line -->
-			<div class="navbar-start min-w-14">
+			<div class="navbar-start h-full w-full border-gray-200">
 				<a href="/">
 					<img class="m-5 w-32" src={logo} alt="votist logo" />
 				</a>
@@ -33,33 +32,8 @@
 			<aside
 				class="relative hidden min-h-[calc(100vh-4rem)] w-64 flex-col border-r bg-white px-0 py-0 md:flex"
 			>
-				<div class="mb-4 w-full border-b border-gray-200"></div>
-				<div class="mt-4 mb-2 flex flex-col items-center">
-					<div class="flex flex-none flex-row items-start justify-end space-x-4">
-						<div class="flex flex-col">
-							<!-- profile info -->
-							<p class="text-right text-2xl">{data.user?.fullName}</p>
-							<p class="text-right">{data.user?.role}</p>
-							<!-- Knowledge and Charisma badges -->
-							<div class="mt-2 flex w-full flex-col items-end gap-1">
-								<div class="flex items-center gap-1 text-xs">
-									<img src={knowledgeIcon} class="h-4 w-4" alt="Knowledge" />
-									<span class="font-semibold text-[#167b9b]">+1</span>
-									<span class="text-[#167b9b]">Knowledge</span>
-								</div>
-								<div class="flex items-center gap-1 text-xs">
-									<img src={charismaIcon} class="h-4 w-4" alt="Charisma" />
-									<span class="font-semibold text-[#f9d026]">+10</span>
-									<span class="text-[#80538d]">Charisma</span>
-								</div>
-							</div>
-						</div>
-						<!-- User Profile Icon -->
-						<div>
-							<UserButton afterSignOutUrl="/" />
-						</div>
-					</div>
-				</div>
+				<div class="mb-4 w-full border-b"></div>
+
 				<!-- Navigation (no horizontal line here) -->
 				<nav class="mt-2 flex flex-col gap-1 px-2">
 					{#each navItems as item}
@@ -85,6 +59,32 @@
 							{/if}
 						</a>
 					{/each}
+					<div class="mt-4 mb-2 flex flex-col items-center">
+						<div class="flex flex-none flex-row items-center justify-end space-x-4">
+							<div class="flex flex-col">
+								<!-- profile info -->
+								<p class="text-right text-2xl">{data.user?.fullName}</p>
+								<p class="text-right">{data.user?.role}</p>
+								<!-- Knowledge and Charisma badges -->
+								<div class="mt-2 flex w-full flex-col items-end gap-1">
+									<div class="flex items-center gap-1 text-xs">
+										<img src={knowledgeIcon} class="h-4 w-4" alt="Knowledge" />
+										<span class="font-semibold text-[#167b9b]">+1</span>
+										<span class="text-[#167b9b]">Knowledge</span>
+									</div>
+									<div class="flex items-center gap-1 text-xs">
+										<img src={charismaIcon} class="h-4 w-4" alt="Charisma" />
+										<span class="font-semibold text-[#f9d026]">+10</span>
+										<span class="text-[#80538d]">Charisma</span>
+									</div>
+								</div>
+							</div>
+							<!-- User Profile Icon -->
+							<div class=" border-votist-yellow rounded-full border-2 p-2">
+								<UserButton afterSignOutUrl="/" />
+							</div>
+						</div>
+					</div>
 				</nav>
 				<!-- Assembly Section at bottom -->
 				<div class="absolute bottom-6 left-0 w-full px-6">
