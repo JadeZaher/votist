@@ -1,4 +1,4 @@
-# VOTIST 
+# VOTIST  
 	Votist is seeking forward-thinking partners—impact investors, civic leaders, creatives, and
 	engaged citizens who share our vision for a better model of digital discourse. Whether you
 	want to support the platform, provide feedback, or help shape its development, we invite you
