@@ -9,10 +9,36 @@
 	import knowledgeIcon from '$lib/assets/icons/knowledge.png';
 	import charismaIcon from '$lib/assets/icons/charisma.png';
 
+	// Import all navigation icons
+	import homeOutline from '$lib/assets/icons/home-outline.png';
+	import homeFilled from '$lib/assets/icons/home-filled.png';
+	import voteOutline from '$lib/assets/icons/vote-outline.png';
+	import voteFilled from '$lib/assets/icons/vote-filled.png';
+	import levelOutline from '$lib/assets/icons/level-outline.png';
+	import levelFilled from '$lib/assets/icons/level-filled.png';
+
 	const navItems = [
-		{ name: 'Home', path: '/', icon: 'home' },
-		{ name: 'Assembly', path: '/vote', icon: 'vote' },
-		{ name: 'Level Up', path: '/san-rafael', icon: 'level' }
+		{
+			name: 'Home',
+			path: '/',
+			icon: 'home',
+			iconOutline: homeOutline,
+			iconFilled: homeFilled
+		},
+		{
+			name: 'Assembly',
+			path: '/vote',
+			icon: 'vote',
+			iconOutline: voteOutline,
+			iconFilled: voteFilled
+		},
+		{
+			name: 'Level Up',
+			path: '/san-rafael',
+			icon: 'level',
+			iconOutline: levelOutline,
+			iconFilled: levelFilled
+		}
 	];
 
 	let { children, data }: { children: any; data: LayoutData } = $props();
@@ -43,7 +69,7 @@
 						{page.url.pathname === item.path ? 'bg-gray-50 font-bold text-[#167b9b]' : 'text-gray-800'}"
 						>
 							<img
-								src={`/src/lib/assets/icons/${item.icon}${page.url.pathname === item.path ? '-filled' : '-outline'}.png`}
+								src={page.url.pathname === item.path ? item.iconFilled : item.iconOutline}
 								alt={item.name}
 								class="h-6 w-6"
 							/>
