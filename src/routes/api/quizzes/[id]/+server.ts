@@ -46,6 +46,51 @@ export const GET: RequestHandler = async ({ params, url }) => {
 	}
 };
 
+// DELETE /api/quizzes/[id] - Delete a quiz (admin only)
+export const DELETE: RequestHandler = async (event) => {
+	const { user } = await getUser(event);
+
+	if (user.publicMetadata?.role !== 'admin') {
+		return json({ error: 'Forbidden' }, { status: 403 });
+	}
+
+	const id = event.url.pathname.split('/').pop();
+	if (!id) {
+		return json({ error: 'Quiz ID is required' }, { status: 400 });
+	}
+
+	try {
+		// Delete all user progress records for this quiz
+		await prisma.userProgress.deleteMany({
+			where: { quizId: id }
+		});
+
+		// Delete all questions associated with the quiz
+		await prisma.question.deleteMany({
+			where: { quizId: id }
+		});
+
+		// Finally delete the quiz itself
+		const deletedQuiz = await prisma.quiz.delete({
+			where: { id }
+		});
+
+		return json({ success: true, deletedQuiz });
+	} catch (error: unknown) {
+		let message = 'Unknown error';
+		if (error && typeof error === 'object' && 'message' in error) {
+			message = (error as any).message;
+		}
+
+		// Handle case where quiz doesn't exist
+		if (message.includes('Record to delete does not exist')) {
+			return json({ error: 'Quiz not found' }, { status: 404 });
+		}
+
+		return json({ error: message }, { status: 500 });
+	}
+};
+
 // PUT /api/quizzes/[id] - Update an existing quiz (admin only)
 export const PUT: RequestHandler = async (event) => {
 	const { user } = await getUser(event);

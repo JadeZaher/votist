@@ -32,7 +32,6 @@
 			/>
 		</div>
 		<div id="clerk-captcha"></div>
-		<!-- <div id="hcaptcha" class="h-captcha" data-sitekey="YOUR_HCAPTCHA_SITE_KEY"></div> -->
 	</div>
 
 	{#if error}

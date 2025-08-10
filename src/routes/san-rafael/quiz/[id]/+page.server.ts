@@ -18,9 +18,7 @@ export const load: ServerLoad = async (event) => {
 		where: { id: quizId },
 		include: {
 			questions: {
-				include: {
-					options: true
-				},
+				include: {},
 				orderBy: { createdAt: 'asc' }
 			}
 		}
@@ -30,33 +28,33 @@ export const load: ServerLoad = async (event) => {
 		throw error(404, 'Quiz not found');
 	}
 
-	const userProgress = await prisma.quizProgress.findUnique({
-		where: {
-			userId_quizId: {
-				userId: user.id,
-				quizId: quizId
-			}
-		}
-	});
+	// const userProgress = await prisma.quizProgress.findUnique({
+	// 	where: {
+	// 		userId_quizId: {
+	// 			userId: user.id,
+	// 			quizId: quizId
+	// 		}
+	// 	}
+	// });
 
-	if (!userProgress || userProgress.status === 'LOCKED') {
-		throw redirect(302, '/quiz');
-	}
+	// if (!userProgress || userProgress.status === 'LOCKED') {
+	// 	throw redirect(302, '/quiz');
+	// }
 
-	if (userProgress.status === 'COMPLETED') {
-		const completion = await prisma.quizCompletion.findUnique({
-			where: {
-				userId_quizId: {
-					userId: user.id,
-					quizId: quizId
-				}
-			}
-		});
+	// if (userProgress.status === 'COMPLETED') {
+	// 	const completion = await prisma.quizCompletion.findUnique({
+	// 		where: {
+	// 			userId_quizId: {
+	// 				userId: user.id,
+	// 				quizId: quizId
+	// 			}
+	// 		}
+	// 	});
 
-		if (completion) {
-			throw redirect(302, `/quiz/${quizId}/results`);
-		}
-	}
+	// if (completion) {
+	// 	throw redirect(302, `/quiz/${quizId}/results`);
+	// 	// }
+	// }
 
 	return {
 		quiz
