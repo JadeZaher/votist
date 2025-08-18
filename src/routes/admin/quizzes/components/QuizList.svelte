@@ -19,12 +19,20 @@
 	async function moveUp(index: number, group: Quiz[]) {
 		if (index === 0) return;
 		[group[index - 1], group[index]] = [group[index], group[index - 1]];
+		const difficulty = group[0]?.difficulty;
+		if (difficulty !== undefined) {
+			grouped[difficulty] = [...group]; // force reactivity
+		}
 		await updateSequence(group);
 	}
 
 	async function moveDown(index: number, group: Quiz[]) {
 		if (index === group.length - 1) return;
 		[group[index], group[index + 1]] = [group[index + 1], group[index]];
+		const difficulty = group[0]?.difficulty;
+		if (difficulty !== undefined) {
+			grouped[difficulty] = [...group]; // force reactivity
+		}
 		await updateSequence(group);
 	}
 
