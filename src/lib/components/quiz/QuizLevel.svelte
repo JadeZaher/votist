@@ -7,6 +7,7 @@
 	export let takeQuiz;
 	export let getQuizStatus;
 	export let nextAvailableQuiz;
+	export let userProgress: Record<string, any>;
 </script>
 
 <div class="mb-8">
@@ -33,6 +34,7 @@
 				onClick={() => takeQuiz(quiz)}
 				status={getQuizStatus(quiz)}
 				isNext={nextAvailableQuiz && quiz.id === nextAvailableQuiz.id}
+				{userProgress}
 			/>
 		{/each}
 	</div>

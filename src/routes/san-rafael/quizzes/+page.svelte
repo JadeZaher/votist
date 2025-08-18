@@ -10,6 +10,7 @@
 	let grouped: Record<string, any[]> = {};
 
 	let completedQuizIds: string[] = [];
+	let userProgress: Record<string, any> = {};
 
 	onMount(async () => {
 		try {
@@ -24,6 +25,19 @@
 					SCHOLAR: quizzes.filter((q) => q.difficulty === 'SCHOLAR'),
 					MENTOR: quizzes.filter((q) => q.difficulty === 'MENTOR')
 				};
+				// Fetch user progress for all quizzes
+				const progressRes = await fetch('/api/userProgress');
+				const progressData = await progressRes.json();
+				userProgress = progressData.reduce((acc: any, p: any) => {
+					acc[p.quizId] = p;
+					return acc;
+				}, {});
+				completedQuizIds = quizzes
+					.filter((q) => {
+						const progress = userProgress[q.id];
+						return progress && progress.isCompleted && progress.quizScore >= q.passingScore;
+					})
+					.map((q) => q.id);
 			}
 		} catch (e) {
 			error = 'Failed to load quizzes';
@@ -37,14 +51,27 @@
 	}
 
 	function nextAvailableQuiz() {
-		const allQuizIds = [
-			...grouped.VOTIST.map((q) => q.id),
-			...grouped.SCHOLAR.map((q) => q.id),
-			...grouped.MENTOR.map((q) => q.id)
-		];
-		const nextIdx = allQuizIds.findIndex((id) => !completedQuizIds.includes(id));
-		if (nextIdx !== -1) {
-			openQuiz(allQuizIds[nextIdx]);
+		const difficultyOrder = ['VOTIST', 'SCHOLAR', 'MENTOR'];
+		const allQuizIds = quizzes
+			.sort((a, b) => {
+				const diffA = difficultyOrder.indexOf(a.difficulty);
+				const diffB = difficultyOrder.indexOf(b.difficulty);
+				if (diffA !== diffB) return diffA - diffB;
+				return (a.order ?? 0) - (b.order ?? 0);
+			})
+			.map((q) => q.id);
+		// Only unlock next quiz if previous is completed
+		for (let i = 0; i < allQuizIds.length; i++) {
+			if (!completedQuizIds.includes(allQuizIds[i])) {
+				// Check if all previous quizzes are completed
+				const allPrevCompleted = allQuizIds
+					.slice(0, i)
+					.every((id) => completedQuizIds.includes(id));
+				if (allPrevCompleted) {
+					openQuiz(allQuizIds[i]);
+					return;
+				}
+			}
 		}
 	}
 
@@ -115,6 +142,6 @@
 	{:else if error}
 		<div class="alert alert-error" role="alert">{error}</div>
 	{:else}
-		<QuizRoadmap {quizzes} />
+		<QuizRoadmap {quizzes} {completedQuizIds} {userProgress} />
 	{/if}
 </div>
