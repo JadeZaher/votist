@@ -44,6 +44,7 @@ interface UserProgress extends BaseEntity {
 	quizScore: number;
 	isCompleted: boolean;
 	completedAt?: Date | null;
+	answers?: Record<string, string> | null;
 }
 
-	export type { BaseEntity, Question, Quiz, UserProgress, Option };
+export type { BaseEntity, Question, Quiz, UserProgress, Option };

@@ -18,6 +18,7 @@
 	export let onClick: () => void;
 	export let status: 'completed' | 'available' | 'locked';
 	export let isNext: boolean = false;
+	export let userProgress: Record<string, any>;
 </script>
 
 <div class="relative flex items-center gap-6">

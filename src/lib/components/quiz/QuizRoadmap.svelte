@@ -4,6 +4,7 @@
 
 	export let quizzes: Quiz[] = [];
 	export let completedQuizIds: string[] = [];
+	export let userProgress: Record<string, any>;
 
 	const levels = [
 		{
@@ -114,6 +115,7 @@
 				{takeQuiz}
 				{getQuizStatus}
 				{nextAvailableQuiz}
+				{userProgress}
 			/>
 		{/if}
 	{/each}

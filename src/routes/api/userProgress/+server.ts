@@ -3,49 +3,61 @@ import { prisma } from '$lib/server/db/prisma';
 import type { RequestEvent, RequestHandler } from '@sveltejs/kit';
 import { getUser } from '$lib/server/auth';
 
-export const PATCH: RequestHandler = async (event: RequestEvent) => {
+// GET /api/userProgress - Get all progress for current user
+export const GET: RequestHandler = async (event: RequestEvent) => {
 	try {
-		// Authenticate user
 		const { user } = await getUser(event);
 		if (!user) {
 			return new Response('Unauthorized', { status: 401 });
 		}
 
-		// Validate quiz ID
-		if (!event.params.quizId) {
+		const progress = await prisma.userProgress.findMany({
+			where: { userId: user.id }
+		});
+		return json(progress);
+	} catch (error) {
+		console.error('Error fetching user progress:', error);
+		return new Response('Internal Server Error', { status: 500 });
+	}
+};
+
+// PATCH /api/userProgress/:quizId - Update progress for a quiz
+export const PATCH: RequestHandler = async (event: RequestEvent) => {
+	try {
+		const { user } = await getUser(event);
+		if (!user) {
+			return new Response('Unauthorized', { status: 401 });
+		}
+
+		const { quizId, quizScore, isCompleted, completedAt, materialId } = await event.request.json();
+		if (!quizId) {
 			return new Response('Quiz ID is required', { status: 400 });
 		}
 
-		// Parse payload
-		const body = await event.request.json();
-		const { quizScore, isCompleted, completedAt, answers, materialId } = body;
-
-		// Update or create progress
-		const updatedProgress = await prisma.userProgress.upsert({
+		const updated = await prisma.userProgress.upsert({
 			where: {
-				userId: user.id,
-				quizId: event.params.quizId
+				userId_quizId: {
+					userId: user.id,
+					quizId
+				}
 			},
 			update: {
 				quizScore,
 				isCompleted,
 				completedAt,
-				answers,
 				materialId: materialId || ''
 			},
 			create: {
 				userId: user.id,
-				quizId: event.params.quizId,
+				quizId,
 				quizScore: quizScore || 0,
 				isCompleted: isCompleted || false,
 				completedAt: completedAt || null,
-				answers,
 				materialId: materialId || ''
 			}
 		});
 
-		// Return updated progress
-		return json(updatedProgress);
+		return json(updated);
 	} catch (error) {
 		console.error('Error updating user progress:', error);
 		return new Response('Internal Server Error', { status: 500 });
