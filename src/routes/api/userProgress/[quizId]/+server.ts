@@ -23,10 +23,8 @@ export const PATCH: RequestHandler = async (event: RequestEvent) => {
 		// Update or create progress
 		const updatedProgress = await prisma.userProgress.upsert({
 			where: {
-				userId_quizId: {
-					userId: user.id,
-					quizId: event.params.quizId
-				}
+				userId: user.id,
+				quizId: event.params.quizId
 			},
 			update: {
 				quizScore,

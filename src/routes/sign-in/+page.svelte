@@ -13,7 +13,7 @@
 	onMount(async () => {
 		const { isAuthenticated } = await fetch('/sign-in').then((res) => res.json());
 		if (isAuthenticated) {
-			goto('/dashboard');
+			goto('/');
 		}
 	});
 
@@ -64,21 +64,23 @@
 <div class="grid min-h-screen w-screen grid-cols-1 md:grid-cols-[minmax(0,30%)_minmax(0,70%)]">
 	<SignedOut>
 		<!-- Left Column (Logo) -->
-		<div class="flex h-[40vh] md:h-full items-center justify-center bg-[#167B9B] p-8">
-			<img src={logo} alt="VOTIST" class="h-20 md:h-24 object-contain" />
+		<div class="flex h-[40vh] items-center justify-center bg-[#167B9B] p-8 md:h-full">
+			<img src={logo} alt="VOTIST" class="h-20 object-contain md:h-24" />
 		</div>
 
 		<!-- Right Column (Form) -->
 		<div class="flex h-full items-center justify-start bg-white px-4 md:px-0">
-			<div class="w-full px-4 md:max-w-lg md:pl-20 md:pr-6 space-y-8 py-6 pb-24">
-				<h2 class="text-2xl md:text-3xl font-bold text-[#1E1E1E]">Sign In</h2>
+			<div class="w-full space-y-8 px-4 py-6 pb-24 md:max-w-lg md:pr-6 md:pl-20">
+				<h2 class="text-2xl font-bold text-[#1E1E1E] md:text-3xl">Sign In</h2>
 
 				<form on:submit|preventDefault={handleSignIn} class="space-y-6">
 					<div class="space-y-4">
 						<!-- Identifier -->
 						<div class="form-control flex flex-col gap-1">
 							<label for="identifier" class="label mb-1">
-								<span class="label-text text-base text-[#1E1E1E] font-medium">Email or Username</span>
+								<span class="label-text text-base font-medium text-[#1E1E1E]"
+									>Email or Username</span
+								>
 							</label>
 							<input
 								id="identifier"
@@ -94,13 +96,13 @@
 						<!-- Password -->
 						<div class="form-control flex flex-col gap-1">
 							<label for="password" class="label mb-1">
-								<span class="label-text text-base text-[#1E1E1E] font-medium">Password</span>
+								<span class="label-text text-base font-medium text-[#1E1E1E]">Password</span>
 							</label>
 							<input
 								id="password"
 								type="password"
 								placeholder="Enter your password"
-								class="input input-bordered w-full py-3 text-base border-[#949494] focus:border-[#167B9B] focus:ring-1 focus:ring-[#167B9B]"
+								class="input input-bordered w-full border-[#949494] py-3 text-base focus:border-[#167B9B] focus:ring-1 focus:ring-[#167B9B]"
 								bind:value={password}
 								disabled={loading}
 								required
@@ -110,24 +112,28 @@
 
 					<!-- Error Message -->
 					{#if error}
-						<div class="alert bg-red-100 border-red-200 p-3 rounded-lg">
-							<span class="text-red-800 font-medium">{error}</span>
+						<div class="alert rounded-lg border-red-200 bg-red-100 p-3">
+							<span class="font-medium text-red-800">{error}</span>
 						</div>
 					{/if}
 
 					<!-- Footer -->
-					<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mt-6">
+					<div
+						class="mt-6 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center"
+					>
 						<div class="text-[#6B7280]">
-							<div class="flex items-center flex-wrap gap-1 text-sm">
+							<div class="flex flex-wrap items-center gap-1 text-sm">
 								<span>Don't have an account?</span>
-								<a href="/sign-up" class="font-semibold text-[#167B9B] hover:text-[#155E75]">Sign up</a>
+								<a href="/sign-up" class="font-semibold text-[#167B9B] hover:text-[#155E75]"
+									>Sign up</a
+								>
 							</div>
 						</div>
 
 						<!-- Submit Button -->
 						<button
 							type="submit"
-							class="btn bg-[#167B9B] hover:bg-[#155E75] text-white font-medium px-8 py-3 text-base md:text-lg w-full md:w-auto text-center"
+							class="btn w-full bg-[#167B9B] px-8 py-3 text-center text-base font-medium text-white hover:bg-[#155E75] md:w-auto md:text-lg"
 							disabled={loading}
 						>
 							{#if loading}
