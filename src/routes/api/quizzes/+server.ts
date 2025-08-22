@@ -42,6 +42,8 @@ export const POST: RequestHandler = async (event) => {
 					create: (data.questions as any[]).map((q: any) => ({
 						text: q.text,
 						type: q.type,
+						imageUrl: q.imageUrl,
+						imageAlt: q.imageAlt,
 						options: q.options,
 						correctAnswer: q.correctAnswer
 					}))

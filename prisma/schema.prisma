@@ -60,6 +60,8 @@ model Question {
   quiz          Quiz     @relation(fields: [quizId], references: [id])
   text          String
   type          String
+  imageUrl      String?
+  imageAlt      String?
   options       Json
   correctAnswer Json
   createdAt     DateTime @default(now())

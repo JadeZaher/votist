@@ -17,6 +17,7 @@
 	let userAnswers = $state<Record<string, string>>({});
 	let showFeedback = $state(false);
 	let isAnswerCorrect = $state<boolean | null>(false);
+	let imageLoadError = $state(false);
 
 	const currentQuestion = $derived(data.quiz.questions[currentQuestionIndex]);
 	const isLastQuestion = $derived(currentQuestionIndex === data.quiz.questions.length - 1);
@@ -119,6 +120,16 @@
 		const correctOption = currentQuestion.options.find((option: Option) => option.isCorrect);
 		return correctOption?.text || '';
 	}
+
+	function handleImageError() {
+		imageLoadError = true;
+	}
+
+	$effect(() => {
+		if (currentQuestion) {
+			imageLoadError = false;
+		}
+	});
 </script>
 
 <div class="bg-base-100 min-h-screen py-8">
@@ -146,6 +157,23 @@
 					>
 						{currentQuestion?.text}
 					</div>
+
+					<!-- Question Image (if present) -->
+					{#if currentQuestion?.imageUrl && !imageLoadError}
+						<div class="mx-auto mt-6 mb-4 w-full max-w-2xl">
+							<figure class="w-full">
+								<img
+									src={currentQuestion.imageUrl}
+									alt={currentQuestion.imageAlt ||
+										`Illustration for question ${currentQuestionIndex + 1}`}
+									class="h-auto max-h-80 w-full rounded-lg object-contain shadow-md"
+									loading="lazy"
+									onerror={handleImageError}
+								/>
+							</figure>
+						</div>
+					{/if}
+
 					<!-- Quiz Description -->
 					<div
 						class="mx-auto mt-2 mb-4 w-full text-center text-base leading-relaxed font-normal text-neutral-600 md:w-[500px]"

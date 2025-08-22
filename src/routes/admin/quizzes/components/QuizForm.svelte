@@ -14,19 +14,26 @@
 	}
 
 	interface LocalQuestion {
+		id: string;
 		text: string;
 		type: string;
+		imageUrl?: string;
+		imageAlt?: string;
 		options: LocalOption[];
 	}
 
 	let title = '';
 	let description = '';
+	let difficulty = 'VOTIST'; // Updated to match QuizEdit
 	let passingScore = 1;
 	let associatedMaterialId: string = '';
 	let questions: LocalQuestion[] = [
 		{
+			id: crypto.randomUUID(),
 			text: '',
 			type: 'single-choice',
+			imageUrl: '',
+			imageAlt: '',
 			options: Array(4)
 				.fill(null)
 				.map(() => ({
@@ -42,10 +49,20 @@
 	}
 
 	async function handleSubmit() {
-		const invalidQuestions = questions.filter((q) => !q.options.some((opt) => opt.isCorrect));
+		const invalidQuestions = questions.filter(
+			(q) =>
+				!q.text.trim() ||
+				!Array.isArray(q.options) ||
+				q.options.length === 0 ||
+				!q.options.some((opt) => opt.text.trim()) ||
+				!q.options.some((opt) => opt.isCorrect)
+		);
 
 		if (invalidQuestions.length > 0) {
-			showToast('Each question must have one correct answer selected', 'error');
+			showToast(
+				'Each question must have text, at least one option, and a correct answer.',
+				'error'
+			);
 			return;
 		}
 
@@ -58,8 +75,11 @@
 			const formattedQuestions = questions.map((q) => {
 				const correct = q.options.find((opt) => opt.isCorrect);
 				return {
+					id: q.id,
 					text: q.text,
 					type: q.type,
+					imageUrl: q.imageUrl,
+					imageAlt: q.imageAlt,
 					options: q.options,
 					correctAnswer: correct ? { ...correct } : null
 				};
@@ -73,6 +93,7 @@
 				body: JSON.stringify({
 					title,
 					description,
+					difficulty, // Include difficulty in the request
 					passingScore,
 					associatedMaterialId: associatedMaterialId || undefined,
 					questions: formattedQuestions
@@ -97,8 +118,11 @@
 		questions = [
 			...questions,
 			{
+				id: crypto.randomUUID(),
 				text: '',
 				type: 'single-choice',
+				imageUrl: '',
+				imageAlt: '',
 				options: Array(4)
 					.fill(null)
 					.map(() => ({
@@ -116,7 +140,7 @@
 				? {
 						...q,
 						options: [
-							...q.options.slice(0, 4),
+							...q.options.filter((opt) => !opt.isNoOpinion),
 							...(checked
 								? [
 										{
@@ -148,6 +172,7 @@
 
 	function removeQuestion(index: number) {
 		if (questions.length <= 1) {
+			showToast('Quiz must have at least one question', 'error');
 			return;
 		}
 
@@ -191,7 +216,19 @@
 		></textarea>
 	</div>
 
-	<div class="form-control w-full">
+	<!-- Add difficulty selector -->
+	<div class="form-control w-full max-w-xs">
+		<label class="label" for="difficulty">
+			<span class="label-text">Difficulty</span>
+		</label>
+		<select id="difficulty" class="select select-bordered w-full" bind:value={difficulty} required>
+			<option value="VOTIST">VOTIST</option>
+			<option value="SCHOLAR">SCHOLAR</option>
+			<option value="MENTOR">MENTOR</option>
+		</select>
+	</div>
+
+	<div class="form-control w-full max-w-xs">
 		<label class="label" for="passing-score">
 			<span class="label-text">Minimum Correct to Pass</span>
 		</label>
@@ -242,6 +279,43 @@
 						required
 					/>
 				</div>
+
+				<div class="form-control">
+					<label class="label" for={'question-image-' + questionIndex}>
+						<span class="label-text">Image URL (optional)</span>
+					</label>
+					<input
+						id={'question-image-' + questionIndex}
+						type="url"
+						class="input input-bordered w-full"
+						bind:value={question.imageUrl}
+						placeholder="https://example.com/image.jpg"
+					/>
+					<label class="label" for={'question-image-' + questionIndex}>
+						<span class="label-text-alt">Add an image to help illustrate the question</span>
+					</label>
+				</div>
+
+				{#if question.imageUrl && question.imageUrl.trim()}
+					<div class="form-control">
+						<label class="label" for={'question-alt-' + questionIndex}>
+							<span class="label-text">Image Alt Text</span>
+						</label>
+						<input
+							id={'question-alt-' + questionIndex}
+							type="text"
+							class="input input-bordered w-full"
+							bind:value={question.imageAlt}
+							placeholder="Describe what's shown in the image"
+							required
+						/>
+						<label class="label" for={'question-alt-' + questionIndex}>
+							<span class="label-text-alt"
+								>Required for accessibility - describe the image content</span
+							>
+						</label>
+					</div>
+				{/if}
 
 				<div class="form-control w-full">
 					<label class="label" for={'question-options-' + questionIndex}>
