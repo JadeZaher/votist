@@ -3,7 +3,7 @@ import { redirect } from '@sveltejs/kit';
 
 export const load = (async ({ locals }) => {
 	const { userId } = await locals.auth();
-	
+
 	// Redirect unauthenticated users to sign-in
 	if (!userId) {
 		throw redirect(302, '/sign-in');
@@ -12,4 +12,4 @@ export const load = (async ({ locals }) => {
 	return {
 		userId
 	};
-}) satisfies LayoutServerLoad; 
+}) satisfies LayoutServerLoad;

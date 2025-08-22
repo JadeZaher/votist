@@ -46,6 +46,8 @@
 					id: q.id,
 					text: q.text ?? '',
 					type: q.type ?? 'single',
+					imageUrl: q.imageUrl ?? '',
+					imageAlt: q.imageAlt ?? '',
 					options: opts
 				};
 			})
@@ -58,6 +60,8 @@
 				id: crypto.randomUUID(),
 				text: '',
 				type: 'single',
+				imageUrl: '',
+				imageAlt: '',
 				options: Array(4)
 					.fill(null)
 					.map((): { text: string; isCorrect: boolean; isNoOpinion: boolean } => ({
@@ -160,6 +164,8 @@
 					id: q.id,
 					text: q.text,
 					type: q.type,
+					imageUrl: q.imageUrl,
+					imageAlt: q.imageAlt,
 					options: q.options,
 					correctAnswer: correct || null
 				};
@@ -309,6 +315,43 @@
 							required
 						/>
 					</div>
+
+					<div class="form-control">
+						<label class="label" for={'question-image-' + questionIndex}>
+							<span class="label-text">Image URL (optional)</span>
+						</label>
+						<input
+							id={'question-image-' + questionIndex}
+							type="url"
+							class="input input-bordered w-full"
+							bind:value={question.imageUrl}
+							placeholder="https://example.com/image.jpg"
+						/>
+						<label class="label" for={'question-image-' + questionIndex}>
+							<span class="label-text-alt">Add an image to help illustrate the question</span>
+						</label>
+					</div>
+
+					{#if question.imageUrl && question.imageUrl.trim()}
+						<div class="form-control">
+							<label class="label" for={'question-alt-' + questionIndex}>
+								<span class="label-text">Image Alt Text</span>
+							</label>
+							<input
+								id={'question-alt-' + questionIndex}
+								type="text"
+								class="input input-bordered w-full"
+								bind:value={question.imageAlt}
+								placeholder="Describe what's shown in the image"
+								required
+							/>
+							<label class="label" for={'question-alt-' + questionIndex}>
+								<span class="label-text-alt"
+									>Required for accessibility - describe the image content</span
+								>
+							</label>
+						</div>
+					{/if}
 
 					<div class="form-control">
 						<label class="label" for={'question-options-' + questionIndex}>

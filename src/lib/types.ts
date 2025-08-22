@@ -23,6 +23,8 @@ interface Question extends BaseEntity {
 	quizId: string;
 	text: string;
 	type: string;
+	imageUrl?: string;
+	imageAlt?: string;
 	options: Option[];
 	correctAnswer: Option | null;
 }
