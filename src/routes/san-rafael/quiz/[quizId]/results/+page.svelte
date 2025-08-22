@@ -184,10 +184,10 @@
 					<div class="relative mb-12 h-40 w-full max-w-2xl rounded-lg text-left">
 						<!-- Start Button -->
 						<button
-								onclick={handleRetakeQuiz}
-								class="btn btn-primary btn-lg absolute top-[99px] left-2 flex h-14 w-40 items-center justify-center rounded-lg px-0 text-[2.5rem] font-bold shadow"
+							onclick={handleRetakeQuiz}
+							class="btn btn-primary btn-lg absolute top-[99px] left-2 flex h-14 w-40 items-center justify-center rounded-lg px-0 text-[2.5rem] font-bold shadow"
 						>
-								Start
+							Start
 						</button>
 						<!-- Quiz Title -->
 						<div
@@ -197,7 +197,7 @@
 						</div>
 						<!-- Try again! -->
 						<div
-							class="absolute top-0 left-0 flex h-11 w-[577px] items-center text-left text-6xl font-medium italic text-cyan-600"
+							class="absolute top-0 left-0 flex h-11 w-[577px] items-center text-left text-6xl font-medium text-cyan-600 italic"
 						>
 							Try again!
 						</div>
