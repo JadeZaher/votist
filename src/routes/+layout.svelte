@@ -5,17 +5,22 @@
 	import { ClerkProvider, SignedIn, SignedOut, UserButton } from 'svelte-clerk';
 	import type { LayoutData } from './$types';
 	import Footer from '$lib/components/Footer.svelte';
-	import profileIcon from '$lib/assets/icons/profile-outline.png';
-	import knowledgeIcon from '$lib/assets/icons/knowledge.png';
-	import charismaIcon from '$lib/assets/icons/charisma.png';
 
 	// Import all navigation icons
 	import homeOutline from '$lib/assets/icons/home-outline.png';
 	import homeFilled from '$lib/assets/icons/home-filled.png';
+	import researchOutline from '$lib/assets/icons/research-outline.png';
+	import researchFilled from '$lib/assets/icons/research-filled.png';
+	import discussOutline from '$lib/assets/icons/discuss-outline.png';
+	import discussFilled from '$lib/assets/icons/discuss-filled.png';
 	import voteOutline from '$lib/assets/icons/vote-outline.png';
 	import voteFilled from '$lib/assets/icons/vote-filled.png';
 	import levelOutline from '$lib/assets/icons/level-outline.png';
 	import levelFilled from '$lib/assets/icons/level-filled.png';
+	import profileOutline from '$lib/assets/icons/profile-outline.png';
+	import profileFilled from '$lib/assets/icons/profile-filled.png';
+	import settingsOutline from '$lib/assets/icons/settings-outline.png';
+	import settingsFilled from '$lib/assets/icons/settings-filled.png';
 
 	const navItems = [
 		{
@@ -27,10 +32,33 @@
 		},
 		{
 			name: 'Assembly',
+			path: null,
+			icon: null,
+			iconOutline: null,
+			iconFilled: null,
+			isSubsection: true,
+			subsections: [
+				{
+					name: 'San Rafael',
+					path: '/san-rafael',
+					subtitle: 'Housing and the Future'
+				}
+			]
+		},
+		{
+			name: 'Research',
+			path: '/research',
+			icon: 'research',
+			iconOutline: researchOutline,
+			iconFilled: researchFilled
+		},
+		{
+			name: 'Discuss & Vote',
 			path: '/vote',
 			icon: 'vote',
 			iconOutline: voteOutline,
-			iconFilled: voteFilled
+			iconFilled: voteFilled,
+			notification: '24'
 		},
 		{
 			name: 'Level Up',
@@ -41,92 +69,141 @@
 		}
 	];
 
+	const bottomNavItems = [
+		{
+			name: 'Profile',
+			path: '/profile',
+			icon: 'profile',
+			iconOutline: profileOutline,
+			iconFilled: profileFilled,
+			notification: '+1'
+		},
+		{
+			name: 'Settings',
+			path: '/settings',
+			icon: 'settings',
+			iconOutline: settingsOutline,
+			iconFilled: settingsFilled
+		}
+	];
+
 	let { children, data }: { children: any; data: LayoutData } = $props();
 </script>
 
 <ClerkProvider {...data.clerk}>
 	<SignedIn>
-		<!-- Main layout below header -->
-		<div class="fixed z-10 min-h-screen border-gray-200 bg-white">
-			<!-- Top horizontal line -->
-			<div class="navbar-start h-full w-full border-gray-200">
-				<a href="/">
-					<img class="m-5 w-32" src={logo} alt="votist logo" />
-				</a>
-			</div>
-			<!-- Sidebar below header -->
-			<aside
-				class="relative hidden min-h-[calc(100vh-4rem)] w-64 flex-col border-r bg-white px-0 py-0 md:flex"
-			>
-				<div class="mb-4 w-full border-b"></div>
-
-				<!-- Navigation (no horizontal line here) -->
-				<nav class="mt-2 flex flex-col gap-1 px-2">
-					{#each navItems as item}
-						<a
-							href={item.path}
-							class="group flex items-center gap-3 rounded-lg px-3 py-2 text-base font-medium transition-colors hover:bg-gray-100
-						{page.url.pathname === item.path ? 'bg-gray-50 font-bold text-[#167b9b]' : 'text-gray-800'}"
-						>
-							<img
-								src={page.url.pathname === item.path ? item.iconFilled : item.iconOutline}
-								alt={item.name}
-								class="h-6 w-6"
-							/>
-							<span>{item.name}</span>
-							{#if item.badge}
-								<span
-									class="ml-auto rounded-full bg-gray-200 px-2 py-0.5 text-xs font-semibold text-gray-700"
-									>{item.badge}</span
-								>
-							{/if}
-							{#if item.plusOne}
-								<span class="ml-auto text-xs font-semibold text-[#669999]">+1</span>
-							{/if}
+		<!-- Main layout with sidebar -->
+		<div class="flex min-h-screen bg-white">
+			<!-- Sidebar -->
+			<aside class="w-64 border-r border-blue-200 bg-white shadow-lg">
+				<div class="flex h-full flex-col">
+					<!-- Logo Section -->
+					<div class="border-b border-blue-200 p-6">
+						<a href="/">
+							<img class="w-32" src={logo} alt="votist logo" />
 						</a>
-					{/each}
-					<div class="mt-4 mb-2 flex flex-col items-center">
-						<div class="flex flex-none flex-row items-center justify-end space-x-4">
-							<div class="flex flex-col">
-								<!-- profile info -->
-								<p class="text-right text-2xl">{data.user?.fullName}</p>
-								<p class="text-right">{data.user?.role}</p>
-								<!-- Knowledge and Charisma badges -->
-								<div class="mt-2 flex w-full flex-col items-end gap-1">
-									<div class="flex items-center gap-1 text-xs">
-										<img src={knowledgeIcon} class="h-4 w-4" alt="Knowledge" />
-										<span class="font-semibold text-[#167b9b]">+1</span>
-										<span class="text-[#167b9b]">Knowledge</span>
-									</div>
-									<div class="flex items-center gap-1 text-xs">
-										<img src={charismaIcon} class="h-4 w-4" alt="Charisma" />
-										<span class="font-semibold text-[#f9d026]">+10</span>
-										<span class="text-[#80538d]">Charisma</span>
-									</div>
-								</div>
-							</div>
-							<!-- User Profile Icon -->
-							<div class=" border-votist-yellow rounded-full border-2 p-2">
-								<UserButton afterSignOutUrl="/" />
-							</div>
-						</div>
 					</div>
-				</nav>
-				<!-- Assembly Section at bottom -->
-				<div class="absolute bottom-6 left-0 w-full px-6">
-					<div class="mb-1 text-xs font-semibold text-gray-500">Assembly</div>
-					<div class="text-xl leading-tight font-bold text-[#167b9b]">San Rafael</div>
-					<div class="text-xs font-medium text-[#167b9b]">Housing and the Future</div>
+
+					<!-- User Profile Section -->
+					<div class="border-b border-blue-200 p-6">
+						<!-- Circular Profile Picture -->
+						<div
+							class="mb-3 flex h-16 w-16 items-center justify-center rounded-full border border-gray-300 bg-gray-200"
+						>
+							<svg class="h-8 w-8 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+								<path
+									fill-rule="evenodd"
+									d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+									clip-rule="evenodd"
+								/>
+							</svg>
+						</div>
+
+						<!-- Username -->
+						<h2 class="mb-1 text-lg font-bold text-gray-800">
+							{data.user?.fullName || 'testadmin'}
+						</h2>
+						<p class="mb-1 text-sm text-gray-600">{data.user?.role || 'Step-Mayor In-Law'}</p>
+						<p class="text-sm text-gray-600">Fairfax CA</p>
+					</div>
+
+					<!-- Navigation -->
+					<nav class="flex-1 space-y-1 p-4">
+						{#each navItems as item}
+							{#if item.isSubsection}
+								<!-- Assembly Section -->
+								<div class="mb-2">
+									<p class="px-3 py-1 text-sm text-gray-400">Assembly</p>
+									{#each item.subsections as subsection}
+										<a
+											href={subsection.path}
+											class="flex flex-col px-3 py-2 hover:bg-gray-50 {page.url.pathname ===
+											subsection.path
+												? 'bg-gray-50 font-bold text-teal-600'
+												: 'text-gray-700'}"
+										>
+											<span class="text-lg font-bold text-teal-500">{subsection.name}</span>
+											<span class="text-sm text-teal-500">{subsection.subtitle}</span>
+										</a>
+									{/each}
+								</div>
+							{:else}
+								<a
+									href={item.path}
+									class="flex items-center rounded-lg p-3 hover:bg-gray-50 {page.url.pathname ===
+									item.path
+										? 'bg-gray-50 font-bold text-teal-600'
+										: 'text-gray-700'}"
+								>
+									<img
+										src={page.url.pathname === item.path ? item.iconFilled : item.iconOutline}
+										alt={item.name}
+										class="mr-3 h-5 w-5"
+									/>
+									<span class="flex-1">{item.name}</span>
+									{#if item.notification}
+										<span class="rounded-full bg-gray-200 px-2 py-1 text-xs text-gray-700">
+											{item.notification}
+										</span>
+									{/if}
+								</a>
+							{/if}
+						{/each}
+					</nav>
+
+					<!-- Bottom Navigation (Profile & Settings) -->
+					<div class="border-t border-gray-200 p-4">
+						<nav class="space-y-1">
+							{#each bottomNavItems as item}
+								<a
+									href={item.path}
+									class="flex items-center rounded-lg p-3 hover:bg-gray-50 {page.url.pathname ===
+									item.path
+										? 'bg-gray-50 font-bold text-teal-600'
+										: 'text-gray-700'}"
+								>
+									<img
+										src={page.url.pathname === item.path ? item.iconFilled : item.iconOutline}
+										alt={item.name}
+										class="mr-3 h-5 w-5"
+									/>
+									<span class="flex-1">{item.name}</span>
+									{#if item.notification}
+										<span class="rounded-full bg-gray-200 px-2 py-1 text-xs text-gray-700">
+											{item.notification}
+										</span>
+									{/if}
+								</a>
+							{/each}
+						</nav>
+					</div>
 				</div>
 			</aside>
 
-			<!-- Main Content Area below header and to the right of sidebar -->
-			<main
-				class="flex min-h-[calc(100vh-4rem)] flex-1 items-center justify-center bg-white p-4 md:p-8"
-			></main>
-		</div>
-		<div class="ml-64 max-w-[calc(100vw-16rem)]">
-			{@render children?.()}
+			<!-- Main Content Area -->
+			<main class="min-h-screen flex-1">
+				{@render children?.()}
+			</main>
 		</div>
 	</SignedIn>
 
