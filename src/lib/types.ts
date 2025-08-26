@@ -50,3 +50,59 @@ interface UserProgress extends BaseEntity {
 }
 
 export type { BaseEntity, Question, Quiz, UserProgress, Option };
+
+// Poll Feed Types
+export interface PollOption {
+	id: string;
+	text: string;
+	votes: number;
+}
+
+export interface PostAuthor {
+	name: string;
+	avatar: string;
+	username: string;
+	isVerified?: boolean;
+}
+
+export interface Poll {
+	question: string;
+	options: PollOption[];
+	totalVotes: number;
+	userVote?: string; // option id that user voted for
+	endsAt?: string;
+}
+
+export interface PostData {
+	id: string;
+	title: string;
+	content: string;
+	author: PostAuthor;
+	timestamp: string;
+	category: string;
+	likes: number;
+	comments: number;
+	isLiked: boolean;
+	isBookmarked: boolean;
+	tags: string[];
+	poll?: Poll;
+}
+
+export interface CommentData {
+	id: string;
+	author: {
+		name: string;
+		avatar: string;
+		username: string;
+	};
+	content: string;
+	timestamp: string;
+	likes: number;
+	isLiked: boolean;
+	replies?: CommentData[];
+}
+
+export interface PollFeedData {
+	post: PostData;
+	comments: CommentData[];
+}
