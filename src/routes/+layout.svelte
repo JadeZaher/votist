@@ -93,9 +93,9 @@
 <ClerkProvider {...data.clerk}>
 	<SignedIn>
 		<!-- Main layout with sidebar -->
-		<div class="flex min-h-screen bg-white">
+		<div class=" flex bg-white">
 			<!-- Sidebar -->
-			<aside class="w-64 border-r border-blue-200 bg-white shadow-lg">
+			<aside class="fixed h-screen w-64 border-r border-blue-200 bg-white shadow-lg">
 				<div class="flex h-full flex-col">
 					<!-- Logo Section -->
 					<div class="border-b border-blue-200 p-6">
