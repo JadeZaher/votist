@@ -122,7 +122,7 @@
 			{#if comment.replies && comment.replies.length > 0 && showReplies}
 				<div class="mt-3">
 					{#each comment.replies as reply (reply.id)}
-						<svelte:self {reply} {onLike} {onReply} depth={depth + 1} />
+						<svelte:self comment={reply} {onLike} {onReply} depth={depth + 1} />
 					{/each}
 				</div>
 			{/if}

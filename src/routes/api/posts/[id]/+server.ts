@@ -2,8 +2,33 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { PrismaClient } from '@prisma/client';
 import { json } from '@sveltejs/kit';
 import { getUser } from '$lib/server/auth';
+import { clerkClient } from 'svelte-clerk/server';
 
 const prisma = new PrismaClient();
+
+// Helper function to transform user data for frontend
+async function transformUserData(clerkId: string) {
+	try {
+		const clerkUser = await clerkClient.users.getUser(clerkId);
+		return {
+			name:
+				clerkUser.firstName && clerkUser.lastName
+					? `${clerkUser.firstName} ${clerkUser.lastName}`
+					: clerkUser.username || 'Anonymous',
+			avatar: clerkUser.imageUrl || '',
+			username: clerkUser.username || 'user',
+			isVerified: clerkUser.publicMetadata?.role === 'admin'
+		};
+	} catch (error) {
+		console.error('Error fetching clerk user:', error);
+		return {
+			name: 'Anonymous',
+			avatar: '',
+			username: 'user',
+			isVerified: false
+		};
+	}
+}
 
 // GET /api/posts/[id] - Get a specific post with all details
 export const GET: RequestHandler = async ({ params }) => {
@@ -66,7 +91,38 @@ export const GET: RequestHandler = async ({ params }) => {
 			return json({ error: 'Post not found' }, { status: 404 });
 		}
 
-		return json({ post });
+		// Transform the data to match frontend expectations
+		const author = await transformUserData(post.author.clerkId);
+
+		const transformedComments = await Promise.all(
+			post.comments.map(async (comment: any) => {
+				const commentAuthor = await transformUserData(comment.author.clerkId);
+
+				const transformedReplies = await Promise.all(
+					(comment.replies || []).map(async (reply: any) => {
+						const replyAuthor = await transformUserData(reply.author.clerkId);
+						return {
+							...reply,
+							author: replyAuthor
+						};
+					})
+				);
+
+				return {
+					...comment,
+					author: commentAuthor,
+					replies: transformedReplies
+				};
+			})
+		);
+
+		const transformedPost = {
+			...post,
+			author,
+			comments: transformedComments
+		};
+
+		return json({ post: transformedPost });
 	} catch (error: unknown) {
 		let message = 'Unknown error';
 		if (error && typeof error === 'object' && 'message' in error) {
@@ -124,7 +180,14 @@ export const PUT: RequestHandler = async (event) => {
 			}
 		});
 
-		return json({ post });
+		// Transform the author data to match frontend expectations
+		const author = await transformUserData(post.author.clerkId);
+		const transformedPost = {
+			...post,
+			author
+		};
+
+		return json({ post: transformedPost });
 	} catch (error: unknown) {
 		let message = 'Unknown error';
 		if (error && typeof error === 'object' && 'message' in error) {
