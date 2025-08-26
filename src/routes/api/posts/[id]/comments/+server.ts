@@ -2,8 +2,32 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { PrismaClient } from '@prisma/client';
 import { json } from '@sveltejs/kit';
 import { getUser } from '$lib/server/auth';
+import { clerkClient } from 'svelte-clerk/server';
 
 const prisma = new PrismaClient();
+
+// Helper function to transform user data for frontend
+async function transformUserData(clerkId: string) {
+	try {
+		const clerkUser = await clerkClient.users.getUser(clerkId);
+		return {
+			name: clerkUser.firstName && clerkUser.lastName 
+				? `${clerkUser.firstName} ${clerkUser.lastName}` 
+				: clerkUser.username || 'Anonymous',
+			avatar: clerkUser.imageUrl || '',
+			username: clerkUser.username || 'user',
+			isVerified: clerkUser.publicMetadata?.role === 'admin'
+		};
+	} catch (error) {
+		console.error('Error fetching clerk user:', error);
+		return {
+			name: 'Anonymous',
+			avatar: '',
+			username: 'user',
+			isVerified: false
+		};
+	}
+}
 
 // GET /api/posts/[id]/comments - Get comments for a post
 export const GET: RequestHandler = async ({ params, url }) => {
@@ -45,6 +69,29 @@ export const GET: RequestHandler = async ({ params, url }) => {
 			take: limit
 		});
 
+		// Transform the data to match frontend expectations
+		const transformedComments = await Promise.all(
+			comments.map(async (comment: any) => {
+				const commentAuthor = await transformUserData(comment.author.clerkId);
+				
+				const transformedReplies = await Promise.all(
+					(comment.replies || []).map(async (reply: any) => {
+						const replyAuthor = await transformUserData(reply.author.clerkId);
+						return {
+							...reply,
+							author: replyAuthor
+						};
+					})
+				);
+
+				return {
+					...comment,
+					author: commentAuthor,
+					replies: transformedReplies
+				};
+			})
+		);
+
 		const total = await prisma.comment.count({
 			where: {
 				postId: params.id,
@@ -53,7 +100,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
 		});
 
 		return json({
-			comments,
+			comments: transformedComments,
 			pagination: {
 				page,
 				limit,
@@ -108,7 +155,14 @@ export const POST: RequestHandler = async (event) => {
 			}
 		});
 
-		return json({ comment });
+		// Transform the author data to match frontend expectations
+		const author = await transformUserData(comment.author.clerkId);
+		const transformedComment = {
+			...comment,
+			author
+		};
+
+		return json({ comment: transformedComment });
 	} catch (error: unknown) {
 		let message = 'Unknown error';
 		if (error && typeof error === 'object' && 'message' in error) {
