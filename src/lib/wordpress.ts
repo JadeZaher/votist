@@ -41,7 +41,7 @@ export function formatPost(original: any) {
 	const content = original?.content?.rendered || '';
 
 	// Safe image extraction with logo fallback
-	let imageUrl = '/favicon.png'; // Default to favicon as fallback
+	let imageUrl = '/votist-logo.png'; // Default to votist logo as fallback
 	try {
 		if (original?._embedded?.['wp:featuredmedia']?.[0]?.media_details?.sizes?.full?.source_url) {
 			imageUrl = original._embedded['wp:featuredmedia'][0].media_details.sizes.full.source_url;
@@ -106,7 +106,7 @@ export function formatSeoPage(original: any) {
 	const content = original?.content?.rendered || '';
 
 	// Safe image extraction with logo fallback
-	let imageUrl = '/favicon.png'; // Default to favicon as fallback
+	let imageUrl = '/votist-logo.png'; // Default to votist logo as fallback
 	try {
 		if (original?._embedded?.['wp:featuredmedia']?.[0]?.media_details?.sizes?.full?.source_url) {
 			imageUrl = original._embedded['wp:featuredmedia'][0].media_details.sizes.full.source_url;
