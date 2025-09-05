@@ -34,39 +34,134 @@ export const fetchCategories = async (): Promise<object[]> => {
   mappers 
 */
 export function formatPost(original: any) {
+	// Safe extraction with fallbacks
+	const title = original?.title?.rendered || 'Untitled Post';
+	const date = original?.date ? new Date(original.date) : new Date();
+	const slug = original?.slug || 'untitled-post';
+	const content = original?.content?.rendered || '';
+
+	// Safe image extraction with logo fallback
+	let imageUrl = '/favicon.png'; // Default to favicon as fallback
+	try {
+		if (original?._embedded?.['wp:featuredmedia']?.[0]?.media_details?.sizes?.full?.source_url) {
+			imageUrl = original._embedded['wp:featuredmedia'][0].media_details.sizes.full.source_url;
+		}
+	} catch (error) {
+		console.warn('Error extracting featured image, using logo fallback:', error);
+	}
+
+	// Safe excerpt extraction
+	let excerpt = '';
+	try {
+		excerpt = original?.yoast_head_json?.description || '';
+	} catch (error) {
+		console.warn('Error extracting excerpt:', error);
+	}
+
+	// Safe tag extraction
+	let tag = 'General';
+	try {
+		if (original?._embedded?.['wp:term']?.[0]?.[0]?.name) {
+			tag = original._embedded['wp:term'][0][0].name;
+		}
+	} catch (error) {
+		console.warn('Error extracting tag, using default:', error);
+	}
+
+	// Safe reading time extraction
+	let readingTime = '5 min read';
+	try {
+		if (original?.yoast_head_json?.twitter_misc?.['Est. reading time']) {
+			readingTime = original.yoast_head_json.twitter_misc['Est. reading time'];
+		}
+	} catch (error) {
+		console.warn('Error extracting reading time, using default:', error);
+	}
+
+	// Safe meta extraction
+	let meta = '';
+	try {
+		meta = original?.yoast_head || '';
+	} catch (error) {
+		console.warn('Error extracting meta:', error);
+	}
+
 	return {
-		title: original['title']['rendered'] ?? '',
-		date: new Date(original['date'] ?? ''),
-		imageUrl:
-			original['_embedded']['wp:featuredmedia'][0]['media_details']['sizes']['full'][
-				'source_url'
-			] ?? '',
-		excerpt: original['yoast_head_json']['description'] ?? '',
-		slug: original['slug'] ?? '',
-		tag: original['_embedded']['wp:term'][0][0]['name'] ?? '',
-		readingTime: original['yoast_head_json']['twitter_misc']['Est. reading time'] ?? '',
-		meta: original['yoast_head'] ?? '',
-		content: original['content']['rendered'] ?? ''
+		title,
+		date,
+		imageUrl,
+		excerpt,
+		slug,
+		tag,
+		readingTime,
+		meta,
+		content
 	};
 }
 export function formatSeoPage(original: any) {
+	// Safe extraction with fallbacks
+	const title = original?.title?.rendered || 'Untitled Page';
+	const date = original?.date ? new Date(original.date) : new Date();
+	const slug = original?.slug || 'untitled-page';
+	const content = original?.content?.rendered || '';
+
+	// Safe image extraction with logo fallback
+	let imageUrl = '/favicon.png'; // Default to favicon as fallback
+	try {
+		if (original?._embedded?.['wp:featuredmedia']?.[0]?.media_details?.sizes?.full?.source_url) {
+			imageUrl = original._embedded['wp:featuredmedia'][0].media_details.sizes.full.source_url;
+		}
+	} catch (error) {
+		console.warn('Error extracting featured image, using logo fallback:', error);
+	}
+
+	// Safe excerpt extraction
+	let excerpt = '';
+	try {
+		excerpt = original?.yoast_head_json?.description || '';
+	} catch (error) {
+		console.warn('Error extracting excerpt:', error);
+	}
+
+	// Safe reading time extraction
+	let readingTime = '5 min read';
+	try {
+		if (original?.yoast_head_json?.twitter_misc?.['Est. reading time']) {
+			readingTime = original.yoast_head_json.twitter_misc['Est. reading time'];
+		}
+	} catch (error) {
+		console.warn('Error extracting reading time, using default:', error);
+	}
+
+	// Safe meta extraction
+	let meta = '';
+	try {
+		meta = original?.yoast_head || '';
+	} catch (error) {
+		console.warn('Error extracting meta:', error);
+	}
+
 	return {
-		title: original['title']['rendered'] ?? '',
-		date: new Date(original['date'] ?? ''),
-		imageUrl:
-			original['_embedded']['wp:featuredmedia'][0]['media_details']['sizes']['full'][
-				'source_url'
-			] ?? '',
-		excerpt: original['yoast_head_json']['description'] ?? '',
-		slug: original['slug'] ?? '',
-		readingTime: original['yoast_head_json']['twitter_misc']['Est. reading time'] ?? '',
-		meta: original['yoast_head'] ?? '',
-		content: original['content']['rendered'] ?? ''
+		title,
+		date,
+		imageUrl,
+		excerpt,
+		slug,
+		readingTime,
+		meta,
+		content
 	};
 }
 
 export function formatCategory(original: any) {
-	return { name: original['name'], slug: original['slug'] };
+	// Safe extraction with fallbacks
+	const name = original?.name || 'Uncategorized';
+	const slug = original?.slug || 'uncategorized';
+
+	return {
+		name,
+		slug
+	};
 }
 
 export const wordpressCSS = `
