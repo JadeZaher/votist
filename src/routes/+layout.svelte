@@ -201,7 +201,7 @@
 			</aside>
 
 			<!-- Main Content Area -->
-			<main class="min-h-screen flex-1">
+			<main class="ml-[16rem] min-h-screen flex-1">
 				{@render children?.()}
 			</main>
 		</div>
