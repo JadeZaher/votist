@@ -36,10 +36,76 @@ export const GET: RequestHandler = async ({ url }) => {
 		const page = parseInt(url.searchParams.get('page') || '1');
 		const limit = parseInt(url.searchParams.get('limit') || '10');
 		const category = url.searchParams.get('category');
+		const admin = url.searchParams.get('admin') === 'true';
 		const skip = (page - 1) * limit;
 
 		const where = category ? { category } : {};
 
+		// For admin requests, include all posts with author names
+		if (admin) {
+			const posts = await prisma.post.findMany({
+				where,
+				include: {
+					author: {
+						select: {
+							clerkId: true,
+							email: true
+						}
+					},
+					poll: {
+						include: {
+							options: true
+						}
+					},
+					comments: {
+						include: {
+							author: {
+								select: {
+									clerkId: true,
+									email: true
+								}
+							}
+						}
+					},
+					votes: true,
+					_count: {
+						select: {
+							comments: true
+						}
+					}
+				},
+				orderBy: {
+					createdAt: 'desc'
+				},
+				skip,
+				take: limit
+			});
+
+			// Transform posts to include author names
+			const transformedPosts = await Promise.all(
+				posts.map(async (post: any) => {
+					const author = await transformUserData(post.author.clerkId);
+					return {
+						...post,
+						authorName: author.name
+					};
+				})
+			);
+
+			const total = await prisma.post.count({ where });
+
+			return json({
+				posts: transformedPosts,
+				pagination: {
+					page,
+					limit,
+					total,
+					totalPages: Math.ceil(total / limit)
+				}
+			});
+		}
+
+		// Original user-facing logic
 		const posts = await prisma.post.findMany({
 			where,
 			include: {
@@ -157,6 +223,11 @@ export const POST: RequestHandler = async (event) => {
 		return json({ error: 'Unauthorized' }, { status: 401 });
 	}
 
+	// Check if user is admin for admin post creation
+	if (user.publicMetadata?.role !== 'admin') {
+		return json({ error: 'Admin access required' }, { status: 403 });
+	}
+
 	const data = await event.request.json();
 
 	try {
@@ -205,6 +276,7 @@ export const POST: RequestHandler = async (event) => {
 
 		return json({ post: transformedPost });
 	} catch (error: unknown) {
+		console.error('Error creating post:', error);
 		let message = 'Unknown error';
 		if (error && typeof error === 'object' && 'message' in error) {
 			message = (error as any).message;

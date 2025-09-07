@@ -13,11 +13,14 @@
 					<a href="/admin/quizzes" class:active={$page.url.pathname.includes('/quizzes')}>Quizzes</a
 					>
 				</li>
+				<li>
+					<a href="/admin/posts" class:active={$page.url.pathname.includes('/posts')}>Posts</a>
+				</li>
 			</ul>
 		</div>
 	</div>
 
-	<div class="container mx-auto p-4">
+	<div class="container mx-auto max-w-7xl p-4">
 		<slot />
 	</div>
 </div>

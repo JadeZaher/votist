@@ -88,6 +88,45 @@ export interface PostData {
 	poll?: Poll;
 }
 
+// Admin Post interface for management
+export interface Post {
+	id: string;
+	title: string;
+	content: string;
+	authorId: string;
+	authorName?: string; // Added for admin display
+	category: string;
+	tags: string[];
+	likes: number;
+	comments: Comment[];
+	votes: Vote[];
+	poll?: Poll;
+	isLiked: boolean;
+	isBookmarked: boolean;
+	createdAt: Date;
+	updatedAt: Date;
+}
+
+export interface Comment {
+	id: string;
+	content: string;
+	authorId: string;
+	postId: string;
+	parentId?: string;
+	likes: number;
+	isLiked: boolean;
+	createdAt: Date;
+	updatedAt: Date;
+}
+
+export interface Vote {
+	id: string;
+	userId: string;
+	postId: string;
+	optionId: string;
+	createdAt: Date;
+}
+
 export interface CommentData {
 	id: string;
 	author: {
