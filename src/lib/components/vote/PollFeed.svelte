@@ -1,232 +1,167 @@
 <script lang="ts">
-	import type { PollFeedData } from '$lib/types';
+	import type { PollFeedData, PostData, CommentData } from '$lib/types';
 	import DiscussionForum from './DiscussionForum.svelte';
+	import { onMount } from 'svelte';
 
-	// Mock data for multiple polls
-	const mockPolls: PollFeedData[] = [
-		{
-			post: {
-				id: '1',
-				title: 'Which React 19 feature are you most excited about?',
-				content:
-					"React 19 has introduced several groundbreaking features that are changing how we build applications. I'm curious to see which feature the community is most excited about!\n\nEach of these features brings significant improvements to developer experience and application performance. Cast your vote and let's see what the community thinks!",
-				author: {
-					name: 'Sarah Chen',
-					avatar:
-						'https://images.unsplash.com/photo-1494790108755-2616b612b47c?w=150&h=150&fit=crop&crop=face',
-					username: 'sarahdev',
-					isVerified: true
-				},
-				timestamp: '2 hours ago',
-				category: 'React',
-				likes: 42,
-				comments: 18,
-				isLiked: false,
-				isBookmarked: true,
-				tags: ['react', 'javascript', 'frontend', 'poll'],
-				poll: {
-					question: 'Which React 19 feature are you most excited about?',
-					options: [
-						{ id: 'option1', text: 'Server Components integration', votes: 156 },
-						{ id: 'option2', text: 'New use() hook', votes: 89 },
-						{ id: 'option3', text: 'Automatic batching improvements', votes: 134 },
-						{ id: 'option4', text: 'Suspense enhancements', votes: 67 },
-						{ id: 'option5', text: 'Compiler optimizations', votes: 198 }
-					],
-					totalVotes: 644,
-					endsAt: 'in 3 days'
-				}
-			},
-			comments: [
-				{
-					id: 'c1',
-					author: {
-						name: 'Alex Rodriguez',
-						avatar:
-							'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-						username: 'alexr'
-					},
-					content:
-						'Voted for Server Components! The automatic deduplication of requests has been a game-changer in my projects.',
-					timestamp: '1 hour ago',
-					likes: 12,
-					isLiked: true,
-					replies: [
-						{
-							id: 'c1r1',
-							author: {
-								name: 'Maya Patel',
-								avatar:
-									'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
-								username: 'mayap'
-							},
-							content: 'Same here! Have you noticed any differences in bundle size?',
-							timestamp: '45 min ago',
-							likes: 3,
-							isLiked: false
-						}
-					]
-				},
-				{
-					id: 'c2',
-					author: {
-						name: 'David Kim',
-						avatar:
-							'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-						username: 'davidk'
-					},
-					content:
-						'I went with compiler optimizations. The automatic performance improvements without changing code is amazing!',
-					timestamp: '45 min ago',
-					likes: 7,
-					isLiked: false
-				}
-			]
-		},
-		{
-			post: {
-				id: '2',
-				title: "What's your preferred CSS framework in 2024?",
-				content:
-					"With so many CSS frameworks and approaches available today, I'm curious about what the community is gravitating towards. Each option has its own strengths and use cases.\n\nWhat has your experience been like with these different approaches?",
-				author: {
-					name: 'Marcus Johnson',
-					avatar:
-						'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-					username: 'marcusj',
-					isVerified: false
-				},
-				timestamp: '4 hours ago',
-				category: 'CSS',
-				likes: 28,
-				comments: 12,
-				isLiked: false,
-				isBookmarked: false,
-				tags: ['css', 'tailwind', 'styling', 'frontend'],
-				poll: {
-					question: "What's your preferred CSS framework in 2024?",
-					options: [
-						{ id: 'css1', text: 'Tailwind CSS', votes: 245 },
-						{ id: 'css2', text: 'CSS Modules', votes: 89 },
-						{ id: 'css3', text: 'Styled Components', votes: 76 },
-						{ id: 'css4', text: 'Vanilla CSS', votes: 134 },
-						{ id: 'css5', text: 'Emotion', votes: 45 }
-					],
-					totalVotes: 589,
-					endsAt: 'in 5 days'
-				}
-			},
-			comments: [
-				{
-					id: 'c3',
-					author: {
-						name: 'Elena Vasquez',
-						avatar:
-							'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face',
-						username: 'elenav'
-					},
-					content:
-						'Tailwind all the way! The developer experience and consistency it provides is unmatched.',
-					timestamp: '3 hours ago',
-					likes: 8,
-					isLiked: false
-				},
-				{
-					id: 'c4',
-					author: {
-						name: "Ryan O'Connor",
-						avatar:
-							'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face',
-						username: 'ryano'
-					},
-					content:
-						"I still prefer vanilla CSS for better understanding of what's happening under the hood.",
-					timestamp: '2 hours ago',
-					likes: 15,
-					isLiked: true
-				}
-			]
-		},
-		{
-			post: {
-				id: '3',
-				title: 'Which deployment platform do you use most often?',
-				content:
-					"Deployment platforms have evolved significantly, each offering unique features and pricing models. I'm interested in seeing what the community prefers for different types of projects.\n\nShare your experiences and any tips for fellow developers!",
-				author: {
-					name: 'Ashley Kim',
-					avatar:
-						'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
-					username: 'ashleyk',
-					isVerified: true
-				},
-				timestamp: '6 hours ago',
-				category: 'DevOps',
-				likes: 67,
-				comments: 24,
-				isLiked: true,
-				isBookmarked: true,
-				tags: ['deployment', 'hosting', 'devops', 'infrastructure'],
-				poll: {
-					question: 'Which deployment platform do you use most often?',
-					options: [
-						{ id: 'deploy1', text: 'Vercel', votes: 189 },
-						{ id: 'deploy2', text: 'Netlify', votes: 156 },
-						{ id: 'deploy3', text: 'AWS', votes: 234 },
-						{ id: 'deploy4', text: 'Railway', votes: 78 },
-						{ id: 'deploy5', text: 'DigitalOcean', votes: 123 }
-					],
-					totalVotes: 780,
-					endsAt: 'in 2 days'
-				}
-			},
-			comments: [
-				{
-					id: 'c5',
-					author: {
-						name: 'James Wilson',
-						avatar:
-							'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-						username: 'jamesw'
-					},
-					content:
-						"Vercel's integration with Next.js is seamless. The deployment experience is fantastic!",
-					timestamp: '5 hours ago',
-					likes: 19,
-					isLiked: false,
-					replies: [
-						{
-							id: 'c5r1',
-							author: {
-								name: 'Sofia Martinez',
-								avatar:
-									'https://images.unsplash.com/photo-1494790108755-2616b612b47c?w=150&h=150&fit=crop&crop=face',
-								username: 'sofiam'
-							},
-							content: 'Agreed! The preview deployments for every PR are a game changer.',
-							timestamp: '4 hours ago',
-							likes: 12,
-							isLiked: true
-						}
-					]
-				},
-				{
-					id: 'c6',
-					author: {
-						name: 'Tom Zhang',
-						avatar:
-							'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-						username: 'tomz'
-					},
-					content:
-						'AWS is more complex but gives you complete control over your infrastructure. Worth learning!',
-					timestamp: '4 hours ago',
-					likes: 22,
-					isLiked: false
-				}
-			]
+	// State variables
+	let polls: PollFeedData[] = [];
+	let loading = true;
+	let error: string | null = null;
+
+	// Helper function to format timestamp
+	function formatTimestamp(date: Date): string {
+		const now = new Date();
+		const diffInMs = now.getTime() - date.getTime();
+		const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+		const diffInDays = Math.floor(diffInHours / 24);
+
+		if (diffInDays > 0) {
+			return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
+		} else if (diffInHours > 0) {
+			return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+		} else {
+			const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+			return `${diffInMinutes} min ago`;
 		}
-	];
+	}
+
+	// Helper function to generate placeholder avatar
+	function getPlaceholderAvatar(name: string): string {
+		// Generate a simple avatar URL based on name
+		const initials = name
+			.split(' ')
+			.map((n) => n[0])
+			.join('')
+			.toUpperCase();
+		return `https://ui-avatars.com/api/?name=${initials}&background=random&color=fff&size=150`;
+	}
+
+	// Helper function to generate placeholder poll data
+	function generatePlaceholderPoll(post: any): any {
+		// If post already has a poll, use it
+		if (post.poll && post.poll.options && post.poll.options.length > 0) {
+			return {
+				question: post.poll.question || post.title,
+				options: post.poll.options.map((option: any) => ({
+					id: option.id,
+					text: option.text,
+					votes: option.votes || 0
+				})),
+				totalVotes: post.poll.totalVotes || 0,
+				endsAt: post.poll.endsAt ? formatTimestamp(new Date(post.poll.endsAt)) : 'in 7 days'
+			};
+		}
+
+		// Generate placeholder poll options based on category
+		const categoryOptions: Record<string, string[]> = {
+			Technology: ['Option A', 'Option B', 'Option C'],
+			Politics: ['Yes', 'No', 'Undecided'],
+			Environment: ['Strongly Agree', 'Agree', 'Neutral', 'Disagree'],
+			'General Discussion': ['Option 1', 'Option 2', 'Option 3'],
+			Education: ['Excellent', 'Good', 'Average', 'Poor']
+		};
+
+		const options = categoryOptions[post.category] || ['Option A', 'Option B', 'Option C'];
+
+		return {
+			question: post.title,
+			options: options.map((text, index) => ({
+				id: `placeholder-${post.id}-${index}`,
+				text,
+				votes: Math.floor(Math.random() * 100) // Random vote count
+			})),
+			totalVotes: Math.floor(Math.random() * 500),
+			endsAt: 'in 7 days'
+		};
+	}
+
+	// Transform API post data to PollFeedData format
+	function transformPostToPollFeedData(post: any): PollFeedData {
+		// Transform comments
+		const transformedComments: CommentData[] = (post.comments || []).map((comment: any) => ({
+			id: comment.id,
+			author: {
+				name: comment.author.name || 'Anonymous User',
+				avatar: comment.author.avatar || getPlaceholderAvatar(comment.author.name || 'Anonymous'),
+				username: comment.author.username || 'user'
+			},
+			content: comment.content,
+			timestamp: formatTimestamp(new Date(comment.createdAt)),
+			likes: comment.likes || 0, // Use actual likes from database
+			isLiked: comment.isLiked || false, // Use actual isLiked from database
+			replies: (comment.replies || []).map((reply: any) => ({
+				id: reply.id,
+				author: {
+					name: reply.author.name || 'Anonymous User',
+					avatar: reply.author.avatar || getPlaceholderAvatar(reply.author.name || 'Anonymous'),
+					username: reply.author.username || 'user'
+				},
+				content: reply.content,
+				timestamp: formatTimestamp(new Date(reply.createdAt)),
+				likes: reply.likes || 0, // Use actual likes from database
+				isLiked: reply.isLiked || false // Use actual isLiked from database
+			}))
+		}));
+
+		// Transform post data
+		const transformedPost: PostData = {
+			id: post.id,
+			title: post.title,
+			content: post.content,
+			author: {
+				name: post.author.name || 'Anonymous User',
+				avatar: post.author.avatar || getPlaceholderAvatar(post.author.name || 'Anonymous'),
+				username: post.author.username || 'user',
+				isVerified: post.author.isVerified || false
+			},
+			timestamp: formatTimestamp(new Date(post.createdAt)),
+			category: post.category,
+			likes: post.likes || 0, // Use actual likes from database
+			comments: post._count?.comments || 0,
+			isLiked: post.isLiked || false, // Use actual isLiked from database
+			isBookmarked: post.isBookmarked || false, // Use actual isBookmarked from database
+			tags: post.tags || [post.category.toLowerCase()], // Use category as tag if no tags
+			poll: generatePlaceholderPoll(post)
+		};
+
+		return {
+			post: transformedPost,
+			comments: transformedComments
+		};
+	}
+
+	// Fetch posts from API
+	async function fetchPosts() {
+		try {
+			loading = true;
+			error = null;
+
+			const response = await fetch('/api/posts?limit=10');
+			if (!response.ok) {
+				throw new Error(`HTTP error! status: ${response.status}`);
+			}
+
+			const data = await response.json();
+
+			if (data.error) {
+				throw new Error(data.error);
+			}
+
+			// Transform the posts to match PollFeedData interface
+			polls = data.posts.map(transformPostToPollFeedData);
+		} catch (err) {
+			console.error('Error fetching posts:', err);
+			error = err instanceof Error ? err.message : 'Failed to load posts';
+			polls = []; // Set empty array on error
+		} finally {
+			loading = false;
+		}
+	}
+
+	// Load posts on component mount
+	onMount(() => {
+		fetchPosts();
+	});
 </script>
 
 <div class="mx-auto max-w-4xl space-y-6 p-4">
@@ -237,7 +172,42 @@
 		</p>
 	</div>
 
-	{#each mockPolls as pollData (pollData.post.id)}
-		<DiscussionForum {pollData} />
-	{/each}
+	{#if loading}
+		<div class="flex items-center justify-center py-12">
+			<div class="loading loading-spinner loading-lg text-primary"></div>
+			<span class="ml-4 text-lg">Loading polls...</span>
+		</div>
+	{:else if error}
+		<div class="alert alert-error">
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				class="h-6 w-6 shrink-0 stroke-current"
+				fill="none"
+				viewBox="0 0 24 24"
+			>
+				<path
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					stroke-width="2"
+					d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+				/>
+			</svg>
+			<div>
+				<h3 class="font-bold">Error loading polls</h3>
+				<div class="text-xs">{error}</div>
+			</div>
+			<button class="btn btn-sm btn-outline" on:click={fetchPosts}>Retry</button>
+		</div>
+	{:else if polls.length === 0}
+		<div class="py-12 text-center">
+			<div class="mb-4 text-6xl">🗳️</div>
+			<h3 class="mb-2 text-xl font-semibold">No polls available</h3>
+			<p class="mb-4 text-gray-600">There are no polls to display at the moment.</p>
+			<button class="btn btn-primary" on:click={fetchPosts}>Refresh</button>
+		</div>
+	{:else}
+		{#each polls as pollData (pollData.post.id)}
+			<DiscussionForum {pollData} />
+		{/each}
+	{/if}
 </div>
