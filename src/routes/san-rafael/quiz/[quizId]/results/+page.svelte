@@ -70,7 +70,7 @@
 	}
 
 	function handleVoteNow() {
-		goto('/san-rafael/proposals'); // Go to proposals for voting
+		goto('/vote'); // Go to proposals for voting
 	}
 
 	function handleLearnMore() {
