@@ -15,24 +15,36 @@ export const load: ServerLoad = async (event) => {
 		await initializeUserProgress(userId);
 
 		const quizzes = await prisma.quiz.findMany({
-			where: { enabled: true },
-			orderBy: [{ difficulty: 'asc' }, { sequence: 'asc' }],
+			orderBy: [{ difficulty: 'asc' }, { order: 'asc' }],
 			include: {
-				QuizProgress: {
+				userProgress: {
 					where: { userId: userId },
-					select: { status: true }
+					select: { isCompleted: true, quizScore: true }
 				}
 			}
 		});
 
-		const quizzesWithProgress = quizzes.map((quiz) => ({
-			id: quiz.id,
-			title: quiz.title,
-			difficulty: quiz.difficulty,
-			sequence: quiz.sequence,
-			prerequisiteId: quiz.prerequisiteId,
-			status: quiz.QuizProgress[0]?.status || 'LOCKED'
-		}));
+		const quizzesWithProgress = quizzes.map((quiz) => {
+			const userProgress = quiz.userProgress[0];
+			let status = 'LOCKED';
+			
+			if (userProgress) {
+				if (userProgress.isCompleted) {
+					status = 'COMPLETED';
+				} else {
+					status = 'AVAILABLE';
+				}
+			}
+			
+			return {
+				id: quiz.id,
+				title: quiz.title,
+				difficulty: quiz.difficulty,
+				order: quiz.order,
+				status: status,
+				score: userProgress?.quizScore || 0
+			};
+		});
 
 		return {
 			quizzes: quizzesWithProgress
