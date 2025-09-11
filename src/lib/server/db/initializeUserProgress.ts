@@ -19,14 +19,14 @@ export async function initializeUserProgress(userId: string): Promise<void> {
 			select: { quizId: true }
 		});
 
-		const existingQuizIds = new Set(existingProgress.map(p => p.quizId));
+		const existingQuizIds = new Set(existingProgress.map((p) => p.quizId));
 
 		// Create UserProgress records for quizzes that don't have them yet
-		const missingQuizzes = allQuizzes.filter(quiz => !existingQuizIds.has(quiz.id));
+		const missingQuizzes = allQuizzes.filter((quiz) => !existingQuizIds.has(quiz.id));
 
 		if (missingQuizzes.length > 0) {
 			await prisma.userProgress.createMany({
-				data: missingQuizzes.map(quiz => ({
+				data: missingQuizzes.map((quiz) => ({
 					userId,
 					quizId: quiz.id,
 					materialId: quiz.id, // Using quizId as materialId for now

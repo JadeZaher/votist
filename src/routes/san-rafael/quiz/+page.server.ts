@@ -27,7 +27,7 @@ export const load: ServerLoad = async (event) => {
 		const quizzesWithProgress = quizzes.map((quiz) => {
 			const userProgress = quiz.userProgress[0];
 			let status = 'LOCKED';
-			
+
 			if (userProgress) {
 				if (userProgress.isCompleted) {
 					status = 'COMPLETED';
@@ -35,7 +35,7 @@ export const load: ServerLoad = async (event) => {
 					status = 'AVAILABLE';
 				}
 			}
-			
+
 			return {
 				id: quiz.id,
 				title: quiz.title,
