@@ -17,6 +17,9 @@ export const load = (async ({ params }) => {
 						id: true,
 						text: true,
 						type: true,
+						imageUrl: true,
+						imageAlt: true,
+						videoUrl: true,
 						options: true,
 						correctAnswer: true
 					}

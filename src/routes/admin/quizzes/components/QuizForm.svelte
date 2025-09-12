@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
+	import QuestionEditor from './QuestionEditor.svelte';
 
 	const dispatch = createEventDispatcher<{
 		saved: void;
@@ -19,6 +20,7 @@
 		type: string;
 		imageUrl?: string;
 		imageAlt?: string;
+		videoUrl?: string;
 		options: LocalOption[];
 	}
 
@@ -32,8 +34,9 @@
 			id: crypto.randomUUID(),
 			text: '',
 			type: 'single-choice',
-			imageUrl: '',
-			imageAlt: '',
+		imageUrl: '',
+		imageAlt: '',
+		videoUrl: '',
 			options: Array(4)
 				.fill(null)
 				.map(() => ({
@@ -187,22 +190,32 @@
 		const toast = document.createElement('div');
 		toast.className = `toast toast-end`;
 		toast.innerHTML = `
-            <div class="alert ${type === 'success' ? 'alert-success' : 'alert-error'}">
-                <span>${message}</span>
-            </div>
-        `;
+			<div class="alert ${type === 'success' ? 'alert-success' : 'alert-error'}">
+				<span>${message}</span>
+			<!-- removed stray closing div after refactor -->
+		`;
 		document.body.appendChild(toast);
 		setTimeout(() => toast.remove(), 3000);
+	}
+
+	function setQuestionField(index: number, key: string, value: any) {
+		questions = questions.map((q, i) =>
+			i === index
+				? {
+						...q,
+						[key]: value
+					}
+				: q
+		);
 	}
 </script>
 
 <form on:submit|preventDefault={handleSubmit} class="space-y-6">
-	<div class="form-control w-full">
+				<!-- Removed leftover open div from previous question form markup -->
 		<label class="label" for="title">
 			<span class="label-text">Quiz Title</span>
 		</label>
 		<input id="title" type="text" class="input input-bordered w-full" bind:value={title} required />
-	</div>
 
 	<div class="form-control w-full">
 		<label class="label" for="description">
@@ -250,120 +263,17 @@
 
 	<div class="divider">Questions</div>
 
-	{#each questions as question, questionIndex}
-		<div class="card bg-base-200 p-4">
-			<div class="mb-4 flex items-center justify-between">
-				<h3 class="font-bold">Question {questionIndex + 1}</h3>
-				{#if questions.length > 1}
-					<button
-						type="button"
-						class="btn btn-sm btn-error btn-circle"
-						on:click={() => removeQuestion(questionIndex)}
-						aria-label="Remove question"
-					>
-						×
-					</button>
-				{/if}
-			</div>
-
-			<div class="space-y-4">
-				<div class="form-control">
-					<label class="label" for={'question-title-' + questionIndex}>
-						<span class="label-text">Question Text</span>
-					</label>
-					<input
-						id={'question-title-' + questionIndex}
-						type="text"
-						class="input input-bordered w-full"
-						bind:value={question.text}
-						required
-					/>
-				</div>
-
-				<div class="form-control">
-					<label class="label" for={'question-image-' + questionIndex}>
-						<span class="label-text">Image URL (optional)</span>
-					</label>
-					<input
-						id={'question-image-' + questionIndex}
-						type="url"
-						class="input input-bordered w-full"
-						bind:value={question.imageUrl}
-						placeholder="https://example.com/image.jpg"
-					/>
-					<label class="label" for={'question-image-' + questionIndex}>
-						<span class="label-text-alt">Add an image to help illustrate the question</span>
-					</label>
-				</div>
-
-				{#if question.imageUrl && question.imageUrl.trim()}
-					<div class="form-control">
-						<label class="label" for={'question-alt-' + questionIndex}>
-							<span class="label-text">Image Alt Text</span>
-						</label>
-						<input
-							id={'question-alt-' + questionIndex}
-							type="text"
-							class="input input-bordered w-full"
-							bind:value={question.imageAlt}
-							placeholder="Describe what's shown in the image"
-							required
-						/>
-						<label class="label" for={'question-alt-' + questionIndex}>
-							<span class="label-text-alt"
-								>Required for accessibility - describe the image content</span
-							>
-						</label>
-					</div>
-				{/if}
-
-				<div class="form-control w-full">
-					<label class="label" for={'question-options-' + questionIndex}>
-						<span class="label-text">Options (4 required)</span>
-					</label>
-
-					{#each question.options.slice(0, 4) as option, optionIndex}
-						<div class="join mt-2 w-full">
-							<input
-								type="text"
-								class="input input-bordered join-item w-full"
-								bind:value={option.text}
-								placeholder="Option {optionIndex + 1}"
-								required
-							/>
-							<input
-								type="radio"
-								name="correct-{questionIndex}"
-								class="radio radio-primary join-item"
-								class:radio-error={!question.options.some((opt) => opt.isCorrect)}
-								checked={option.isCorrect}
-								on:change={() => setCorrectOption(questionIndex, optionIndex)}
-								required
-							/>
-						</div>
-					{/each}
-
-					<!-- No Opinion option -->
-					<div class="form-control mt-4">
-						<label class="label cursor-pointer">
-							<span class="label-text">Include "No Opinion" option</span>
-							<input
-								type="checkbox"
-								class="checkbox checkbox-primary"
-								checked={question.options.some((opt) => opt.isNoOpinion)}
-								on:change={(e) => handleNoOpinionChange(questionIndex, e.currentTarget.checked)}
-							/>
-						</label>
-					</div>
-
-					{#if !question.options.some((opt) => opt.isCorrect)}
-						<div class="text-error mt-2 text-sm">Please select a correct answer</div>
-					{/if}
-				</div>
-			</div>
-		</div>
-	{/each}
-
+		{#each questions as question, questionIndex}
+			<QuestionEditor
+				question={question}
+				{questionIndex}
+				questionsLength={questions.length}
+				{setCorrectOption}
+				{removeQuestion}
+				{handleNoOpinionChange}
+				{setQuestionField}
+			/>
+		{/each}
 	<div class="flex justify-between">
 		<button type="button" class="btn" on:click={addQuestion}> Add Question </button>
 		<div class="join">

@@ -25,6 +25,7 @@ interface Question extends BaseEntity {
 	type: string;
 	imageUrl?: string;
 	imageAlt?: string;
+	videoUrl?: string; // Optional video URL for question
 	options: Option[];
 	correctAnswer: Option | null;
 }

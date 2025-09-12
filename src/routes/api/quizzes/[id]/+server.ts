@@ -137,6 +137,7 @@ export const PUT: RequestHandler = async (event) => {
 						type: q.type,
 						imageUrl: q.imageUrl,
 						imageAlt: q.imageAlt,
+						videoUrl: q.videoUrl,
 						options: Array.isArray(q.options) ? q.options : [],
 						correctAnswer: q.correctAnswer
 					}
@@ -149,6 +150,7 @@ export const PUT: RequestHandler = async (event) => {
 						type: q.type,
 						imageUrl: q.imageUrl,
 						imageAlt: q.imageAlt,
+						videoUrl: q.videoUrl,
 						options: Array.isArray(q.options) ? q.options : [],
 						correctAnswer: q.correctAnswer
 					}
