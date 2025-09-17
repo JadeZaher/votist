@@ -44,6 +44,7 @@ export const POST: RequestHandler = async (event) => {
 						type: q.type,
 						imageUrl: q.imageUrl,
 						imageAlt: q.imageAlt,
+						videoUrl: q.videoUrl,
 						options: q.options,
 						correctAnswer: q.correctAnswer
 					}))

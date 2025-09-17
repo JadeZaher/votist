@@ -4,6 +4,8 @@
 	import { dev } from '$app/environment';
 	import QuizAnswerCorrectIcon from '$lib/components/icons/QuizAnswerCorrectIcon.svelte';
 	import QuizAnswerIncorrectIcon from '$lib/components/icons/QuizAnswerIncorrectIcon.svelte';
+	import VideoCard from '$lib/components/cards/VideoCard.svelte';
+	import { parseVideoUrl } from '$lib/util/videoUtils';
 	import type { Quiz, Option } from '$lib/types';
 
 	interface PageData {
@@ -24,6 +26,12 @@
 	const progressPercentage = $derived(
 		((currentQuestionIndex + 1) / data.quiz.questions.length) * 100
 	);
+
+	// Parse video URL for current question if available
+	const currentVideoInfo = $derived(() => {
+		if (!currentQuestion?.videoUrl) return null;
+		return parseVideoUrl(currentQuestion.videoUrl);
+	});
 
 	function selectAnswer(answer: string) {
 		if (!showFeedback) {
@@ -157,6 +165,14 @@
 					>
 						{currentQuestion?.text}
 					</div>
+
+					<!-- Question Video (if present) -->
+					{#if currentVideoInfo()}
+						{@const videoInfo = currentVideoInfo()!}
+						<div class="mx-auto mt-6 mb-4 w-full max-w-2xl">
+							<VideoCard videoId={videoInfo.videoId} service={videoInfo.service} />
+						</div>
+					{/if}
 
 					<!-- Question Image (if present) -->
 					{#if currentQuestion?.imageUrl && !imageLoadError}
