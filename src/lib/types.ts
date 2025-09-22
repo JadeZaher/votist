@@ -83,7 +83,7 @@ export interface PostData {
 	category: string;
 	likes: number;
 	comments: number;
-	isLiked: boolean;
+	isLiked?: boolean; // Optional, calculated dynamically
 	isBookmarked: boolean;
 	tags: string[];
 	poll?: Poll;
@@ -102,7 +102,6 @@ export interface Post {
 	comments: Comment[];
 	votes: Vote[];
 	poll?: Poll;
-	isLiked: boolean;
 	isBookmarked: boolean;
 	createdAt: Date;
 	updatedAt: Date;
@@ -115,7 +114,6 @@ export interface Comment {
 	postId: string;
 	parentId?: string;
 	likes: number;
-	isLiked: boolean;
 	createdAt: Date;
 	updatedAt: Date;
 }
@@ -138,8 +136,10 @@ export interface CommentData {
 	content: string;
 	timestamp: string;
 	likes: number;
-	isLiked: boolean;
+	isLiked?: boolean; // Optional, calculated dynamically
 	replies?: CommentData[];
+	rootCommentId?: string; // For tracking the thread root
+	parentId?: string; // For tracking immediate parent
 }
 
 export interface PollFeedData {

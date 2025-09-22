@@ -59,9 +59,15 @@ export const POST: RequestHandler = async (event) => {
 			});
 
 			if (existingVote) {
-				// User already voted, update their vote
+				// User is changing their vote
 				if (existingVote.optionId === data.optionId) {
-					return json({ error: 'Already voted for this option' }, { status: 400 });
+					// Same option selected, no change needed
+					return await tx.poll.findUnique({
+						where: { id: post.poll!.id },
+						include: {
+							options: true
+						}
+					});
 				}
 
 				// Remove vote from previous option
@@ -75,6 +81,14 @@ export const POST: RequestHandler = async (event) => {
 					where: { id: existingVote.id },
 					data: { optionId: data.optionId }
 				});
+
+				// Add vote to new option
+				await tx.pollOption.update({
+					where: { id: data.optionId },
+					data: { votes: { increment: 1 } }
+				});
+
+				// Total votes don't change when switching
 			} else {
 				// Create new vote
 				await tx.vote.create({
@@ -84,19 +98,19 @@ export const POST: RequestHandler = async (event) => {
 						optionId: data.optionId
 					}
 				});
+
+				// Increment votes for the selected option
+				await tx.pollOption.update({
+					where: { id: data.optionId },
+					data: { votes: { increment: 1 } }
+				});
+
+				// Update total votes in poll
+				await tx.poll.update({
+					where: { id: post.poll!.id },
+					data: { totalVotes: { increment: 1 } }
+				});
 			}
-
-			// Increment votes for the selected option
-			await tx.pollOption.update({
-				where: { id: data.optionId },
-				data: { votes: { increment: 1 } }
-			});
-
-			// Update total votes in poll
-			await tx.poll.update({
-				where: { id: post.poll!.id },
-				data: { totalVotes: { increment: existingVote ? 0 : 1 } }
-			});
 
 			// Return updated poll data
 			return await tx.poll.findUnique({
@@ -107,7 +121,11 @@ export const POST: RequestHandler = async (event) => {
 			});
 		});
 
-		return json({ poll: result });
+		return json({
+			success: true,
+			poll: result,
+			userVote: data.optionId
+		});
 	} catch (error: unknown) {
 		let message = 'Unknown error';
 		if (error && typeof error === 'object' && 'message' in error) {
