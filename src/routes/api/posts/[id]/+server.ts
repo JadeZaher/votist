@@ -233,3 +233,77 @@ export const DELETE: RequestHandler = async (event) => {
 		return json({ error: message }, { status: 500 });
 	}
 };
+
+// POST /api/posts/[id]/like - Toggle like on a post
+export const POST: RequestHandler = async (event) => {
+	const { user, isAuthenticated } = await getUser(event);
+
+	if (!isAuthenticated) {
+		return json({ error: 'Unauthorized' }, { status: 401 });
+	}
+
+	try {
+		// Verify the post exists
+		const post = await prisma.post.findUnique({
+			where: { id: event.params.id },
+			select: { id: true }
+		});
+
+		if (!post) {
+			return json({ error: 'Post not found' }, { status: 404 });
+		}
+
+		// Use transaction to handle like toggle atomically
+		const result = await prisma.$transaction(async (tx) => {
+			// Check if user already liked
+			const existingLike = await tx.postLike.findUnique({
+				where: {
+					userId_postId: {
+						userId: user.id,
+						postId: event.params.id
+					}
+				}
+			});
+
+			let newIsLiked: boolean;
+			let newLikes: number;
+
+			if (existingLike) {
+				// Remove like
+				await tx.postLike.delete({
+					where: { id: existingLike.id }
+				});
+				newIsLiked = false;
+				newLikes = await tx.post.update({
+					where: { id: event.params.id },
+					data: { likes: { decrement: 1 } },
+					select: { likes: true }
+				}).then(c => c.likes);
+			} else {
+				// Add like
+				await tx.postLike.create({
+					data: {
+						userId: user.id,
+						postId: event.params.id
+					}
+				});
+				newIsLiked = true;
+				newLikes = await tx.post.update({
+					where: { id: event.params.id },
+					data: { likes: { increment: 1 } },
+					select: { likes: true }
+				}).then(c => c.likes);
+			}
+
+			return { likes: newLikes, isLiked: newIsLiked };
+		});
+
+		return json({ ...result });
+	} catch (error: unknown) {
+		let message = 'Unknown error';
+		if (error && typeof error === 'object' && 'message' in error) {
+			message = (error as any).message;
+		}
+		return json({ error: message }, { status: 400 });
+	}
+};

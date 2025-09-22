@@ -3,25 +3,102 @@
 	import { MoreHorizontal, ArrowUp, MessageCircle } from 'lucide-svelte';
 
 	export let comment: CommentData;
-	export let onLike: (commentId: string) => void;
-	export let onReply: (commentId: string, content: string) => void;
-	export let depth = 0;
+	export const onLike: (commentId: string) => void = () => {};
+	export let onAddReply: (reply: CommentData) => void;
+	export let depth = 0; // Still used for visual indentation but max 1 level
+	export let postId: string;
+	export let isAuthenticated: boolean;
+	export let user: any;
 
 	let showReplyForm = false;
 	let replyContent = '';
 	let showReplies = true;
+	let isLiking = false;
+	let isReplying = false;
 
-	function handleReplySubmit(e: Event) {
-		e.preventDefault();
-		if (replyContent.trim()) {
-			onReply(comment.id, replyContent);
-			replyContent = '';
-			showReplyForm = false;
+	async function handleLike() {
+		if (!isAuthenticated || isLiking) return;
+
+		// Optimistic update
+		const prevIsLiked = comment.isLiked || false;
+		const prevLikes = comment.likes;
+		comment.isLiked = !prevIsLiked;
+		comment.likes = prevIsLiked ? comment.likes - 1 : comment.likes + 1;
+		isLiking = true;
+
+		try {
+			const response = await fetch(`/api/comments/${comment.id}/like`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				}
+			});
+
+			const result = await response.json();
+
+			if (response.ok) {
+				// Update with actual values from server
+				comment.likes = result.likes;
+				comment.isLiked = result.isLiked;
+			} else {
+				// Revert on error
+				comment.isLiked = prevIsLiked;
+				comment.likes = prevLikes;
+				console.error('Failed to like comment:', result.error);
+			}
+		} catch (error) {
+			// Revert on error
+			comment.isLiked = prevIsLiked;
+			comment.likes = prevLikes;
+			console.error('Error liking comment:', error);
+		} finally {
+			isLiking = false;
 		}
 	}
 
-	const maxDepth = 3;
-	const shouldIndent = depth < maxDepth;
+	async function handleReply() {
+		if (!isAuthenticated || !replyContent.trim() || isReplying) return;
+
+		isReplying = true;
+
+		try {
+			const response = await fetch('/api/comments', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					postId,
+					content: replyContent.trim(),
+					parentId: comment.id
+				})
+			});
+
+			const result = await response.json();
+
+			if (response.ok) {
+				// For 2-level threading, always add replies to the parent callback
+				// The parent component will handle placing it correctly
+				onAddReply(result.comment);
+				replyContent = '';
+				showReplyForm = false;
+			} else {
+				console.error('Failed to add reply:', result.error);
+			}
+		} catch (error) {
+			console.error('Error adding reply:', error);
+		} finally {
+			isReplying = false;
+		}
+	}
+
+	function handleReplyClick() {
+		if (!isAuthenticated) return;
+		showReplyForm = !showReplyForm;
+	}
+
+	const maxDepth = 1; // Only 2 levels: 0 (top-level) and 1 (replies)
+	const shouldIndent = depth > 0;
 </script>
 
 <div class={shouldIndent ? 'ml-6 border-l border-gray-200 pl-4' : ''}>
@@ -54,18 +131,22 @@
 
 			<div class="flex items-center gap-4">
 				<button
-					class="flex h-7 items-center gap-1.5 rounded px-2 hover:bg-gray-100 {comment.isLiked
+					type="button"
+					class="flex h-7 items-center gap-1.5 rounded px-2 hover:bg-gray-100 {comment.isLiked ||
+					false
 						? 'text-orange-500'
-						: 'text-gray-500'}"
-					on:click={() => onLike(comment.id)}
+						: 'text-gray-500'} {!isAuthenticated ? 'cursor-not-allowed opacity-50' : ''}"
+					disabled={!isAuthenticated || isLiking}
+					on:click={handleLike}
 				>
-					<ArrowUp class="h-3 w-3 {comment.isLiked ? 'fill-current' : ''}" />
+					<ArrowUp class="h-3 w-3 {comment.isLiked || false ? 'fill-current' : ''}" />
 					<span class="text-xs">{comment.likes}</span>
 				</button>
 
 				<button
 					class="flex h-7 items-center gap-1.5 rounded px-2 text-gray-500 hover:bg-gray-100"
-					on:click={() => (showReplyForm = !showReplyForm)}
+					on:click={handleReplyClick}
+					disabled={!isAuthenticated}
 				>
 					<MessageCircle class="h-3 w-3" />
 					<span class="text-xs">Reply</span>
@@ -84,12 +165,20 @@
 			</div>
 
 			{#if showReplyForm}
-				<form on:submit={handleReplySubmit} class="mt-3">
+				<div class="mt-3">
 					<div class="flex gap-2">
 						<div
 							class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-gray-200"
 						>
-							<span class="text-xs">U</span>
+							{#if user?.imageUrl}
+								<img
+									src={user.imageUrl}
+									alt={user.firstName || 'User'}
+									class="h-6 w-6 rounded-full"
+								/>
+							{:else}
+								<span class="text-xs">{(user?.firstName || 'U').slice(0, 1).toUpperCase()}</span>
+							{/if}
 						</div>
 						<div class="flex-1">
 							<textarea
@@ -97,32 +186,35 @@
 								placeholder="Write a reply..."
 								class="w-full resize-none rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
 								rows="2"
-							/>
+								disabled={!isAuthenticated || isReplying}
+							></textarea>
 							<div class="mt-2 flex gap-2">
 								<button
-									type="submit"
+									type="button"
 									class="rounded bg-blue-500 px-3 py-1 text-sm text-white disabled:opacity-50"
-									disabled={!replyContent.trim()}
+									disabled={!replyContent.trim() || !isAuthenticated || isReplying}
+									on:click={handleReply}
 								>
-									Reply
+									{isReplying ? 'Replying...' : 'Reply'}
 								</button>
 								<button
 									type="button"
 									class="rounded bg-gray-200 px-3 py-1 text-sm text-gray-700"
 									on:click={() => (showReplyForm = false)}
+									disabled={isReplying}
 								>
 									Cancel
 								</button>
 							</div>
 						</div>
 					</div>
-				</form>
+				</div>
 			{/if}
 
 			{#if comment.replies && comment.replies.length > 0 && showReplies}
 				<div class="mt-3">
 					{#each comment.replies as reply (reply.id)}
-						<svelte:self comment={reply} {onLike} {onReply} depth={depth + 1} />
+						<svelte:self comment={reply} {onAddReply} depth={1} {postId} {isAuthenticated} {user} />
 					{/each}
 				</div>
 			{/if}

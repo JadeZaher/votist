@@ -101,26 +101,28 @@ model User {
   posts        Post[]
   comments     Comment[]
   votes        Vote[]
+  postLikes    PostLike[]
+  commentLikes CommentLike[]
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
 }
 
 model Post {
-  id           String    @id @default(cuid())
+  id           String     @id @default(cuid())
   title        String
   content      String
   authorId     String
-  author       User      @relation(fields: [authorId], references: [clerkId])
+  author       User       @relation(fields: [authorId], references: [clerkId])
   category     String
   tags         String[]
-  likes        Int       @default(0)
+  likes        Int        @default(0)
   comments     Comment[]
   votes        Vote[]
+  postLikes    PostLike[]
   poll         Poll?
-  isLiked      Boolean   @default(false)
-  isBookmarked Boolean   @default(false)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  isBookmarked Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 
   @@index([authorId])
   @@index([category])
@@ -153,23 +155,27 @@ model PollOption {
 }
 
 model Comment {
-  id        String    @id @default(cuid())
-  content   String
-  authorId  String
-  author    User      @relation(fields: [authorId], references: [clerkId])
-  postId    String
-  post      Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
-  parentId  String?
-  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
-  replies   Comment[] @relation("CommentReplies")
-  likes     Int       @default(0)
-  isLiked   Boolean   @default(false)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id            String        @id @default(cuid())
+  content       String
+  authorId      String
+  author        User          @relation(fields: [authorId], references: [clerkId])
+  postId        String
+  post          Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parentId      String?
+  parent        Comment?      @relation("CommentReplies", fields: [parentId], references: [id])
+  replies       Comment[]     @relation("CommentReplies")
+  rootCommentId String? // Points to the original comment in the thread
+  rootComment   Comment?      @relation("CommentThread", fields: [rootCommentId], references: [id])
+  threadReplies Comment[]     @relation("CommentThread")
+  likes         Int           @default(0)
+  commentLikes  CommentLike[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
   @@index([authorId])
   @@index([postId])
   @@index([parentId])
+  @@index([rootCommentId])
 }
 
 model Vote {
@@ -186,4 +192,30 @@ model Vote {
   @@index([userId])
   @@index([postId])
   @@index([optionId])
+}
+
+model PostLike {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [clerkId])
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, postId])
+  @@index([userId])
+  @@index([postId])
+}
+
+model CommentLike {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [clerkId])
+  commentId String
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, commentId])
+  @@index([userId])
+  @@index([commentId])
 }
