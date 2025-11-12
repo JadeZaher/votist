@@ -38,6 +38,7 @@
 	let pollQuestion = '';
 	let pollOptions: string[] = ['', ''];
 	let pollEndsAt = '';
+	let pollRequiredDifficulty: 'VOTIST' | 'SCHOLAR' | 'MENTOR' | null = null;
 
 	function addTag() {
 		const tag = tagInput.trim();
@@ -88,7 +89,8 @@
 				postData.poll = {
 					question: pollQuestion.trim(),
 					options: pollOptions.filter((opt) => opt.trim()).map((opt) => ({ text: opt.trim() })),
-					endsAt: pollEndsAt ? new Date(pollEndsAt).toISOString() : null
+					endsAt: pollEndsAt ? new Date(pollEndsAt).toISOString() : null,
+					requiredDifficulty: pollRequiredDifficulty
 				};
 			}
 
@@ -273,6 +275,27 @@
 					class="input input-bordered w-full"
 					bind:value={pollEndsAt}
 				/>
+			</div>
+
+			<div class="form-control">
+				<label class="label" for="poll-difficulty">
+					<span class="label-text">Required Quiz Difficulty (optional)</span>
+				</label>
+				<select
+					id="poll-difficulty"
+					class="select select-bordered w-full"
+					bind:value={pollRequiredDifficulty}
+				>
+					<option value={null}>No requirement</option>
+					<option value="VOTIST">VOTIST - Basic level</option>
+					<option value="SCHOLAR">SCHOLAR - Intermediate level</option>
+					<option value="MENTOR">MENTOR - Advanced level</option>
+				</select>
+				<div class="label">
+					<span class="label-text-alt text-gray-500">
+						Users must complete at least one quiz of this difficulty level to vote.
+					</span>
+				</div>
 			</div>
 		</div>
 	{/if}

@@ -23,6 +23,12 @@
 	} | null = null;
 
 	let isVoting: boolean = false;
+	let showQuizRequirementModal: boolean = false;
+	let quizRequirementMessage: string = '';
+	let requiredDifficultyLevel: string = '';
+
+	// Debug logging
+	$: console.log('[Post Component] Auth status:', { isAuthenticated, hasUser: !!user });
 
 	async function handleVoteClick(optionId: string) {
 		if (!post.poll || !isAuthenticated || isVoting) return;
@@ -120,6 +126,16 @@
 					};
 				}
 				console.log('Vote submitted successfully via API');
+			} else if (response.status === 403 && data.error === 'Quiz requirement not met') {
+				// Quiz requirement not met - show modal and redirect
+				if (revertVote && post.poll) {
+					post.poll.userVote = revertVote.prevUserVote;
+					post.poll.totalVotes = revertVote.prevTotalVotes;
+					post.poll.options = revertVote.prevOptions;
+				}
+				quizRequirementMessage = data.message || 'You need to complete a quiz to vote.';
+				requiredDifficultyLevel = data.requiredDifficulty || '';
+				showQuizRequirementModal = true;
 			} else {
 				// Revert optimistic update on failure
 				if (revertVote && post.poll) {
@@ -146,6 +162,11 @@
 	function getPercentage(votes: number, total: number) {
 		if (total === 0) return 0;
 		return Math.round((votes / total) * 100);
+	}
+
+	function redirectToQuizzes() {
+		showQuizRequirementModal = false;
+		window.location.href = '/san-rafael';
 	}
 </script>
 
@@ -330,3 +351,54 @@
 		</div>
 	</div>
 </div>
+
+<!-- Quiz Requirement Modal -->
+{#if showQuizRequirementModal}
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+		on:click={() => (showQuizRequirementModal = false)}
+		on:keydown={(e) => e.key === 'Escape' && (showQuizRequirementModal = false)}
+		role="button"
+		tabindex="-1"
+	>
+		<div
+			class="mx-4 max-w-md rounded-lg bg-white p-6 shadow-xl"
+			on:click={(e) => e.stopPropagation()}
+			on:keydown={(e) => e.stopPropagation()}
+			role="dialog"
+			aria-modal="true"
+			tabindex="-1"
+		>
+			<div class="mb-4">
+				<h3 class="mb-2 text-xl font-bold text-gray-900">Quiz Required to Vote</h3>
+				<p class="text-gray-600">
+					{quizRequirementMessage}
+				</p>
+			</div>
+
+			<div class="mb-6 rounded-lg bg-blue-50 p-4">
+				<p class="text-sm text-blue-800">
+					Complete at least one <strong>{requiredDifficultyLevel}</strong> level quiz to participate
+					in this poll. Quizzes help ensure informed participation in our community discussions.
+				</p>
+			</div>
+
+			<div class="flex gap-3">
+				<button
+					type="button"
+					class="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 hover:bg-gray-50"
+					on:click={() => (showQuizRequirementModal = false)}
+				>
+					Cancel
+				</button>
+				<button
+					type="button"
+					class="flex-1 rounded-lg bg-[#167b9b] px-4 py-2 font-medium text-white hover:bg-[#125a74]"
+					on:click={redirectToQuizzes}
+				>
+					Take Quiz
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}

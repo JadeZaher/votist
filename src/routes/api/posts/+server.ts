@@ -243,6 +243,7 @@ export const POST: RequestHandler = async (event) => {
 							create: {
 								question: data.poll.question,
 								endsAt: data.poll.endsAt ? new Date(data.poll.endsAt) : null,
+								requiredDifficulty: data.poll.requiredDifficulty || null,
 								options: {
 									create: data.poll.options.map((option: any) => ({
 										text: option.text

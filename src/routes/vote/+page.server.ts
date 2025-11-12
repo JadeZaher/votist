@@ -35,6 +35,13 @@ export const load: PageServerLoad = async (event) => {
 	const { locals } = event;
 	const { user, isAuthenticated } = await getUser(event);
 
+	// Debug logging
+	console.log('[Vote Page Load] Authentication status:', {
+		isAuthenticated,
+		hasUser: !!user,
+		userId: user?.id
+	});
+
 	let voteMap = new Map<string, string>();
 	let postLikeMap = new Map<string, boolean>();
 	let commentLikeMap = new Map<string, boolean>();

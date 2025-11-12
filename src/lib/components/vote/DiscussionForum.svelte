@@ -1,6 +1,5 @@
 <script lang="ts">
-	import type { PollFeedData, PostData, CommentData, Poll } from '$lib/types';
-	import { enhance } from '$app/forms';
+	import type { PollFeedData, PostData, CommentData } from '$lib/types';
 	import Post from './Post.svelte';
 	import CommentForm from './CommentForm.svelte';
 	import Comment from './Comment.svelte';
@@ -12,42 +11,21 @@
 
 	let post: PostData = pollData.post;
 	let comments: CommentData[] = pollData.comments;
-
-	// Helper function to calculate if user has liked an item
-	function calculateIsLiked(itemId: string, itemType: 'post' | 'comment'): boolean {
-		if (!isAuthenticated || !user) return false;
-		// This would be calculated based on user's like relationships
-		// For now, use the existing isLiked value if available
-		return false; // Will be calculated dynamically
-	}
 	let sortBy = 'popular';
 	let isDiscussionOpen = false;
-
-	let isVoting = false;
-	let isAddingComment = false;
-	let isLikingPost = false;
-	let isLikingComment = false;
-
-	let revertPostLike: { prevIsLiked: boolean; prevLikes: number } | null = null;
-	let postDelta: number;
 
 	// Debug logging to see if the state is changing
 	$: console.log('Discussion open state:', isDiscussionOpen);
 
 	function handlePostLike() {
-		if (!isAuthenticated || isLikingPost) return;
-		const currentIsLiked = post.isLiked || false;
-		revertPostLike = { prevIsLiked: currentIsLiked, prevLikes: post.likes };
-		postDelta = currentIsLiked ? -1 : 1;
-		post.isLiked = !currentIsLiked;
-		post.likes += postDelta;
-		isLikingPost = true;
+		post = {
+			...post,
+			isLiked: !post.isLiked,
+			likes: post.isLiked ? post.likes - 1 : post.likes + 1
+		};
 	}
 
-	// Simplified post like handling
-
 	function handlePostBookmark() {
-		if (!isAuthenticated) return;
 		post = {
 			...post,
 			isBookmarked: !post.isBookmarked
@@ -61,58 +39,85 @@
 	}
 
 	function handleVote(optionId: string) {
-		// This function now just passes the vote to the Post component
-		// The Post component handles the actual form submission and backend call
-		if (!isAuthenticated || !post.poll || post.poll.userVote) return;
-
-		// The Post component will handle the optimistic update and form submission
-		// This function is now mainly a pass-through
+		if (post.poll && !post.poll.userVote) {
+			post = {
+				...post,
+				poll: {
+					...post.poll,
+					userVote: optionId,
+					totalVotes: post.poll.totalVotes + 1,
+					options: post.poll.options.map((option) =>
+						option.id === optionId ? { ...option, votes: option.votes + 1 } : option
+					)
+				}
+			};
+		}
 	}
 
 	function handleCommentLike(commentId: string) {
-		// This function is now handled directly by the Comment component
-		// but we keep it for backward compatibility if needed
-		return;
-	}
-
-	function handleAddComment(comment: CommentData) {
-		if (!isAuthenticated) return;
-
-		// Add the new comment to the beginning of the comments array
-		comments = [comment, ...comments];
-		post = {
-			...post,
-			comments: post.comments + 1
-		};
-	}
-
-	function handleAddReply(reply: CommentData) {
-		if (!isAuthenticated) return;
-
-		// Find the root comment this reply belongs to
-		const targetRootId = reply.rootCommentId;
-
-		if (targetRootId) {
-			// Add to the specific root comment's replies
-			comments = comments.map((comment) => {
-				if (comment.id === targetRootId) {
+		function updateCommentLike(comments: CommentData[]): CommentData[] {
+			return comments.map((comment) => {
+				if (comment.id === commentId) {
 					return {
 						...comment,
-						replies: comment.replies ? [...comment.replies, reply] : [reply]
+						isLiked: !comment.isLiked,
+						likes: comment.isLiked ? comment.likes - 1 : comment.likes + 1
+					};
+				}
+				if (comment.replies) {
+					return {
+						...comment,
+						replies: updateCommentLike(comment.replies)
 					};
 				}
 				return comment;
 			});
-		} else {
-			// This is a top-level comment, add to main comments array
-			comments = [reply, ...comments];
 		}
 
-		// Update post comment count
+		comments = updateCommentLike(comments);
+	}
+
+	function handleAddComment(newComment: CommentData) {
+		comments = [newComment, ...comments];
 		post = {
 			...post,
 			comments: post.comments + 1
 		};
+	}
+
+	function handleAddReply(parentId: string, content: string) {
+		function addReplyToComment(comments: CommentData[]): CommentData[] {
+			return comments.map((comment) => {
+				if (comment.id === parentId) {
+					const newReply: CommentData = {
+						id: `r${Date.now()}`,
+						author: {
+							name: 'You',
+							avatar: '',
+							username: 'you'
+						},
+						content,
+						timestamp: 'now',
+						likes: 0,
+						isLiked: false
+					};
+
+					return {
+						...comment,
+						replies: [...(comment.replies || []), newReply]
+					};
+				}
+				if (comment.replies) {
+					return {
+						...comment,
+						replies: addReplyToComment(comment.replies)
+					};
+				}
+				return comment;
+			});
+		}
+
+		comments = addReplyToComment(comments);
 	}
 
 	$: sortedComments = [...comments].sort((a, b) => {
@@ -130,11 +135,12 @@
 	<div class="p-6">
 		<Post
 			{post}
-			onLike={handlePostLike}
-			onBookmark={handlePostBookmark}
-			onDiscussionClick={handleDiscussionClick}
 			{isAuthenticated}
 			{user}
+			onLike={handlePostLike}
+			onBookmark={handlePostBookmark}
+			onVote={handleVote}
+			onDiscussionClick={handleDiscussionClick}
 		/>
 
 		<!-- Discussion Toggle -->
@@ -169,23 +175,16 @@
 					</div>
 
 					<CommentForm
-						onAddComment={handleAddComment}
-						placeholder="Share your thoughts on the poll..."
+						postId={post.id}
 						{isAuthenticated}
 						{user}
-						postId={post.id}
+						onAddComment={handleAddComment}
+						placeholder="Share your thoughts on the poll..."
 					/>
 
 					<div class="space-y-1">
 						{#each sortedComments as comment (comment.id)}
-							<Comment
-								{comment}
-								onLike={handleCommentLike}
-								onAddReply={handleAddReply}
-								{isAuthenticated}
-								{user}
-								postId={post.id}
-							/>
+							<Comment {comment} onLike={handleCommentLike} onReply={handleAddReply} />
 						{/each}
 					</div>
 				</div>
