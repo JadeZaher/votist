@@ -107,16 +107,8 @@
 					<!-- User Profile Section -->
 					<div class="border-b border-blue-200 p-6">
 						<!-- Circular Profile Picture -->
-						<div
-							class="mb-3 flex h-16 w-16 items-center justify-center rounded-full border border-gray-300 bg-gray-200"
-						>
-							<svg class="h-8 w-8 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-								<path
-									fill-rule="evenodd"
-									d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-									clip-rule="evenodd"
-								/>
-							</svg>
+						<div class="m-4 mx-10 scale-150">
+							<UserButton />
 						</div>
 
 						<!-- Username -->

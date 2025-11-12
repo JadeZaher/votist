@@ -2,6 +2,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { PrismaClient } from '@prisma/client';
 import { json } from '@sveltejs/kit';
 import { getUser } from '$lib/server/auth';
+import { userMeetsQuizRequirement } from '$lib/server/quizPermissions';
 
 const prisma = new PrismaClient();
 
@@ -44,6 +45,25 @@ export const POST: RequestHandler = async (event) => {
 		// Check if poll has ended
 		if (post.poll.endsAt && new Date() > post.poll.endsAt) {
 			return json({ error: 'Poll has ended' }, { status: 400 });
+		}
+
+		// Check if user meets quiz difficulty requirement
+		if (post.poll.requiredDifficulty) {
+			const meetsRequirement = await userMeetsQuizRequirement(
+				user.id,
+				post.poll.requiredDifficulty
+			);
+
+			if (!meetsRequirement) {
+				return json(
+					{
+						error: 'Quiz requirement not met',
+						requiredDifficulty: post.poll.requiredDifficulty,
+						message: `You must complete at least one ${post.poll.requiredDifficulty} level quiz to vote on this poll.`
+					},
+					{ status: 403 }
+				);
+			}
 		}
 
 		// Use transaction to handle vote update/creation atomically
