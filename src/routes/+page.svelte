@@ -32,7 +32,7 @@
 
 <ImageTextSection
 	heading="On Votist, knowledge is power — your power."
-	content="Our Votist Levels ensure that every discussion is led by informed voices, not just the loudest ones. By completing these quizzes, you're not just proving what you know; you're securing your place in a community where credibility is earned."
+	content="Votist is a civic discussion platform where participation is earned through demonstrated understanding, not volume or outrage. The goal is to surface well-articulated visions and arguments by slowing people down and privileging knowledge over reaction."
 	imageUrl={knowledgeispower}
 	imageAlt="Voting interface showing options"
 	buttonText="Start"
