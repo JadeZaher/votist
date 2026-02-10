@@ -91,6 +91,29 @@ The admin panel currently works for basic CRUD but has significant UX friction t
 - Inline form validation with field-level error messages
 - Loading states on all async operations
 
+## PoC Alignment Notes
+
+The PoC introduces specific content management needs beyond general CRUD:
+
+### FR12: Orientation Video Management
+- Admin interface to set/update the orientation video URL and description
+- Manage the list of optional background material links shown alongside the video
+- Preview the orientation page as users will see it
+- Support YouTube/Vimeo embed URLs
+
+### FR13: Structured Poll Question Management
+- The PoC has exactly 3 structured poll questions about San Rafael housing
+- Admin UI should clearly distinguish these PoC polls from general posts
+- Each poll question should support: question text, response options, "No Opinion" option toggle
+- Preview polls as they appear in the structured participation flow
+- Ability to set poll order (1, 2, 3) in the PoC flow
+
+### FR14: Background Materials Management
+- Manage links to related background materials and articles shown in the orientation step
+- Support both internal research articles (WordPress) and external links
+- Set display order and optional descriptions for each material
+- Toggle materials as active/inactive without deleting
+
 ## Non-Functional Requirements
 
 | Requirement | Target |

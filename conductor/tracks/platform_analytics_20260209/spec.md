@@ -135,6 +135,31 @@ timeSpent    Int? // seconds
 lastActiveAt DateTime?
 ```
 
+## PoC Alignment Notes
+
+The PoC's core validation question is: "Will people accept a modest, respectful knowledge gate before expressing a civic opinion — and does this produce a more useful civic signal?" Analytics should directly measure this.
+
+### FR7: Knowledge Gate Acceptance Metrics
+- **Full flow completion rate**: % of users who complete sign-in → video → quiz → all 3 polls
+- **Drop-off by step**: Sign-in → Video watched → Quiz attempted → Quiz passed → Poll 1 → Poll 2 → Poll 3
+- **Time in flow**: Average time from sign-in to completing all 3 polls
+- This is THE primary PoC success metric
+
+### FR8: Civic Signal Quality Metrics
+- **Response variance**: Do the 3 poll questions produce meaningfully different distributions? (Low variance = uninformative signal)
+- **Resident vs non-resident divergence**: Do residents and non-residents respond differently?
+- **Score-response correlation**: Do users with higher quiz scores respond differently than those who barely passed?
+
+### FR9: Resident/Non-Resident Segmentation in All Views
+- All poll response analytics (FR2) should support filtering by resident/non-resident
+- Pipeline analytics (FR4) should show separate funnels for residents vs non-residents
+- Overview dashboard should display resident participation rate
+
+### FR10: Orientation Video Analytics
+- Video view count and completion rate
+- Average time on video page before proceeding to quiz
+- Include video step in the pipeline funnel (between sign-in and quiz)
+
 ## Non-Functional Requirements
 
 | Requirement | Target |

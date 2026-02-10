@@ -245,6 +245,35 @@ Since `clerkId` is the current primary key and all relations reference it:
 ### Shared User Transform
 The duplicated `transformUserData()` function exists in 5 files. Consolidate into a single `$lib/server/users.ts` utility that reads from the local User table.
 
+## PoC Alignment Notes
+
+The PoC flow requires **LinkedIn as the primary sign-in method** for real-name civic accountability. This elevates FR-5 (LinkedIn OAuth) from P1 to **P0** for the PoC launch.
+
+### FR-11: Residency Collection at Sign-Up
+**Description:** Collect whether the user is a San Rafael resident during sign-up to enable result segmentation.
+
+**Acceptance Criteria:**
+- During sign-up (Step 2 or 3), users are asked: "Are you a San Rafael resident?" (yes/no)
+- A `isResident` boolean field is added to the User model
+- This field is used to segment poll results (resident vs non-resident views)
+- Non-residents can still participate; their responses are segmented, not excluded
+- Priority: **P0 (Critical for PoC)**
+
+### FR-12: Real-Name Display Settings
+**Description:** The PoC uses real names for civic accountability but displays only limited name information publicly.
+
+**Acceptance Criteria:**
+- LinkedIn sign-in automatically populates `firstName` and `lastName` from the LinkedIn profile
+- Public display shows first name + last initial (e.g., "John S.") — not full name
+- Aggregate results pages show no individual names
+- Admin views show full names for moderation purposes
+- Priority: **P0 (Critical for PoC)**
+
+### Priority Adjustment for PoC
+- **LinkedIn OAuth (FR-5)**: Elevated from P1 to **P0** — LinkedIn is THE PoC sign-in method for real-name verification
+- **Google OAuth (FR-4)**: Remains P0 but is secondary to LinkedIn for PoC
+- **Email/password (FR-2)**: Remains P0 as fallback, but LinkedIn sign-in is the promoted path
+
 ## Out of Scope
 
 - Email verification / confirmation flow (can be added later)
@@ -260,6 +289,6 @@ The duplicated `transformUserData()` function exists in 5 files. Consolidate int
 
 1. **Existing user migration**: Are there existing production users in Clerk that need their data migrated to the local database, or is this a fresh start? (Assumption: fresh start for now; migration script provided as utility)
 2. **Session duration**: Is 30 days an acceptable default session lifetime, or should it be shorter for a civic platform?
-3. **LinkedIn priority**: Is LinkedIn OAuth required for the initial launch, or can it be deferred to a fast-follow? (Classified as P1 in this spec)
+3. ~~**LinkedIn priority**: Is LinkedIn OAuth required for the initial launch, or can it be deferred to a fast-follow?~~ **RESOLVED: LinkedIn is P0 for PoC — it is the primary sign-in method for real-name civic accountability.**
 4. **Avatar storage**: Should user avatars from OAuth be proxied/cached locally, or is storing the external URL sufficient?
 5. **Admin role assignment**: How will admins be designated in the new system? Direct database flag? Separate admin invite flow?

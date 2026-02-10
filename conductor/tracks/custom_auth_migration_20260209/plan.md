@@ -401,6 +401,39 @@ Phase 7 (API Routes) -- depends on Phase 1, 2
 Phase 8 (Clerk Removal) -- depends on ALL prior phases
 ```
 
+## Phase 9: PoC-Specific Auth Requirements
+
+**Goal:** Add LinkedIn-first sign-in flow, residency collection, and real-name display settings required by the PoC.
+
+### Tasks
+
+- [ ] Task 9.1: Elevate LinkedIn as the primary sign-in method
+  - On sign-in/sign-up pages, display "Sign in with LinkedIn" as the prominent primary button
+  - Email/password and Google auth remain available but are visually secondary
+  - Add explanatory text: "We use LinkedIn for real-name civic accountability"
+  - TDD: Write component tests verifying LinkedIn button is visually primary
+
+- [ ] Task 9.2: Add residency field to User schema and sign-up flow
+  - Add `isResident Boolean @default(false)` to User model
+  - Add residency question to sign-up Step 2: "Are you a San Rafael resident?" (yes/no toggle)
+  - For LinkedIn/Google OAuth: show residency question on first-login profile completion page
+  - TDD: Write tests for schema validation and sign-up flow with residency
+
+- [ ] Task 9.3: Implement real-name display formatting
+  - Create `formatDisplayName(user: User): string` utility that returns "FirstName L." format
+  - Use this in all public-facing user displays (votes, comments, poll results)
+  - Admin views continue to show full names
+  - TDD: Write tests for name formatting (edge cases: no last name, single character names)
+
+- [ ] Task 9.4: Add LinkedIn profile data extraction
+  - On LinkedIn OAuth callback, extract and store: firstName, lastName, profilePictureUrl, email
+  - Map LinkedIn profile data to User model fields
+  - TDD: Write tests for LinkedIn profile data mapping
+
+- [ ] Verification: Sign up via LinkedIn, verify residency is collected, verify name displays as "First L." format in public views. [checkpoint marker]
+
+---
+
 ## Risk Register
 
 | Risk | Likelihood | Impact | Mitigation |

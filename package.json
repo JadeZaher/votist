@@ -16,12 +16,14 @@
 		"test:integration": "playwright test",
 		"test:unit": "vitest",
 		"db:seed": "tsx prisma/seed.ts",
-		"db:reset": "prisma migrate reset --force && npm run db:seed"
+		"db:reset": "prisma migrate reset --force && npm run db:seed",
+		"generate:prisma": "tsx scripts/dbml-to-prisma.ts && npx prisma validate"
 	},
 	"prisma": {
 		"seed": "tsx prisma/seed.ts"
 	},
 	"devDependencies": {
+		"@dbml/core": "^6.2.0-alpha.0",
 		"@sveltejs/adapter-vercel": "^5.5.2",
 		"@sveltejs/kit": "^2.27.0",
 		"@sveltejs/vite-plugin-svelte": "^5.0.0",
@@ -31,11 +33,13 @@
 		"@tailwindcss/typography": "^0.5.16",
 		"@types/eslint": "^9.6.1",
 		"@types/node": "^22.15.3",
+		"@types/pluralize": "^0.0.33",
 		"daisyui": "^5.0.0",
 		"eslint": "^9.25.1",
 		"eslint-config-prettier": "^10.1.2",
 		"eslint-plugin-svelte": "^3.5.1",
 		"lucide-svelte": "^0.477.0",
+		"pluralize": "^8.0.0",
 		"postcss": "^8.5.3",
 		"prettier": "^3.5.3",
 		"prettier-plugin-svelte": "^3.3.3",

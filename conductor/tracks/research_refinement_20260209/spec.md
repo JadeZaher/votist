@@ -110,6 +110,21 @@ The research section pulls content from a headless WordPress instance (Kinsta-ho
 - Add BreadcrumbList structured data
 - Ensure canonical URLs are correct for headless setup
 
+## PoC Alignment Notes
+
+In the PoC flow, the research section serves as the "optional links to related background materials and articles" referenced in the orientation step. The research section should be explicitly connected to the knowledge-gating flow.
+
+### FR13: Connection to PoC Orientation Flow
+- Research articles are linked from the orientation video page as optional background reading
+- Add a prominent CTA at the bottom of research articles: "Ready to take the Knowledge Check?" linking to the quiz
+- Tag certain articles as "PoC Background Material" to distinguish from general research
+- Featured/pinned articles should be the San Rafael housing context materials
+
+### FR14: Neutral Framing Indicators
+- Research content should reinforce Votist's neutral positioning
+- Display a subtle "Context Material" badge on PoC-related articles
+- No opinion-framing in article presentation (consistent with PoC design constraints)
+
 ## Non-Functional Requirements
 
 | Requirement | Target |

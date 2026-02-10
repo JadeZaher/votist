@@ -46,10 +46,18 @@
 - [ ] 5.5 Implement bulk delete with single confirmation modal
 - [ ] 5.6 Implement bulk category change for posts
 
-## Phase 6: Form Validation & Polish
+## Phase 6: PoC Content Management
+> Admin tools for managing PoC-specific content: orientation video, structured polls, and background materials.
+
+- [ ] 6.1 Build orientation video settings page (`/admin/orientation`): video URL field, description, embed preview
+- [ ] 6.2 Build background materials manager: CRUD list of links (title, URL, description, order, active/inactive toggle)
+- [ ] 6.3 Add PoC poll management view: dedicated section showing the 3 structured poll questions with order controls
+- [ ] 6.4 Add poll preview in PoC context: show how polls appear in the sequential participation flow
+
+## Phase 7: Form Validation & Polish
 > Make forms robust and consistent.
 
-- [ ] 6.1 Add field-level inline validation with error messages (character limits, required fields, URL format)
-- [ ] 6.2 Standardize delete confirmations: DaisyUI modal everywhere (replace `confirm()` in quiz delete)
-- [ ] 6.3 Add loading spinners/disabled states on all async form submissions
-- [ ] 6.4 Add form auto-save for drafts (save to localStorage every 30 seconds, restore on page load)
+- [ ] 7.1 Add field-level inline validation with error messages (character limits, required fields, URL format)
+- [ ] 7.2 Standardize delete confirmations: DaisyUI modal everywhere (replace `confirm()` in quiz delete)
+- [ ] 7.3 Add loading spinners/disabled states on all async form submissions
+- [ ] 7.4 Add form auto-save for drafts (save to localStorage every 30 seconds, restore on page load)

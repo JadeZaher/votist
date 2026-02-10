@@ -18,6 +18,7 @@
 - [ ] 2.3 Add growth trend mini-charts: new users, votes, quiz completions over last 30 days
 - [ ] 2.4 Add "Polls ending soon" alert section
 - [ ] 2.5 Add navigation link to analytics from admin sidebar
+- [ ] 2.6 Add **resident participation rate** stat card: % of participants who are San Rafael residents
 
 ## Phase 3: Poll Response Analytics
 > Detailed poll-level insights for civic engagement understanding.
@@ -28,6 +29,7 @@
 - [ ] 3.4 Add votes-over-time line chart per poll (daily vote count from `Vote.createdAt`)
 - [ ] 3.5 Add voter expertise breakdown per poll: pie chart showing VOTIST/SCHOLAR/MENTOR distribution of voters
 - [ ] 3.6 Add poll comparison view: side-by-side metrics for 2-3 polls
+- [ ] 3.7 Add **resident/non-resident segmentation** toggle to all poll analytics views: filter vote distributions and participation by `User.isResident`
 
 ## Phase 4: Quiz Performance & Expertise Analytics
 > Understand how users learn and progress through difficulty tiers.
@@ -39,14 +41,17 @@
 - [ ] 4.5 Add per-question analysis view: bar chart of most-missed questions with question text
 - [ ] 4.6 Add time-to-completion metrics (average time between progress `createdAt` and `completedAt`)
 
-## Phase 5: Quiz ↔ Poll Engagement Pipeline
-> The unique Votist insight -- connecting learning to civic participation.
+## Phase 5: Quiz ↔ Poll Engagement Pipeline & PoC Metrics
+> The unique Votist insight -- connecting learning to civic participation. Plus PoC-specific validation metrics.
 
-- [ ] 5.1 Create `GET /api/analytics/pipeline` endpoint: conversion funnel data (registered → quizzed → passed → voted), drop-off by stage
-- [ ] 5.2 Build pipeline analytics page (`/admin/analytics/pipeline`): visual funnel chart showing conversion at each stage
+- [ ] 5.1 Create `GET /api/analytics/pipeline` endpoint: conversion funnel data reflecting full PoC flow (registered → video watched → quiz attempted → quiz passed → poll 1 → poll 2 → poll 3), drop-off by stage
+- [ ] 5.2 Build pipeline analytics page (`/admin/analytics/pipeline`): visual funnel chart showing conversion at each PoC flow stage
 - [ ] 5.3 Add tier-level voting rates: what % of users at each difficulty level actually vote
 - [ ] 5.4 Add quiz requirement impact analysis: compare participation rates for polls with different `requiredDifficulty` levels
 - [ ] 5.5 Add engagement quality metric: do higher-tier users generate more comments/likes per vote
+- [ ] 5.6 Add **knowledge gate acceptance rate**: % of users completing the full PoC flow (sign-in → video → quiz → all 3 polls) — the primary PoC success metric
+- [ ] 5.7 Add **civic signal quality metrics**: response variance across the 3 poll questions, resident vs non-resident divergence scores
+- [ ] 5.8 Add **orientation video analytics**: view count, completion rate, average time on video page before proceeding
 
 ## Phase 6: User Activity & Content Performance
 > Track platform health and identify top-performing content.

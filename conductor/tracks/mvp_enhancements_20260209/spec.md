@@ -135,10 +135,47 @@ Votist is close to MVP but has critical gaps across security, broken navigation,
 | Accessibility | WCAG 2.1 AA for interactive elements |
 | Console logging | Zero in production builds |
 
+## PoC Alignment Notes
+
+The PoC participant flow is: **LinkedIn sign-in → Watch orientation video → Complete knowledge check → Answer 3 structured polls → View aggregate results**. Several features in the current codebase are future-vision and should be deprioritized for PoC.
+
+### FR13: Orientation Video Page
+- Build an orientation video step between sign-in and quiz
+- Short, neutral video outlining San Rafael's growth history and housing context
+- Optional links to background materials (research section articles)
+- "Continue to Knowledge Check" CTA after video completion
+- Track video view status per user (to enforce flow order)
+
+### FR14: Aggregate Results Page
+- Build anonymized, read-only aggregate results page showing community sentiment
+- Displays results for all 3 structured poll questions
+- Bar charts or pie charts showing option breakdown with percentages
+- Segmentable by resident vs non-resident responses
+- No individual vote visibility — only aggregates
+- Accessible after completing all 3 polls (the final step in the PoC flow)
+
+### FR15: Resident/Non-Resident Result Segmentation
+- Add toggle or tabs on results page: "All Participants" / "San Rafael Residents" / "Non-Residents"
+- Query votes joined with User.isResident for segmentation
+- Display participation counts per segment
+
+### FR16: PoC Flow Enforcement
+- After sign-in, guide users through the sequential flow: video → quiz → polls → results
+- Users who haven't watched the video cannot access the quiz
+- Users who haven't passed the quiz cannot access polls
+- After completing all 3 polls, redirect to aggregate results
+- Dashboard shows flow progress indicator
+
+### PoC Deprioritization Notes
+- **Comment threads/discussions** (Phase 4 tasks 4.1, 4.3): The PoC explicitly has "No comment threads, debates, scores, rankings, or weighted votes." These are future-vision features and should be deferred.
+- **Post likes** (Phase 4 task 4.1): Deprioritized for PoC — focus on the poll voting flow.
+- **Share functionality** (Phase 4 task 4.5): Keep for research articles; not critical for PoC poll flow.
+- The PoC uses exactly **3 structured poll questions** about San Rafael housing, not a general-purpose poll feed.
+
 ## Open Questions
 
 1. **Bookmark feature**: Should we implement per-user bookmarks (new `Bookmark` model) for MVP, or remove the button entirely?
-2. **User-generated posts**: Should regular users be able to create discussion posts, or is admin-only sufficient for MVP?
+2. ~~**User-generated posts**: Should regular users be able to create discussion posts, or is admin-only sufficient for MVP?~~ **RESOLVED: PoC has no user-generated discussion. Admin-only content.**
 3. **Dead footer pages**: Create minimal `/tos` and `/privacy` pages, or remove links for now?
 4. **Quiz timer**: Should quizzes have time limits for MVP?
-5. **Real-time updates**: Should votes/comments update live (WebSocket/SSE) for MVP, or is refresh-based sufficient?
+5. ~~**Real-time updates**: Should votes/comments update live (WebSocket/SSE) for MVP, or is refresh-based sufficient?~~ **RESOLVED: PoC has no real-time updates. Refresh-based is sufficient for read-only aggregate results.**

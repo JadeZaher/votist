@@ -73,14 +73,25 @@
 - [ ] 7.5 Migrate admin components: `QuizForm.svelte`, `QuizEdit.svelte`, `QuizList.svelte`, `QuestionEditor.svelte`, `PostForm.svelte`, `PostEdit.svelte`, `PostList.svelte`
 - [ ] 7.6 Migrate remaining: `Modal.svelte`, `UserLoader.svelte`, `VotingProgressBar.svelte`, auth pages
 
-## Phase 8: Final Verification
+## Phase 8: PoC Flow — Orientation Video & Aggregate Results
+> Build the missing PoC-specific pages that complete the civic participation flow.
+
+- [ ] 8.1 Create orientation video page (`/san-rafael/orientation`): embed neutral context video, provide optional links to research articles
+- [ ] 8.2 Add `videoWatched Boolean @default(false)` to UserProgress or create `UserFlowProgress` model tracking video/quiz/poll completion
+- [ ] 8.3 Build flow enforcement middleware: redirect users to next incomplete step (video → quiz → polls → results)
+- [ ] 8.4 Create aggregate results page (`/san-rafael/results/aggregate`): anonymized bar/pie charts for all 3 structured poll questions
+- [ ] 8.5 Add resident/non-resident toggle to aggregate results: filter displayed data by `User.isResident`
+- [ ] 8.6 Add participation counts to results: total participants, resident count, non-resident count
+- [ ] 8.7 Add PoC flow progress indicator to dashboard/sidebar: checkmarks for video, quiz, polls, results
+
+## Phase 9: Final Verification
 > Comprehensive testing and validation before launch.
 
-- [ ] 8.1 Run full test suite: `CI=true npm test`
-- [ ] 8.2 Run type checking: `npm run check`
-- [ ] 8.3 Run linting: `npm run lint`
-- [ ] 8.4 Manual mobile testing: verify all pages on 320px, 375px, 768px, 1024px viewports
-- [ ] 8.5 Manual flow testing: complete quiz -> vote -> comment -> like cycle end-to-end
-- [ ] 8.6 Verify no `console.log` statements remain in source
-- [ ] 8.7 Update `conductor/tech-stack.md` with any changes made during this track
-- [ ] 8.8 Final build verification: `npm run build` succeeds without errors
+- [ ] 9.1 Run full test suite: `CI=true npm test`
+- [ ] 9.2 Run type checking: `npm run check`
+- [ ] 9.3 Run linting: `npm run lint`
+- [ ] 9.4 Manual mobile testing: verify all pages on 320px, 375px, 768px, 1024px viewports
+- [ ] 9.5 Manual PoC flow testing: complete full LinkedIn → video → quiz → 3 polls → aggregate results cycle end-to-end
+- [ ] 9.6 Verify no `console.log` statements remain in source
+- [ ] 9.7 Update `conductor/tech-stack.md` with any changes made during this track
+- [ ] 9.8 Final build verification: `npm run build` succeeds without errors

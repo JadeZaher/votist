@@ -29,10 +29,18 @@
 - [ ] 3.4 Add clear filters button and search result highlighting in titles
 - [ ] 3.5 Add pagination: load 9 articles per page, "Load more" button, preserve filter state
 
-## Phase 4: Loading & Error Polish
+## Phase 4: PoC Flow Integration
+> Connect the research section to the knowledge-gating participation flow.
+
+- [ ] 4.1 Add "Take the Knowledge Check" CTA at bottom of research articles linking to `/san-rafael/quiz`
+- [ ] 4.2 Add "PoC Background Material" tag/badge to San Rafael housing-related articles
+- [ ] 4.3 Pin/feature PoC background articles at top of research listing page
+- [ ] 4.4 Add "Context Material" neutral framing indicator on PoC-tagged articles
+
+## Phase 5: Loading & Error Polish
 > Make the research section feel robust and responsive.
 
-- [ ] 4.1 Add skeleton loading cards for research listing while WordPress API responds
-- [ ] 4.2 Add user-facing error banner with retry button when WordPress is unreachable
-- [ ] 4.3 Add fetch retry logic with exponential backoff (3 attempts) in `wordpress.ts`
-- [ ] 4.4 Add BreadcrumbList structured data (schema.org JSON-LD) for SEO
+- [ ] 5.1 Add skeleton loading cards for research listing while WordPress API responds
+- [ ] 5.2 Add user-facing error banner with retry button when WordPress is unreachable
+- [ ] 5.3 Add fetch retry logic with exponential backoff (3 attempts) in `wordpress.ts`
+- [ ] 5.4 Add BreadcrumbList structured data (schema.org JSON-LD) for SEO

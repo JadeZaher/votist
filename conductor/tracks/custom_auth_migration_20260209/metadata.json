@@ -4,6 +4,6 @@
   "description": "Replace Clerk with a custom authentication solution supporting email/password and social sign-in (Google, LinkedIn)",
   "status": "active",
   "created_at": "2026-02-09T00:00:00.000Z",
-  "phases": 8,
-  "total_tasks": 38
+  "phases": 9,
+  "total_tasks": 43
 }

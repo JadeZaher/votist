@@ -1,0 +1,240 @@
+// Votist Database Architecture
+// This is the source of truth for the database schema.
+// Edit this file and run: npm run generate:prisma
+// Then run: npx prisma migrate dev
+
+Enum QuizDifficulty {
+  VOTIST
+  SCHOLAR
+  MENTOR
+}
+
+Enum QuizStatus {
+  LOCKED
+  AVAILABLE
+  IN_PROGRESS
+  COMPLETED
+}
+
+Table Assembly {
+  id          varchar [pk, default: `cuid()`]
+  title       varchar [not null]
+  description varchar [not null]
+  createdAt   datetime [not null, default: `now()`]
+  updatedAt   datetime [not null]
+  status      varchar [not null, default: 'draft']
+  topic       varchar [not null]
+  location    varchar
+  votes       int [not null, default: 0]
+}
+
+Table Quiz {
+  id                   varchar [pk, default: `cuid()`]
+  title                varchar [not null]
+  description          varchar [not null]
+  passingScore         int [not null]
+  difficulty           QuizDifficulty [default: 'VOTIST']
+  associatedMaterialId varchar
+  order                int [not null, default: 0]
+  createdAt            datetime [not null, default: `now()`]
+  updatedAt            datetime [not null]
+
+  indexes {
+    (difficulty, order)
+  }
+}
+
+Table Question {
+  id            varchar [pk, default: `cuid()`]
+  quizId        varchar [not null]
+  text          varchar [not null]
+  type          varchar [not null]
+  imageUrl      varchar
+  imageAlt      varchar
+  videoUrl      varchar
+  options       json [not null]
+  correctAnswer json [not null]
+  createdAt     datetime [not null, default: `now()`]
+  updatedAt     datetime [not null]
+}
+
+Table UserProgress {
+  id          varchar [pk, default: `cuid()`]
+  userId      varchar [not null]
+  materialId  varchar [not null]
+  quizId      varchar [not null]
+  quizScore   int [not null]
+  answers     json
+  isCompleted boolean [not null, default: false]
+  completedAt datetime
+  createdAt   datetime [not null, default: `now()`]
+  updatedAt   datetime [not null]
+
+  indexes {
+    (userId, quizId) [unique]
+  }
+}
+
+Table User {
+  clerkId      varchar [pk]
+  email        varchar [unique]
+  isAdmin      boolean [not null, default: false]
+  createdAt    datetime [not null, default: `now()`]
+  updatedAt    datetime [not null]
+}
+
+Table Post {
+  id           varchar [pk, default: `cuid()`]
+  title        varchar [not null]
+  content      varchar [not null]
+  authorId     varchar [not null]
+  category     varchar [not null]
+  tags         "varchar[]" [not null]
+  likes        int [not null, default: 0]
+  isBookmarked boolean [not null, default: false]
+  createdAt    datetime [not null, default: `now()`]
+  updatedAt    datetime [not null]
+
+  indexes {
+    authorId
+    category
+    createdAt
+  }
+}
+
+Table Poll {
+  id                 varchar [pk, default: `cuid()`]
+  postId             varchar [not null, unique]
+  question           varchar [not null]
+  requiredDifficulty QuizDifficulty
+  totalVotes         int [not null, default: 0]
+  endsAt             datetime
+  createdAt          datetime [not null, default: `now()`]
+  updatedAt          datetime [not null]
+}
+
+Table PollOption {
+  id        varchar [pk, default: `cuid()`]
+  pollId    varchar [not null]
+  text      varchar [not null]
+  votes     int [not null, default: 0]
+  createdAt datetime [not null, default: `now()`]
+  updatedAt datetime [not null]
+
+  indexes {
+    pollId
+  }
+}
+
+Table Comment {
+  id            varchar [pk, default: `cuid()`]
+  content       varchar [not null]
+  authorId      varchar [not null]
+  postId        varchar [not null]
+  parentId      varchar
+  rootCommentId varchar
+  likes         int [not null, default: 0]
+  createdAt     datetime [not null, default: `now()`]
+  updatedAt     datetime [not null]
+
+  indexes {
+    authorId
+    postId
+    parentId
+    rootCommentId
+  }
+}
+
+Table Vote {
+  id        varchar [pk, default: `cuid()`]
+  userId    varchar [not null]
+  postId    varchar [not null]
+  optionId  varchar [not null]
+  createdAt datetime [not null, default: `now()`]
+
+  indexes {
+    (userId, postId) [unique]
+    userId
+    postId
+    optionId
+  }
+}
+
+Table PostLike {
+  id        varchar [pk, default: `cuid()`]
+  userId    varchar [not null]
+  postId    varchar [not null]
+  createdAt datetime [not null, default: `now()`]
+
+  indexes {
+    (userId, postId) [unique]
+    userId
+    postId
+  }
+}
+
+Table CommentLike {
+  id        varchar [pk, default: `cuid()`]
+  userId    varchar [not null]
+  commentId varchar [not null]
+  createdAt datetime [not null, default: `now()`]
+
+  indexes {
+    (userId, commentId) [unique]
+    userId
+    commentId
+  }
+}
+
+// ========== Relationships ==========
+
+// Quiz -> Question (one-to-many)
+Ref: Question.quizId > Quiz.id
+
+// Quiz -> UserProgress (one-to-many)
+Ref: UserProgress.quizId > Quiz.id
+
+// User -> UserProgress (one-to-many)
+Ref: UserProgress.userId > User.clerkId
+
+// User -> Post (one-to-many)
+Ref: Post.authorId > User.clerkId
+
+// Post -> Poll (one-to-one)
+Ref: Poll.postId - Post.id [delete: cascade]
+
+// Poll -> PollOption (one-to-many)
+Ref: PollOption.pollId > Poll.id [delete: cascade]
+
+// User -> Comment (one-to-many)
+Ref: Comment.authorId > User.clerkId
+
+// Post -> Comment (one-to-many)
+Ref: Comment.postId > Post.id [delete: cascade]
+
+// Comment self-referential: parent/child replies
+Ref: Comment.parentId > Comment.id
+
+// Comment self-referential: root thread
+Ref: Comment.rootCommentId > Comment.id
+
+// User -> Vote (one-to-many)
+Ref: Vote.userId > User.clerkId
+
+// Post -> Vote (one-to-many)
+Ref: Vote.postId > Post.id [delete: cascade]
+
+// PollOption -> Vote (one-to-many)
+Ref: Vote.optionId > PollOption.id [delete: cascade]
+
+// User -> PostLike (one-to-many)
+Ref: PostLike.userId > User.clerkId
+
+// Post -> PostLike (one-to-many)
+Ref: PostLike.postId > Post.id [delete: cascade]
+
+// User -> CommentLike (one-to-many)
+Ref: CommentLike.userId > User.clerkId
+
+// Comment -> CommentLike (one-to-many)
+Ref: CommentLike.commentId > Comment.id [delete: cascade]
