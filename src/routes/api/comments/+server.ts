@@ -95,13 +95,13 @@ export const GET: RequestHandler = async (event) => {
 
 		const transformedComments: CommentData[] = await Promise.all(
 			topLevelComments.map(async (comment) => {
-				const commentAuthor = await transformUserData(comment.author.clerkId);
+				const commentAuthor = await transformUserData(comment.author.clerkId!);
 
 				// Get all replies for this root comment (flattened)
 				const replies = repliesByRoot.get(comment.id) || [];
 				const transformedReplies = await Promise.all(
 					replies.map(async (reply) => {
-						const replyAuthor = await transformUserData(reply.author.clerkId);
+						const replyAuthor = await transformUserData(reply.author.clerkId!);
 						return {
 							id: reply.id,
 							author: replyAuthor,
@@ -186,7 +186,7 @@ export const POST: RequestHandler = async (event) => {
 			}
 		});
 
-		const author = await transformUserData(newComment.author.clerkId);
+		const author = await transformUserData(newComment.author.clerkId!);
 		const transformedComment: CommentData = {
 			id: newComment.id,
 			author,

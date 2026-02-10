@@ -109,14 +109,14 @@ export const load: PageServerLoad = async (event) => {
 
 	const polls: PollFeedData[] = await Promise.all(
 		posts.map(async (post) => {
-			const postAuthor = await transformUserData(post.author.clerkId);
+			const postAuthor = await transformUserData(post.author.clerkId!);
 
 			const transformedComments: CommentData[] = await Promise.all(
 				post.comments.map(async (comment) => {
-					const commentAuthor = await transformUserData(comment.author.clerkId);
+					const commentAuthor = await transformUserData(comment.author.clerkId!);
 					const transformedReplies = await Promise.all(
 						comment.replies.map(async (reply) => {
-							const replyAuthor = await transformUserData(reply.author.clerkId);
+							const replyAuthor = await transformUserData(reply.author.clerkId!);
 							return {
 								id: reply.id,
 								author: replyAuthor,

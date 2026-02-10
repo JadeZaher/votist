@@ -70,7 +70,7 @@ export const PUT: RequestHandler = async (event) => {
 		});
 
 		// Transform the author data to match frontend expectations
-		const author = await transformUserData(comment.author.clerkId);
+		const author = await transformUserData(comment.author.clerkId!);
 		const transformedComment = {
 			...comment,
 			author

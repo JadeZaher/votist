@@ -92,15 +92,15 @@ export const GET: RequestHandler = async ({ params }) => {
 		}
 
 		// Transform the data to match frontend expectations
-		const author = await transformUserData(post.author.clerkId);
+		const author = await transformUserData(post.author.clerkId!);
 
 		const transformedComments = await Promise.all(
 			post.comments.map(async (comment: any) => {
-				const commentAuthor = await transformUserData(comment.author.clerkId);
+				const commentAuthor = await transformUserData(comment.author.clerkId!);
 
 				const transformedReplies = await Promise.all(
 					(comment.replies || []).map(async (reply: any) => {
-						const replyAuthor = await transformUserData(reply.author.clerkId);
+						const replyAuthor = await transformUserData(reply.author.clerkId!);
 						return {
 							...reply,
 							author: replyAuthor
@@ -181,7 +181,7 @@ export const PUT: RequestHandler = async (event) => {
 		});
 
 		// Transform the author data to match frontend expectations
-		const author = await transformUserData(post.author.clerkId);
+		const author = await transformUserData(post.author.clerkId!);
 		const transformedPost = {
 			...post,
 			author

@@ -79,7 +79,7 @@ enum QuizStatus {
 model UserProgress {
   id          String    @id @default(cuid())
   userId      String
-  user        User      @relation(fields: [userId], references: [clerkId])
+  user        User      @relation(fields: [userId], references: [id])
   materialId  String
   quizId      String
   quiz        Quiz      @relation(fields: [quizId], references: [id])
@@ -94,17 +94,52 @@ model UserProgress {
 }
 
 model User {
-  clerkId      String         @id
+  id           String         @id @default(cuid())
+  clerkId      String?        @unique // Retained during migration, removed in Phase 8
   email        String?        @unique
+  passwordHash String?
+  firstName    String?
+  lastName     String?
+  avatarUrl    String?
+  role         String         @default("visitor")
   isAdmin      Boolean        @default(false)
+  isResident   Boolean        @default(false)
   userProgress UserProgress[]
   posts        Post[]
   comments     Comment[]
   votes        Vote[]
   postLikes    PostLike[]
   commentLikes CommentLike[]
+  sessions     Session[]
+  accounts     Account[]
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
+}
+
+model Account {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider          String
+  providerAccountId String
+  accessToken       String?
+  refreshToken      String?
+  createdAt         DateTime @default(now())
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
 }
 
 model Post {
@@ -112,7 +147,7 @@ model Post {
   title        String
   content      String
   authorId     String
-  author       User       @relation(fields: [authorId], references: [clerkId])
+  author       User       @relation(fields: [authorId], references: [id])
   category     String
   tags         String[]
   likes        Int        @default(0)
@@ -159,7 +194,7 @@ model Comment {
   id            String        @id @default(cuid())
   content       String
   authorId      String
-  author        User          @relation(fields: [authorId], references: [clerkId])
+  author        User          @relation(fields: [authorId], references: [id])
   postId        String
   post          Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
   parentId      String?
@@ -182,7 +217,7 @@ model Comment {
 model Vote {
   id        String     @id @default(cuid())
   userId    String
-  user      User       @relation(fields: [userId], references: [clerkId])
+  user      User       @relation(fields: [userId], references: [id])
   postId    String
   post      Post       @relation(fields: [postId], references: [id], onDelete: Cascade)
   optionId  String
@@ -198,7 +233,7 @@ model Vote {
 model PostLike {
   id        String   @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [clerkId])
+  user      User     @relation(fields: [userId], references: [id])
   postId    String
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
@@ -211,7 +246,7 @@ model PostLike {
 model CommentLike {
   id        String   @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [clerkId])
+  user      User     @relation(fields: [userId], references: [id])
   commentId String
   comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
