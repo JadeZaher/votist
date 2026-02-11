@@ -22,13 +22,38 @@ export async function getUser(event: RequestEvent) {
 		]);
 
 		if (!existingUser) {
-			await prisma.user.create({
-				data: {
-					clerkId: userId,
-					email: clerkUser.emailAddresses[0]?.emailAddress,
-					isAdmin: clerkUser.publicMetadata?.role === 'admin'
-				}
-			});
+			const email = clerkUser.emailAddresses[0]?.emailAddress;
+
+			// Check for orphaned record with same email (Clerk account was deleted and recreated)
+			const userByEmail = email
+				? await prisma.user.findUnique({ where: { email } })
+				: null;
+
+			if (userByEmail) {
+				// Re-link: update the orphaned record's clerkId to the new Clerk account
+				await prisma.user.update({
+					where: { id: userByEmail.id },
+					data: {
+						clerkId: userId,
+						firstName: clerkUser.firstName ?? userByEmail.firstName,
+						lastName: clerkUser.lastName ?? userByEmail.lastName,
+						avatarUrl: clerkUser.imageUrl ?? userByEmail.avatarUrl,
+						isAdmin: clerkUser.publicMetadata?.role === 'admin'
+					}
+				});
+			} else {
+				// Truly new user
+				await prisma.user.create({
+					data: {
+						clerkId: userId,
+						email,
+						firstName: clerkUser.firstName,
+						lastName: clerkUser.lastName,
+						avatarUrl: clerkUser.imageUrl,
+						isAdmin: clerkUser.publicMetadata?.role === 'admin'
+					}
+				});
+			}
 		}
 
 		return {
