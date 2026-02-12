@@ -1,22 +1,47 @@
-FROM node:24-slim@sha256:5ae787590295f944e7dc200bf54861bac09bf21b5fdb4c9b97aee7781b6d95a2
+# ---- Dependencies ----
+FROM node:20-slim AS deps
 
-# Install OpenSSL
 RUN apt-get update -y && \
     apt-get install -y openssl && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy the entire project first
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# ---- Build ----
+FROM node:20-slim AS build
+
+RUN apt-get update -y && \
+    apt-get install -y openssl && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Install all dependencies including peer dependencies
-RUN npm install
+# Runs: svelte-kit sync (generates .svelte-kit/tsconfig.json) + prisma generate + vite build
+RUN npm run build
 
-# Generate Prisma client separately, allowing failures for other generators
-RUN npx prisma generate --generator client || true && \
-    npx prisma generate --generator markdown || true
+# ---- Production ----
+FROM node:20-slim AS production
 
-EXPOSE 5173
+RUN apt-get update -y && \
+    apt-get install -y openssl && \
+    rm -rf /var/lib/apt/lists/*
 
-CMD ["npm", "run", "dev", "--", "--host"]
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# Copy the built output and production deps
+COPY --from=build /app/build ./build
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/package.json ./
+COPY --from=build /app/prisma ./prisma
+
+EXPOSE 3000
+
+CMD ["node", "build"]

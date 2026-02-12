@@ -6,7 +6,7 @@
 	"scripts": {
 		"dev": "vite dev",
 		"clean": "rm -rf .svelte-kit build",
-		"build": "npm run clean && prisma generate && vite build",
+		"build": "svelte-kit sync && prisma generate && vite build",
 		"preview": "vite preview",
 		"test": "npm run test:integration && npm run test:unit",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
@@ -59,6 +59,7 @@
 	},
 	"dependencies": {
 		"@prisma/client": "^6.7.0",
+		"@sveltejs/adapter-node": "^5.5.2",
 		"@trpc/client": "^10.45.2",
 		"@trpc/server": "^10.45.2",
 		"@vimeo/player": "^2.29.5",
