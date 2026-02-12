@@ -1,33 +1,33 @@
 import type { RequestHandler } from '@sveltejs/kit';
-import { PrismaClient } from '@prisma/client';
 import { json } from '@sveltejs/kit';
 import { getUser } from '$lib/server/auth';
-import { clerkClient } from 'svelte-clerk/server';
+import { prisma } from '$lib/server/db/prisma';
 
-const prisma = new PrismaClient();
+const authorSelect = {
+	firstName: true,
+	lastName: true,
+	avatarUrl: true,
+	email: true,
+	isAdmin: true
+} as const;
 
-// Helper function to transform user data for frontend
-async function transformUserData(clerkId: string) {
-	try {
-		const clerkUser = await clerkClient.users.getUser(clerkId);
-		return {
-			name:
-				clerkUser.firstName && clerkUser.lastName
-					? `${clerkUser.firstName} ${clerkUser.lastName}`
-					: clerkUser.username || 'Anonymous',
-			avatar: clerkUser.imageUrl || '',
-			username: clerkUser.username || 'user',
-			isVerified: clerkUser.publicMetadata?.role === 'admin'
-		};
-	} catch (error) {
-		console.error('Error fetching clerk user:', error);
-		return {
-			name: 'Anonymous',
-			avatar: '',
-			username: 'user',
-			isVerified: false
-		};
-	}
+function transformAuthor(author: {
+	firstName: string | null;
+	lastName: string | null;
+	avatarUrl: string | null;
+	email: string | null;
+	isAdmin: boolean;
+}) {
+	const name =
+		author.firstName && author.lastName
+			? `${author.firstName} ${author.lastName}`
+			: author.firstName || author.lastName || 'Anonymous';
+	return {
+		name,
+		avatar: author.avatarUrl || '',
+		username: author.email?.split('@')[0] || 'user',
+		isVerified: author.isAdmin
+	};
 }
 
 // GET /api/posts/[id] - Get a specific post with all details
@@ -36,12 +36,7 @@ export const GET: RequestHandler = async ({ params }) => {
 		const post = await prisma.post.findUnique({
 			where: { id: params.id },
 			include: {
-				author: {
-					select: {
-						clerkId: true,
-						email: true
-					}
-				},
+				author: { select: authorSelect },
 				poll: {
 					include: {
 						options: {
@@ -55,22 +50,19 @@ export const GET: RequestHandler = async ({ params }) => {
 						}
 					}
 				},
+				quizGateQuiz: {
+					select: {
+						id: true,
+						title: true,
+						difficulty: true
+					}
+				},
 				comments: {
 					include: {
-						author: {
-							select: {
-								clerkId: true,
-								email: true
-							}
-						},
+						author: { select: authorSelect },
 						replies: {
 							include: {
-								author: {
-									select: {
-										clerkId: true,
-										email: true
-									}
-								}
+								author: { select: authorSelect }
 							}
 						}
 					},
@@ -91,30 +83,21 @@ export const GET: RequestHandler = async ({ params }) => {
 			return json({ error: 'Post not found' }, { status: 404 });
 		}
 
-		// Transform the data to match frontend expectations
-		const author = await transformUserData(post.author.clerkId!);
+		const author = transformAuthor(post.author);
 
-		const transformedComments = await Promise.all(
-			post.comments.map(async (comment: any) => {
-				const commentAuthor = await transformUserData(comment.author.clerkId!);
+		const transformedComments = post.comments.map((comment) => {
+			const commentAuthor = transformAuthor(comment.author);
+			const transformedReplies = (comment.replies || []).map((reply) => ({
+				...reply,
+				author: transformAuthor(reply.author)
+			}));
 
-				const transformedReplies = await Promise.all(
-					(comment.replies || []).map(async (reply: any) => {
-						const replyAuthor = await transformUserData(reply.author.clerkId!);
-						return {
-							...reply,
-							author: replyAuthor
-						};
-					})
-				);
-
-				return {
-					...comment,
-					author: commentAuthor,
-					replies: transformedReplies
-				};
-			})
-		);
+			return {
+				...comment,
+				author: commentAuthor,
+				replies: transformedReplies
+			};
+		});
 
 		const transformedPost = {
 			...post,
@@ -143,6 +126,15 @@ export const PUT: RequestHandler = async (event) => {
 	const data = await event.request.json();
 
 	try {
+		// Look up internal DB user by Clerk ID
+		const dbUser = await prisma.user.findUnique({
+			where: { clerkId: user.id }
+		});
+
+		if (!dbUser) {
+			return json({ error: 'User not found in database' }, { status: 404 });
+		}
+
 		// Check if user owns the post or is admin
 		const existingPost = await prisma.post.findUnique({
 			where: { id: event.params.id },
@@ -153,7 +145,7 @@ export const PUT: RequestHandler = async (event) => {
 			return json({ error: 'Post not found' }, { status: 404 });
 		}
 
-		if (existingPost.authorId !== user.id && user.publicMetadata?.role !== 'admin') {
+		if (existingPost.authorId !== dbUser.id && user.publicMetadata?.role !== 'admin') {
 			return json({ error: 'Forbidden' }, { status: 403 });
 		}
 
@@ -163,15 +155,13 @@ export const PUT: RequestHandler = async (event) => {
 				title: data.title,
 				content: data.content,
 				category: data.category,
-				tags: data.tags || []
+				tags: data.tags || [],
+				quizGateType: data.quizGateType || 'NONE',
+				quizGateDifficulty: data.quizGateDifficulty || null,
+				quizGateQuizId: data.quizGateQuizId || null
 			},
 			include: {
-				author: {
-					select: {
-						clerkId: true,
-						email: true
-					}
-				},
+				author: { select: authorSelect },
 				poll: {
 					include: {
 						options: true
@@ -180,11 +170,9 @@ export const PUT: RequestHandler = async (event) => {
 			}
 		});
 
-		// Transform the author data to match frontend expectations
-		const author = await transformUserData(post.author.clerkId!);
 		const transformedPost = {
 			...post,
-			author
+			author: transformAuthor(post.author)
 		};
 
 		return json({ post: transformedPost });
@@ -206,6 +194,15 @@ export const DELETE: RequestHandler = async (event) => {
 	}
 
 	try {
+		// Look up internal DB user by Clerk ID
+		const dbUser = await prisma.user.findUnique({
+			where: { clerkId: user.id }
+		});
+
+		if (!dbUser) {
+			return json({ error: 'User not found in database' }, { status: 404 });
+		}
+
 		// Check if user owns the post or is admin
 		const existingPost = await prisma.post.findUnique({
 			where: { id: event.params.id },
@@ -216,7 +213,7 @@ export const DELETE: RequestHandler = async (event) => {
 			return json({ error: 'Post not found' }, { status: 404 });
 		}
 
-		if (existingPost.authorId !== user.id && user.publicMetadata?.role !== 'admin') {
+		if (existingPost.authorId !== dbUser.id && user.publicMetadata?.role !== 'admin') {
 			return json({ error: 'Forbidden' }, { status: 403 });
 		}
 
@@ -243,6 +240,15 @@ export const POST: RequestHandler = async (event) => {
 	}
 
 	try {
+		// Look up internal DB user by Clerk ID
+		const dbUser = await prisma.user.findUnique({
+			where: { clerkId: user.id }
+		});
+
+		if (!dbUser) {
+			return json({ error: 'User not found in database' }, { status: 404 });
+		}
+
 		// Verify the post exists
 		const post = await prisma.post.findUnique({
 			where: { id: event.params.id },
@@ -259,7 +265,7 @@ export const POST: RequestHandler = async (event) => {
 			const existingLike = await tx.postLike.findUnique({
 				where: {
 					userId_postId: {
-						userId: user.id,
+						userId: dbUser.id,
 						postId: event.params.id
 					}
 				}
@@ -274,25 +280,29 @@ export const POST: RequestHandler = async (event) => {
 					where: { id: existingLike.id }
 				});
 				newIsLiked = false;
-				newLikes = await tx.post.update({
-					where: { id: event.params.id },
-					data: { likes: { decrement: 1 } },
-					select: { likes: true }
-				}).then(c => c.likes);
+				newLikes = await tx.post
+					.update({
+						where: { id: event.params.id },
+						data: { likes: { decrement: 1 } },
+						select: { likes: true }
+					})
+					.then((c) => c.likes);
 			} else {
 				// Add like
 				await tx.postLike.create({
 					data: {
-						userId: user.id,
+						userId: dbUser.id,
 						postId: event.params.id
 					}
 				});
 				newIsLiked = true;
-				newLikes = await tx.post.update({
-					where: { id: event.params.id },
-					data: { likes: { increment: 1 } },
-					select: { likes: true }
-				}).then(c => c.likes);
+				newLikes = await tx.post
+					.update({
+						where: { id: event.params.id },
+						data: { likes: { increment: 1 } },
+						select: { likes: true }
+					})
+					.then((c) => c.likes);
 			}
 
 			return { likes: newLikes, isLiked: newIsLiked };

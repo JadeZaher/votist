@@ -40,6 +40,17 @@
 	let pollOptions: string[] = post.poll?.options?.map((opt: any) => opt.text) || ['', ''];
 	let pollEndsAt = post.poll?.endsAt ? new Date(post.poll.endsAt).toISOString().slice(0, 16) : '';
 
+	// Quiz Gate fields (initialized from existing post data)
+	let enableQuizGate = post.quizGateType && post.quizGateType !== 'NONE';
+	let quizGateType: 'DIFFICULTY' | 'SPECIFIC_QUIZ' = (post.quizGateType === 'SPECIFIC_QUIZ' ? 'SPECIFIC_QUIZ' : 'DIFFICULTY');
+	let quizGateDifficulty: 'VOTIST' | 'SCHOLAR' | 'MENTOR' = post.quizGateDifficulty || 'VOTIST';
+	let quizGateQuizId: string | null = post.quizGateQuizId || null;
+	let quizGateQuizTitle: string = post.quizGateQuiz?.title || '';
+	let quizSearchQuery = post.quizGateQuiz?.title || '';
+	let quizSearchResults: Array<{ id: string; title: string; difficulty: string; order: number }> = [];
+	let showQuizDropdown = false;
+	let searchTimeout: ReturnType<typeof setTimeout>;
+
 	function addTag() {
 		const tag = tagInput.trim();
 		if (tag && !tags.includes(tag)) {
@@ -66,6 +77,52 @@
 		pollOptions = pollOptions.map((option, i) => (i === index ? value : option));
 	}
 
+	async function searchQuizzes(query: string) {
+		try {
+			const res = await fetch(`/api/quizzes/search?q=${encodeURIComponent(query)}`);
+			const data = await res.json();
+			if (data.quizzes) {
+				quizSearchResults = data.quizzes;
+			}
+		} catch (e) {
+			console.error('Failed to search quizzes:', e);
+		}
+	}
+
+	function handleQuizSearch(e: Event) {
+		const value = (e.target as HTMLInputElement).value;
+		quizSearchQuery = value;
+		clearTimeout(searchTimeout);
+		if (value.trim()) {
+			searchTimeout = setTimeout(() => searchQuizzes(value), 300);
+			showQuizDropdown = true;
+		} else {
+			searchTimeout = setTimeout(() => searchQuizzes(''), 300);
+			showQuizDropdown = true;
+		}
+	}
+
+	function selectQuiz(quiz: { id: string; title: string; difficulty: string }) {
+		quizGateQuizId = quiz.id;
+		quizGateQuizTitle = quiz.title;
+		quizSearchQuery = quiz.title;
+		showQuizDropdown = false;
+	}
+
+	function clearQuizSelection() {
+		quizGateQuizId = null;
+		quizGateQuizTitle = '';
+		quizSearchQuery = '';
+		quizSearchResults = [];
+	}
+
+	function handleClickOutside(event: MouseEvent) {
+		const target = event.target as HTMLElement;
+		if (!target.closest('.relative')) {
+			showQuizDropdown = false;
+		}
+	}
+
 	async function handleSubmit() {
 		if (!title.trim() || !content.trim()) {
 			showToast('Title and content are required', 'error');
@@ -82,7 +139,10 @@
 				title: title.trim(),
 				content: content.trim(),
 				category,
-				tags
+				tags,
+				quizGateType: enableQuizGate ? quizGateType : 'NONE',
+				quizGateDifficulty: enableQuizGate && quizGateType === 'DIFFICULTY' ? quizGateDifficulty : null,
+				quizGateQuizId: enableQuizGate && quizGateType === 'SPECIFIC_QUIZ' ? quizGateQuizId : null
 			};
 
 			if (includePoll) {
@@ -130,7 +190,7 @@
 	}
 </script>
 
-<form on:submit|preventDefault={handleSubmit} class="space-y-6">
+<form on:submit|preventDefault={handleSubmit} on:click={handleClickOutside} class="space-y-6">
 	<div class="form-control w-full">
 		<label class="label" for="title">
 			<span class="label-text font-semibold">Post Title</span>
@@ -275,6 +335,136 @@
 					bind:value={pollEndsAt}
 				/>
 			</div>
+		</div>
+	{/if}
+
+	<div class="divider">Quiz Gate / Access Control</div>
+
+	<div class="form-control">
+		<label class="label cursor-pointer">
+			<span class="label-text">Require quiz completion to participate</span>
+			<input type="checkbox" class="checkbox checkbox-primary" bind:checked={enableQuizGate} />
+		</label>
+		<div class="label">
+			<span class="label-text-alt text-gray-500">
+				When enabled, users must complete specific quizzes before they can vote or comment on this post.
+			</span>
+		</div>
+	</div>
+
+	{#if enableQuizGate}
+		<div class="card bg-base-200 space-y-4 p-4">
+			<div class="form-control">
+				<label class="label">
+					<span class="label-text">Gate Type</span>
+				</label>
+				<div class="flex gap-4">
+					<label class="label cursor-pointer gap-2">
+						<input
+							type="radio"
+							name="quizGateType"
+							class="radio radio-primary"
+							value="DIFFICULTY"
+							bind:group={quizGateType}
+						/>
+						<span class="label-text">Difficulty Level</span>
+					</label>
+					<label class="label cursor-pointer gap-2">
+						<input
+							type="radio"
+							name="quizGateType"
+							class="radio radio-primary"
+							value="SPECIFIC_QUIZ"
+							bind:group={quizGateType}
+						/>
+						<span class="label-text">Specific Quiz</span>
+					</label>
+				</div>
+			</div>
+
+			{#if quizGateType === 'DIFFICULTY'}
+				<div class="form-control">
+					<label class="label" for="quiz-gate-difficulty">
+						<span class="label-text">Required Difficulty Level</span>
+					</label>
+					<select
+						id="quiz-gate-difficulty"
+						class="select select-bordered w-full"
+						bind:value={quizGateDifficulty}
+					>
+						<option value="VOTIST">VOTIST - Complete all basic quizzes</option>
+						<option value="SCHOLAR">SCHOLAR - Complete all basic + intermediate quizzes</option>
+						<option value="MENTOR">MENTOR - Complete all quizzes</option>
+					</select>
+					<div class="label">
+						<span class="label-text-alt text-gray-500">
+							Users must complete ALL quizzes at this level and below to participate.
+						</span>
+					</div>
+				</div>
+			{:else}
+				<div class="form-control">
+					<label class="label" for="quiz-gate-search">
+						<span class="label-text">Select Required Quiz</span>
+					</label>
+					<div class="relative">
+						<input
+							id="quiz-gate-search"
+							type="text"
+							class="input input-bordered w-full"
+							placeholder="Search quizzes by title..."
+							value={quizSearchQuery}
+							on:input={handleQuizSearch}
+							on:focus={() => { showQuizDropdown = true; searchQuizzes(quizSearchQuery); }}
+							autocomplete="off"
+						/>
+						{#if quizGateQuizId}
+							<button
+								type="button"
+								class="btn btn-sm btn-circle btn-ghost absolute right-2 top-1/2 -translate-y-1/2"
+								on:click={clearQuizSelection}
+							>
+								×
+							</button>
+						{/if}
+
+						{#if showQuizDropdown && quizSearchResults.length > 0}
+							<div class="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg">
+								{#each quizSearchResults as quiz}
+									<button
+										type="button"
+										class="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-gray-50 {quiz.id === quizGateQuizId ? 'bg-primary/10' : ''}"
+										on:click={() => selectQuiz(quiz)}
+									>
+										<div>
+											<div class="font-medium">{quiz.title}</div>
+											<div class="text-sm text-gray-500">
+												{quiz.difficulty} · Order #{quiz.order}
+											</div>
+										</div>
+										{#if quiz.id === quizGateQuizId}
+											<span class="badge badge-primary badge-sm">Selected</span>
+										{/if}
+									</button>
+								{/each}
+							</div>
+						{/if}
+					</div>
+					{#if quizGateQuizId}
+						<div class="label">
+							<span class="label-text-alt text-success">
+								Selected: {quizGateQuizTitle}
+							</span>
+						</div>
+					{:else}
+						<div class="label">
+							<span class="label-text-alt text-gray-500">
+								Search for and select a specific quiz that users must complete.
+							</span>
+						</div>
+					{/if}
+				</div>
+			{/if}
 		</div>
 	{/if}
 

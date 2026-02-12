@@ -1,0 +1,9 @@
+{
+  "track_id": "quiz_gate_posts_20260211",
+  "title": "Quiz Gate / Block System for Posts",
+  "description": "Posts can require users to complete all quizzes at a given difficulty level (or a specific quiz) before participating in polling or discussion. Admins select gate type via full-text searchable dropdown.",
+  "status": "in_progress",
+  "created_at": "2026-02-11T00:00:00.000Z",
+  "phases": 4,
+  "total_tasks": 10
+}

@@ -1,33 +1,33 @@
 import type { RequestHandler } from '@sveltejs/kit';
-import { PrismaClient } from '@prisma/client';
 import { json } from '@sveltejs/kit';
 import { getUser } from '$lib/server/auth';
-import { clerkClient } from 'svelte-clerk/server';
+import { prisma } from '$lib/server/db/prisma';
 
-const prisma = new PrismaClient();
+const authorSelect = {
+	firstName: true,
+	lastName: true,
+	avatarUrl: true,
+	email: true,
+	isAdmin: true
+} as const;
 
-// Helper function to transform user data for frontend
-async function transformUserData(clerkId: string) {
-	try {
-		const clerkUser = await clerkClient.users.getUser(clerkId);
-		return {
-			name:
-				clerkUser.firstName && clerkUser.lastName
-					? `${clerkUser.firstName} ${clerkUser.lastName}`
-					: clerkUser.username || 'Anonymous',
-			avatar: clerkUser.imageUrl || '',
-			username: clerkUser.username || 'user',
-			isVerified: clerkUser.publicMetadata?.role === 'admin'
-		};
-	} catch (error) {
-		console.error('Error fetching clerk user:', error);
-		return {
-			name: 'Anonymous',
-			avatar: '',
-			username: 'user',
-			isVerified: false
-		};
-	}
+function transformAuthor(author: {
+	firstName: string | null;
+	lastName: string | null;
+	avatarUrl: string | null;
+	email: string | null;
+	isAdmin: boolean;
+}) {
+	const name =
+		author.firstName && author.lastName
+			? `${author.firstName} ${author.lastName}`
+			: author.firstName || author.lastName || 'Anonymous';
+	return {
+		name,
+		avatar: author.avatarUrl || '',
+		username: author.email?.split('@')[0] || 'user',
+		isVerified: author.isAdmin
+	};
 }
 
 // GET /api/posts - Get all posts with polls and comments
@@ -46,12 +46,7 @@ export const GET: RequestHandler = async ({ url }) => {
 			const posts = await prisma.post.findMany({
 				where,
 				include: {
-					author: {
-						select: {
-							clerkId: true,
-							email: true
-						}
-					},
+					author: { select: authorSelect },
 					poll: {
 						include: {
 							options: true
@@ -59,12 +54,7 @@ export const GET: RequestHandler = async ({ url }) => {
 					},
 					comments: {
 						include: {
-							author: {
-								select: {
-									clerkId: true,
-									email: true
-								}
-							}
+							author: { select: authorSelect }
 						}
 					},
 					votes: true,
@@ -81,16 +71,10 @@ export const GET: RequestHandler = async ({ url }) => {
 				take: limit
 			});
 
-			// Transform posts to include author names
-			const transformedPosts = await Promise.all(
-				posts.map(async (post: any) => {
-					const author = await transformUserData(post.author.clerkId!);
-					return {
-						...post,
-						authorName: author.name
-					};
-				})
-			);
+			const transformedPosts = posts.map((post) => ({
+				...post,
+				authorName: transformAuthor(post.author).name
+			}));
 
 			const total = await prisma.post.count({ where });
 
@@ -109,12 +93,7 @@ export const GET: RequestHandler = async ({ url }) => {
 		const posts = await prisma.post.findMany({
 			where,
 			include: {
-				author: {
-					select: {
-						clerkId: true,
-						email: true
-					}
-				},
+				author: { select: authorSelect },
 				poll: {
 					include: {
 						options: true
@@ -122,30 +101,20 @@ export const GET: RequestHandler = async ({ url }) => {
 				},
 				comments: {
 					include: {
-						author: {
-							select: {
-								clerkId: true,
-								email: true
-							}
-						},
+						author: { select: authorSelect },
 						replies: {
 							include: {
-								author: {
-									select: {
-										clerkId: true,
-										email: true
-									}
-								}
+								author: { select: authorSelect }
 							}
 						}
 					},
 					where: {
-						parentId: null // Only top-level comments
+						parentId: null
 					},
 					orderBy: {
 						createdAt: 'desc'
 					},
-					take: 5 // Limit comments per post
+					take: 5
 				},
 				_count: {
 					select: {
@@ -160,40 +129,28 @@ export const GET: RequestHandler = async ({ url }) => {
 			take: limit
 		});
 
-		// Transform the data to match frontend expectations
-		const transformedPosts = await Promise.all(
-			posts.map(async (post: any) => {
-				const author = await transformUserData(post.author.clerkId!);
-
-				const transformedComments = await Promise.all(
-					post.comments.map(async (comment: any) => {
-						const commentAuthor = await transformUserData(comment.author.clerkId!);
-
-						const transformedReplies = await Promise.all(
-							(comment.replies || []).map(async (reply: any) => {
-								const replyAuthor = await transformUserData(reply.author.clerkId!);
-								return {
-									...reply,
-									author: replyAuthor
-								};
-							})
-						);
-
-						return {
-							...comment,
-							author: commentAuthor,
-							replies: transformedReplies
-						};
-					})
-				);
+		const transformedPosts = posts.map((post) => {
+			const author = transformAuthor(post.author);
+			const transformedComments = post.comments.map((comment) => {
+				const commentAuthor = transformAuthor(comment.author);
+				const transformedReplies = (comment.replies || []).map((reply) => ({
+					...reply,
+					author: transformAuthor(reply.author)
+				}));
 
 				return {
-					...post,
-					author,
-					comments: transformedComments
+					...comment,
+					author: commentAuthor,
+					replies: transformedReplies
 				};
-			})
-		);
+			});
+
+			return {
+				...post,
+				author,
+				comments: transformedComments
+			};
+		});
 
 		const total = await prisma.post.count({ where });
 
@@ -231,13 +188,25 @@ export const POST: RequestHandler = async (event) => {
 	const data = await event.request.json();
 
 	try {
+		// Look up internal DB user by Clerk ID
+		const dbUser = await prisma.user.findUnique({
+			where: { clerkId: user.id }
+		});
+
+		if (!dbUser) {
+			return json({ error: 'User not found in database' }, { status: 404 });
+		}
+
 		const post = await prisma.post.create({
 			data: {
 				title: data.title,
 				content: data.content,
-				authorId: user.id,
+				authorId: dbUser.id,
 				category: data.category,
 				tags: data.tags || [],
+				quizGateType: data.quizGateType || 'NONE',
+				quizGateDifficulty: data.quizGateDifficulty || null,
+				quizGateQuizId: data.quizGateQuizId || null,
 				poll: data.poll
 					? {
 							create: {
@@ -254,12 +223,7 @@ export const POST: RequestHandler = async (event) => {
 					: undefined
 			},
 			include: {
-				author: {
-					select: {
-						clerkId: true,
-						email: true
-					}
-				},
+				author: { select: authorSelect },
 				poll: {
 					include: {
 						options: true
@@ -268,11 +232,9 @@ export const POST: RequestHandler = async (event) => {
 			}
 		});
 
-		// Transform the author data to match frontend expectations
-		const author = await transformUserData(post.author.clerkId!);
 		const transformedPost = {
 			...post,
-			author
+			author: transformAuthor(post.author)
 		};
 
 		return json({ post: transformedPost });

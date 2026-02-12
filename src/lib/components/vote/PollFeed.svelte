@@ -51,7 +51,13 @@
 		</div>
 	{:else}
 		{#each polls as pollData (pollData.post.id)}
-			<DiscussionForum {pollData} {isAuthenticated} {user} />
+			<DiscussionForum
+				{pollData}
+				{isAuthenticated}
+				{user}
+				quizGateBlocked={pollData.quizGateBlocked}
+				quizGateMessage={pollData.quizGateMessage}
+			/>
 		{/each}
 	{/if}
 </div>

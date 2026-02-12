@@ -50,6 +50,7 @@ model Quiz {
   userProgress         UserProgress[]
   createdAt            DateTime        @default(now())
   updatedAt            DateTime        @updatedAt
+  gatedPosts         Post[]
 
   @@index([difficulty, order])
 }
@@ -74,6 +75,12 @@ enum QuizStatus {
   AVAILABLE
   IN_PROGRESS
   COMPLETED
+}
+
+enum QuizGateType {
+  NONE
+  DIFFICULTY
+  SPECIFIC_QUIZ
 }
 
 model UserProgress {
@@ -158,6 +165,10 @@ model Post {
   isBookmarked Boolean    @default(false)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
+  quizGateType       QuizGateType    @default(NONE)
+  quizGateDifficulty QuizDifficulty?
+  quizGateQuizId     String?
+  quizGateQuiz       Quiz?           @relation(fields: [quizGateQuizId], references: [id])
 
   @@index([authorId])
   @@index([category])

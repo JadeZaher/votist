@@ -1,144 +1,153 @@
-import { error, redirect } from '@sveltejs/kit';
 import { prisma } from '$lib/server/db/prisma';
 import { getUser } from '$lib/server/auth';
 import type { PageServerLoad } from './$types';
 import type { PollFeedData, PostData, CommentData, Poll } from '$lib/types';
+import { userMeetsPostQuizGate } from '$lib/server/quizPermissions';
 
-import type { Prisma } from '@prisma/client';
-import { clerkClient } from 'svelte-clerk/server';
-
-// Helper function to transform user data for frontend
-async function transformUserData(clerkId: string) {
-	try {
-		const clerkUser = await clerkClient.users.getUser(clerkId);
-		return {
-			name:
-				clerkUser.firstName && clerkUser.lastName
-					? `${clerkUser.firstName} ${clerkUser.lastName}`
-					: clerkUser.username || 'Anonymous',
-			avatar: clerkUser.imageUrl || '',
-			username: clerkUser.username || 'user',
-			isVerified: clerkUser.publicMetadata?.role === 'admin'
-		};
-	} catch (error) {
-		console.error('Error fetching clerk user:', error);
-		return {
-			name: 'Anonymous',
-			avatar: '',
-			username: 'user',
-			isVerified: false
-		};
-	}
+// Transform DB user fields into frontend display format (no external API calls)
+function transformAuthor(author: {
+	firstName: string | null;
+	lastName: string | null;
+	avatarUrl: string | null;
+	email: string | null;
+	isAdmin: boolean;
+}) {
+	const name =
+		author.firstName && author.lastName
+			? `${author.firstName} ${author.lastName}`
+			: author.firstName || author.lastName || 'Anonymous';
+	return {
+		name,
+		avatar: author.avatarUrl || '',
+		username: author.email?.split('@')[0] || 'user',
+		isVerified: author.isAdmin
+	};
 }
 
+const authorSelect = {
+	firstName: true,
+	lastName: true,
+	avatarUrl: true,
+	email: true,
+	isAdmin: true
+} as const;
+
 export const load: PageServerLoad = async (event) => {
-	const { locals } = event;
 	const { user, isAuthenticated } = await getUser(event);
 
-	// Debug logging
-	console.log('[Vote Page Load] Authentication status:', {
-		isAuthenticated,
-		hasUser: !!user,
-		userId: user?.id
-	});
+	// Look up internal DB user for the authenticated user
+	let dbUserId: string | null = null;
+	if (isAuthenticated && user) {
+		const dbUser = await prisma.user.findUnique({
+			where: { clerkId: user.id },
+			select: { id: true }
+		});
+		dbUserId = dbUser?.id ?? null;
+	}
 
 	let voteMap = new Map<string, string>();
 	let postLikeMap = new Map<string, boolean>();
 	let commentLikeMap = new Map<string, boolean>();
 
-	if (isAuthenticated && user) {
-		// Get user's votes
-		const userVotes = await prisma.vote.findMany({
-			where: { userId: user.id },
-			select: { postId: true, optionId: true }
-		});
-		userVotes.forEach((vote) => {
-			voteMap.set(vote.postId, vote.optionId);
-		});
-
-		// Get user's post likes
-		const userPostLikes = await prisma.postLike.findMany({
-			where: { userId: user.id },
-			select: { postId: true }
-		});
-		userPostLikes.forEach((like) => {
-			postLikeMap.set(like.postId, true);
-		});
-
-		// Get user's comment likes
-		const userCommentLikes = await prisma.commentLike.findMany({
-			where: { userId: user.id },
-			select: { commentId: true }
-		});
-		userCommentLikes.forEach((like) => {
-			commentLikeMap.set(like.commentId, true);
-		});
-	}
-
-	const posts = await prisma.post.findMany({
-		include: {
-			author: {
-				select: { clerkId: true }
-			},
-			poll: {
-				include: {
-					options: {
-						select: { id: true, text: true, votes: true }
-					}
-				}
-			},
-			comments: {
-				include: {
-					author: {
-						select: { clerkId: true }
-					},
-					replies: {
-						include: {
-							author: {
-								select: { clerkId: true }
-							}
+	// Fetch user interaction data and posts in parallel
+	const [posts, ...userMaps] = await Promise.all([
+		prisma.post.findMany({
+			include: {
+				author: { select: authorSelect },
+				poll: {
+					include: {
+						options: {
+							select: { id: true, text: true, votes: true }
 						}
 					}
 				},
-				orderBy: { createdAt: 'asc' }
-			}
-		},
-		orderBy: { createdAt: 'desc' },
-		take: 10
-	});
+				comments: {
+					include: {
+						author: { select: authorSelect },
+						replies: {
+							include: {
+								author: { select: authorSelect }
+							}
+						}
+					},
+					orderBy: { createdAt: 'asc' }
+				}
+			},
+			orderBy: { createdAt: 'desc' },
+			take: 10
+		}),
+		// Fetch user votes, likes, comment likes in parallel (only if authenticated)
+		...(dbUserId
+			? [
+					prisma.vote.findMany({
+						where: { userId: dbUserId },
+						select: { postId: true, optionId: true }
+					}),
+					prisma.postLike.findMany({
+						where: { userId: dbUserId },
+						select: { postId: true }
+					}),
+					prisma.commentLike.findMany({
+						where: { userId: dbUserId },
+						select: { commentId: true }
+					})
+				]
+			: [])
+	]);
 
+	if (dbUserId && userMaps.length === 3) {
+		const [userVotes, userPostLikes, userCommentLikes] = userMaps as [
+			{ postId: string; optionId: string }[],
+			{ postId: string }[],
+			{ commentId: string }[]
+		];
+		userVotes.forEach((vote) => voteMap.set(vote.postId, vote.optionId));
+		userPostLikes.forEach((like) => postLikeMap.set(like.postId, true));
+		userCommentLikes.forEach((like) => commentLikeMap.set(like.commentId, true));
+	}
+
+	// Transform posts - no async needed, all data is already loaded
 	const polls: PollFeedData[] = await Promise.all(
 		posts.map(async (post) => {
-			const postAuthor = await transformUserData(post.author.clerkId!);
+			const postAuthor = transformAuthor(post.author);
 
-			const transformedComments: CommentData[] = await Promise.all(
-				post.comments.map(async (comment) => {
-					const commentAuthor = await transformUserData(comment.author.clerkId!);
-					const transformedReplies = await Promise.all(
-						comment.replies.map(async (reply) => {
-							const replyAuthor = await transformUserData(reply.author.clerkId!);
-							return {
-								id: reply.id,
-								author: replyAuthor,
-								content: reply.content,
-								timestamp: reply.createdAt.toISOString(),
-								likes: reply.likes,
-								isLiked: commentLikeMap.get(reply.id) || false
-							};
-						})
-					);
+			// Check quiz gate for authenticated users
+			let quizGateBlocked = false;
+			let quizGateMessage = '';
+			if (dbUserId && post.quizGateType !== 'NONE') {
+				const gateResult = await userMeetsPostQuizGate(dbUserId, {
+					quizGateType: post.quizGateType,
+					quizGateDifficulty: post.quizGateDifficulty,
+					quizGateQuizId: post.quizGateQuizId
+				});
+				quizGateBlocked = !gateResult.allowed;
+				quizGateMessage = gateResult.message;
+			}
 
+			const transformedComments: CommentData[] = post.comments.map((comment) => {
+				const commentAuthor = transformAuthor(comment.author);
+				const transformedReplies: CommentData[] = (comment.replies || []).map((reply) => {
+					const replyAuthor = transformAuthor(reply.author);
 					return {
-						id: comment.id,
-						author: commentAuthor,
-						content: comment.content,
-						timestamp: comment.createdAt.toISOString(),
-						likes: comment.likes,
-						isLiked: commentLikeMap.get(comment.id) || false,
-						replies: transformedReplies
+						id: reply.id,
+						author: replyAuthor,
+						content: reply.content,
+						timestamp: reply.createdAt.toISOString(),
+						likes: reply.likes,
+						isLiked: commentLikeMap.get(reply.id) || false
 					};
-				})
-			);
+				});
+
+				return {
+					id: comment.id,
+					author: commentAuthor,
+					content: comment.content,
+					timestamp: comment.createdAt.toISOString(),
+					likes: comment.likes,
+					isLiked: commentLikeMap.get(comment.id) || false,
+					replies: transformedReplies
+				};
+			});
 
 			const pollData: Poll | undefined = post.poll
 				? {
@@ -160,14 +169,16 @@ export const load: PageServerLoad = async (event) => {
 				likes: post.likes,
 				comments: post.comments.length,
 				isLiked: postLikeMap.get(post.id) || false,
-				isBookmarked: false, // TODO: Check user's bookmark status
+				isBookmarked: false,
 				tags: post.tags || [],
 				poll: pollData
 			};
 
 			return {
 				post: transformedPost,
-				comments: transformedComments
+				comments: transformedComments,
+				quizGateBlocked,
+				quizGateMessage
 			};
 		})
 	);
@@ -178,5 +189,3 @@ export const load: PageServerLoad = async (event) => {
 		user: isAuthenticated ? user : null
 	};
 };
-
-// Form actions removed - now using API endpoints for comments and likes

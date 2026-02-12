@@ -15,6 +15,8 @@
 	export let onDiscussionClick: () => void;
 	export let isAuthenticated: boolean;
 	export const user: any = null;
+	export let quizGateBlocked: boolean = false;
+	export let quizGateMessage: string = '';
 
 	let revertVote: {
 		prevUserVote: string | undefined;
@@ -31,6 +33,7 @@
 	$: console.log('[Post Component] Auth status:', { isAuthenticated, hasUser: !!user });
 
 	async function handleVoteClick(optionId: string) {
+		if (quizGateBlocked) return;
 		if (!post.poll || !isAuthenticated || isVoting) return;
 
 		// Allow vote changes - don't block if user already voted
@@ -226,11 +229,29 @@
 				<h3 class="mb-4 font-medium">{post.poll.question}</h3>
 
 				<div class="space-y-3">
+					{#if quizGateBlocked}
+						<div class="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
+							<div class="flex items-center gap-2 mb-2">
+								<svg class="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+								</svg>
+								<span class="font-medium text-amber-800">Quiz Completion Required</span>
+							</div>
+							<p class="text-sm text-amber-700">{quizGateMessage}</p>
+							<button
+								type="button"
+								class="mt-3 rounded-lg bg-[#167b9b] px-4 py-2 text-sm font-medium text-white hover:bg-[#125a74]"
+								on:click={redirectToQuizzes}
+							>
+								Complete Quizzes
+							</button>
+						</div>
+					{/if}
 					{#each post.poll.options as option}
 						{@const percentage = getPercentage(option.votes, post.poll!.totalVotes)}
 						{@const isSelected = post.poll?.userVote === option.id}
 						{@const hasVoted = !!post.poll?.userVote}
-						{@const canVote = isAuthenticated && !isVoting}
+						{@const canVote = isAuthenticated && !isVoting && !quizGateBlocked}
 						{@const isPollEnded = post.poll.endsAt && new Date() > new Date(post.poll.endsAt)}
 
 						<div class="space-y-2">

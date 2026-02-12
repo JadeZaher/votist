@@ -1,8 +1,6 @@
 import type { PageServerLoad } from './$types';
-import { PrismaClient } from '@prisma/client';
 import { getUser } from '$lib/server/auth';
-
-const prisma = new PrismaClient();
+import { prisma } from '$lib/server/db/prisma';
 
 export const load = (async (event) => {
 	const { user, isAuthenticated } = await getUser(event);
@@ -21,6 +19,13 @@ export const load = (async (event) => {
 			poll: {
 				include: {
 					options: true
+				}
+			},
+			quizGateQuiz: {
+				select: {
+					id: true,
+					title: true,
+					difficulty: true
 				}
 			}
 		}

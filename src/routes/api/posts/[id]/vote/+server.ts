@@ -1,10 +1,8 @@
 import type { RequestHandler } from '@sveltejs/kit';
-import { PrismaClient } from '@prisma/client';
 import { json } from '@sveltejs/kit';
 import { getUser } from '$lib/server/auth';
-import { userMeetsQuizRequirement } from '$lib/server/quizPermissions';
-
-const prisma = new PrismaClient();
+import { userMeetsQuizRequirement, userMeetsPostQuizGate } from '$lib/server/quizPermissions';
+import { prisma } from '$lib/server/db/prisma';
 
 // POST /api/posts/[id]/vote - Vote on a poll option
 export const POST: RequestHandler = async (event) => {
@@ -17,6 +15,15 @@ export const POST: RequestHandler = async (event) => {
 	const data = await event.request.json();
 
 	try {
+		// Look up internal DB user by Clerk ID
+		const dbUser = await prisma.user.findUnique({
+			where: { clerkId: user.id }
+		});
+
+		if (!dbUser) {
+			return json({ error: 'User not found in database' }, { status: 404 });
+		}
+
 		// Verify the post and poll option exist
 		const post = await prisma.post.findUnique({
 			where: { id: event.params.id },
@@ -50,7 +57,7 @@ export const POST: RequestHandler = async (event) => {
 		// Check if user meets quiz difficulty requirement
 		if (post.poll.requiredDifficulty) {
 			const meetsRequirement = await userMeetsQuizRequirement(
-				user.id,
+				dbUser.id,
 				post.poll.requiredDifficulty
 			);
 
@@ -66,13 +73,27 @@ export const POST: RequestHandler = async (event) => {
 			}
 		}
 
+		// Check if user meets post-level quiz gate
+		const gateResult = await userMeetsPostQuizGate(dbUser.id, post);
+		if (!gateResult.allowed) {
+			return json(
+				{
+					error: 'Quiz gate requirement not met',
+					quizGateType: post.quizGateType,
+					quizGateDifficulty: post.quizGateDifficulty,
+					message: gateResult.message
+				},
+				{ status: 403 }
+			);
+		}
+
 		// Use transaction to handle vote update/creation atomically
 		const result = await prisma.$transaction(async (tx) => {
 			// Check if user already voted
 			const existingVote = await tx.vote.findUnique({
 				where: {
 					userId_postId: {
-						userId: user.id,
+						userId: dbUser.id,
 						postId: event.params.id
 					}
 				}
@@ -113,7 +134,7 @@ export const POST: RequestHandler = async (event) => {
 				// Create new vote
 				await tx.vote.create({
 					data: {
-						userId: user.id,
+						userId: dbUser.id,
 						postId: event.params.id,
 						optionId: data.optionId
 					}
@@ -164,11 +185,20 @@ export const DELETE: RequestHandler = async (event) => {
 	}
 
 	try {
+		// Look up internal DB user by Clerk ID
+		const dbUser = await prisma.user.findUnique({
+			where: { clerkId: user.id }
+		});
+
+		if (!dbUser) {
+			return json({ error: 'User not found in database' }, { status: 404 });
+		}
+
 		// Find user's vote
 		const vote = await prisma.vote.findUnique({
 			where: {
 				userId_postId: {
-					userId: user.id,
+					userId: dbUser.id,
 					postId: event.params.id
 				}
 			},

@@ -145,4 +145,6 @@ export interface CommentData {
 export interface PollFeedData {
 	post: PostData;
 	comments: CommentData[];
+	quizGateBlocked: boolean;
+	quizGateMessage: string;
 }

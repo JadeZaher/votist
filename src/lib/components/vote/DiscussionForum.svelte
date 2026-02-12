@@ -5,17 +5,42 @@
 	import Comment from './Comment.svelte';
 	import { ChevronDown, ChevronUp } from 'lucide-svelte';
 
-	export let pollData: PollFeedData;
-	export let isAuthenticated: boolean;
-	export let user: any;
+	let {
+		pollData,
+		isAuthenticated,
+		user,
+		quizGateBlocked = false,
+		quizGateMessage = ''
+	}: {
+		pollData: PollFeedData;
+		isAuthenticated: boolean;
+		user: any;
+		quizGateBlocked?: boolean;
+		quizGateMessage?: string;
+	} = $props();
 
-	let post: PostData = pollData.post;
-	let comments: CommentData[] = pollData.comments;
-	let sortBy = 'popular';
-	let isDiscussionOpen = false;
+	let post: PostData = $state(pollData.post);
+	let comments: CommentData[] = $state(pollData.comments);
+	let sortBy = $state('popular');
+	let isDiscussionOpen = $state(false);
 
-	// Debug logging to see if the state is changing
-	$: console.log('Discussion open state:', isDiscussionOpen);
+	// Sync with parent data on page refresh / navigation
+	$effect(() => {
+		post = pollData.post;
+		comments = pollData.comments;
+	});
+
+	let sortedComments = $derived(
+		[...comments].sort((a, b) => {
+			if (sortBy === 'popular') {
+				return b.likes - a.likes;
+			} else if (sortBy === 'newest') {
+				return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+			} else {
+				return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+			}
+		})
+	);
 
 	function handlePostLike() {
 		post = {
@@ -33,9 +58,7 @@
 	}
 
 	function handleDiscussionClick() {
-		console.log('Discussion click handler called, current state:', isDiscussionOpen);
 		isDiscussionOpen = !isDiscussionOpen;
-		console.log('New state:', isDiscussionOpen);
 	}
 
 	function handleVote(optionId: string) {
@@ -55,8 +78,8 @@
 	}
 
 	function handleCommentLike(commentId: string) {
-		function updateCommentLike(comments: CommentData[]): CommentData[] {
-			return comments.map((comment) => {
+		function updateCommentLike(list: CommentData[]): CommentData[] {
+			return list.map((comment) => {
 				if (comment.id === commentId) {
 					return {
 						...comment,
@@ -86,8 +109,8 @@
 	}
 
 	function handleAddReply(parentId: string, content: string) {
-		function addReplyToComment(comments: CommentData[]): CommentData[] {
-			return comments.map((comment) => {
+		function addReplyToComment(list: CommentData[]): CommentData[] {
+			return list.map((comment) => {
 				if (comment.id === parentId) {
 					const newReply: CommentData = {
 						id: `r${Date.now()}`,
@@ -119,16 +142,6 @@
 
 		comments = addReplyToComment(comments);
 	}
-
-	$: sortedComments = [...comments].sort((a, b) => {
-		if (sortBy === 'popular') {
-			return b.likes - a.likes;
-		} else if (sortBy === 'newest') {
-			return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
-		} else {
-			return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
-		}
-	});
 </script>
 
 <div class="rounded-lg border border-gray-200 bg-white">
@@ -137,9 +150,10 @@
 			{post}
 			{isAuthenticated}
 			{user}
+			{quizGateBlocked}
+			{quizGateMessage}
 			onLike={handlePostLike}
 			onBookmark={handlePostBookmark}
-			onVote={handleVote}
 			onDiscussionClick={handleDiscussionClick}
 		/>
 
@@ -148,7 +162,7 @@
 			<button
 				type="button"
 				class="flex h-auto w-full items-center justify-between rounded-md p-3 text-left hover:bg-gray-50"
-				on:click={handleDiscussionClick}
+				onclick={handleDiscussionClick}
 			>
 				<span class="flex items-center gap-2">
 					<h3 class="font-medium">Discussion</h3>
@@ -174,13 +188,41 @@
 						</select>
 					</div>
 
-					<CommentForm
-						postId={post.id}
-						{isAuthenticated}
-						{user}
-						onAddComment={handleAddComment}
-						placeholder="Share your thoughts on the poll..."
-					/>
+					{#if quizGateBlocked}
+						<div class="rounded-lg border border-amber-200 bg-amber-50 p-4">
+							<div class="mb-2 flex items-center gap-2">
+								<svg
+									class="h-5 w-5 text-amber-600"
+									fill="none"
+									viewBox="0 0 24 24"
+									stroke="currentColor"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+									/>
+								</svg>
+								<span class="font-medium text-amber-800">Quiz Required to Comment</span>
+							</div>
+							<p class="text-sm text-amber-700">{quizGateMessage}</p>
+							<a
+								href="/san-rafael"
+								class="mt-3 inline-block rounded-lg bg-[#167b9b] px-4 py-2 text-sm font-medium text-white hover:bg-[#125a74]"
+							>
+								Complete Quizzes
+							</a>
+						</div>
+					{:else}
+						<CommentForm
+							postId={post.id}
+							{isAuthenticated}
+							{user}
+							onAddComment={handleAddComment}
+							placeholder="Share your thoughts on the poll..."
+						/>
+					{/if}
 
 					<div class="space-y-1">
 						{#each sortedComments as comment (comment.id)}
