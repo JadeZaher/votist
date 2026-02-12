@@ -1,5 +1,5 @@
 import type { PageServerLoad } from './$types';
-import { WP_ADMIN_PASSWORD, WP_BASE_URL } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 import { formatPost } from '$lib/wordpress';
 
 // Fallback data when WordPress API fails
@@ -21,7 +21,7 @@ export const load: PageServerLoad = async ({ fetch, params }) => {
 	console.log('Research slug page load function called for:', slug);
 
 	// Check if environment variables are available
-	if (!WP_BASE_URL || !WP_ADMIN_PASSWORD) {
+	if (!env.WP_BASE_URL || !env.WP_ADMIN_PASSWORD) {
 		console.warn('WordPress environment variables not configured, using fallback data');
 		return {
 			post: getFallbackPost(slug)
@@ -29,11 +29,11 @@ export const load: PageServerLoad = async ({ fetch, params }) => {
 	}
 
 	try {
-		const res = await fetch(`${WP_BASE_URL}posts?_embed&slug=${slug}`, {
+		const res = await fetch(`${env.WP_BASE_URL}posts?_embed&slug=${slug}`, {
 			method: 'GET',
 			headers: {
 				'Content-Type': 'application/json',
-				Authorization: `Basic admin:${WP_ADMIN_PASSWORD}`
+				Authorization: `Basic admin:${env.WP_ADMIN_PASSWORD}`
 			},
 			signal: AbortSignal.timeout(10000) // 10 second timeout
 		});

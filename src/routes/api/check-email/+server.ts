@@ -1,8 +1,8 @@
 import { createClerkClient } from '@clerk/backend';
-import { CLERK_SECRET_KEY } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 import type { RequestHandler } from './$types';
 
-const clerk = createClerkClient({ secretKey: CLERK_SECRET_KEY });
+const clerk = createClerkClient({ secretKey: env.CLERK_SECRET_KEY! });
 
 export const GET: RequestHandler = async ({ url }) => {
 	const email = url.searchParams.get('email');

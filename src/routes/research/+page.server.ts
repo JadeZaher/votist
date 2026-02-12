@@ -1,4 +1,4 @@
-import { WP_ADMIN_PASSWORD, WP_BASE_URL } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 import { fetchCategories, formatCategory, formatPost } from '$lib/wordpress';
 
 // Fallback data when WordPress API fails
@@ -24,18 +24,18 @@ export const load = async ({ fetch }: { fetch: typeof globalThis.fetch }) => {
 	console.log('Research +page.server.ts load function called');
 
 	// Check if environment variables are available
-	if (!WP_BASE_URL || !WP_ADMIN_PASSWORD) {
+	if (!env.WP_BASE_URL || !env.WP_ADMIN_PASSWORD) {
 		console.warn('WordPress environment variables not configured, using fallback data');
 		return getFallbackData();
 	}
 
 	try {
 		// Fetch posts with timeout
-		const postsPromise = fetch(`${WP_BASE_URL}posts?_embed&status=publish`, {
+		const postsPromise = fetch(`${env.WP_BASE_URL}posts?_embed&status=publish`, {
 			method: 'GET',
 			headers: {
 				'Content-Type': 'application/json',
-				Authorization: `Basic admin:${WP_ADMIN_PASSWORD}`
+				Authorization: `Basic admin:${env.WP_ADMIN_PASSWORD}`
 			},
 			signal: AbortSignal.timeout(10000) // 10 second timeout
 		});

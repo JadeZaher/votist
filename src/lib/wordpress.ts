@@ -1,4 +1,4 @@
-import { WP_ADMIN_PASSWORD, WP_BASE_URL } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 /*
   client calls
 */
@@ -7,12 +7,12 @@ export const fetchPosts = async (
 	search: string | undefined
 ): Promise<object[]> => {
 	const res = await fetch(
-		`${WP_BASE_URL}/posts?_embed&status=publish&categories=${category}&search=${search}`,
+		`${env.WP_BASE_URL}/posts?_embed&status=publish&categories=${category}&search=${search}`,
 		{
 			method: 'GET',
 			headers: {
 				'Content-Type': 'application/json',
-				Authorization: `Basic admin:${WP_ADMIN_PASSWORD}`
+				Authorization: `Basic admin:${env.WP_ADMIN_PASSWORD}`
 			}
 		}
 	);
@@ -20,11 +20,11 @@ export const fetchPosts = async (
 };
 
 export const fetchCategories = async (): Promise<object[]> => {
-	const res = await fetch(`${WP_BASE_URL}/categories`, {
+	const res = await fetch(`${env.WP_BASE_URL}/categories`, {
 		method: 'GET',
 		headers: {
 			'Content-Type': 'application/json',
-			Authorization: `Basic admin:${WP_ADMIN_PASSWORD}`
+			Authorization: `Basic admin:${env.WP_ADMIN_PASSWORD}`
 		}
 	});
 	return res.json();
