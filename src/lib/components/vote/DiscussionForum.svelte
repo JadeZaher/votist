@@ -20,15 +20,39 @@
 	} = $props();
 
 	let post: PostData = $state(pollData.post);
-	let comments: CommentData[] = $state(pollData.comments);
+	let comments: CommentData[] = $state([]);
 	let sortBy = $state('popular');
 	let isDiscussionOpen = $state(false);
+	let commentsLoaded = $state(false);
+	let commentsLoading = $state(false);
 
-	// Sync with parent data on page refresh / navigation
+	// Sync post data with parent on navigation
 	$effect(() => {
 		post = pollData.post;
-		comments = pollData.comments;
 	});
+
+	// Lazy-load comments when discussion is opened
+	$effect(() => {
+		if (isDiscussionOpen && !commentsLoaded && !commentsLoading) {
+			loadComments();
+		}
+	});
+
+	async function loadComments() {
+		commentsLoading = true;
+		try {
+			const res = await fetch(`/api/posts/${post.id}/comments`);
+			const data = await res.json();
+			if (res.ok && data.comments) {
+				comments = data.comments;
+			}
+		} catch (err) {
+			console.error('Failed to load comments:', err);
+		} finally {
+			commentsLoading = false;
+			commentsLoaded = true;
+		}
+	}
 
 	let sortedComments = $derived(
 		[...comments].sort((a, b) => {
@@ -61,45 +85,6 @@
 		isDiscussionOpen = !isDiscussionOpen;
 	}
 
-	function handleVote(optionId: string) {
-		if (post.poll && !post.poll.userVote) {
-			post = {
-				...post,
-				poll: {
-					...post.poll,
-					userVote: optionId,
-					totalVotes: post.poll.totalVotes + 1,
-					options: post.poll.options.map((option) =>
-						option.id === optionId ? { ...option, votes: option.votes + 1 } : option
-					)
-				}
-			};
-		}
-	}
-
-	function handleCommentLike(commentId: string) {
-		function updateCommentLike(list: CommentData[]): CommentData[] {
-			return list.map((comment) => {
-				if (comment.id === commentId) {
-					return {
-						...comment,
-						isLiked: !comment.isLiked,
-						likes: comment.isLiked ? comment.likes - 1 : comment.likes + 1
-					};
-				}
-				if (comment.replies) {
-					return {
-						...comment,
-						replies: updateCommentLike(comment.replies)
-					};
-				}
-				return comment;
-			});
-		}
-
-		comments = updateCommentLike(comments);
-	}
-
 	function handleAddComment(newComment: CommentData) {
 		comments = [newComment, ...comments];
 		post = {
@@ -108,39 +93,62 @@
 		};
 	}
 
-	function handleAddReply(parentId: string, content: string) {
-		function addReplyToComment(list: CommentData[]): CommentData[] {
-			return list.map((comment) => {
-				if (comment.id === parentId) {
-					const newReply: CommentData = {
-						id: `r${Date.now()}`,
-						author: {
-							name: 'You',
-							avatar: '',
-							username: 'you'
-						},
-						content,
-						timestamp: 'now',
-						likes: 0,
-						isLiked: false
-					};
+	function handleAddReply(reply: CommentData) {
+		// Thread reply under the correct root comment (2-level threading)
+		const rootId = reply.rootCommentId || reply.parentId;
+		comments = comments.map((comment) => {
+			if (comment.id === rootId) {
+				return {
+					...comment,
+					replies: [...(comment.replies || []), reply]
+				};
+			}
+			return comment;
+		});
+		post = {
+			...post,
+			comments: post.comments + 1
+		};
+	}
 
-					return {
-						...comment,
-						replies: [...(comment.replies || []), newReply]
-					};
-				}
-				if (comment.replies) {
-					return {
-						...comment,
-						replies: addReplyToComment(comment.replies)
-					};
-				}
-				return comment;
-			});
+	function handleDeleteComment(commentId: string) {
+		// Check if it's a top-level comment
+		const topLevel = comments.find((c) => c.id === commentId);
+		if (topLevel) {
+			const removedCount = 1 + (topLevel.replies?.length || 0);
+			comments = comments.filter((c) => c.id !== commentId);
+			post = { ...post, comments: Math.max(0, post.comments - removedCount) };
+			return;
 		}
+		// Otherwise it's a reply — remove from its parent
+		comments = comments.map((comment) => {
+			if (comment.replies?.some((r) => r.id === commentId)) {
+				return {
+					...comment,
+					replies: comment.replies.filter((r) => r.id !== commentId)
+				};
+			}
+			return comment;
+		});
+		post = { ...post, comments: Math.max(0, post.comments - 1) };
+	}
 
-		comments = addReplyToComment(comments);
+	function handleEditComment(commentId: string, newContent: string) {
+		// Check top-level
+		const topIdx = comments.findIndex((c) => c.id === commentId);
+		if (topIdx !== -1) {
+			comments = comments.map((c) =>
+				c.id === commentId ? { ...c, content: newContent } : c
+			);
+			return;
+		}
+		// Otherwise it's a reply
+		comments = comments.map((comment) => ({
+			...comment,
+			replies: comment.replies?.map((r) =>
+				r.id === commentId ? { ...r, content: newContent } : r
+			)
+		}));
 	}
 </script>
 
@@ -224,14 +232,26 @@
 						/>
 					{/if}
 
-					<div class="space-y-1">
-						{#each sortedComments as comment (comment.id)}
-							<Comment {comment} onLike={handleCommentLike} onReply={handleAddReply} />
-						{/each}
-					</div>
+					{#if commentsLoading}
+						<div class="flex justify-center py-6">
+							<div class="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-[#167b9b]"></div>
+						</div>
+					{:else}
+						<div class="space-y-1">
+							{#each sortedComments as comment (comment.id)}
+								<Comment
+									{comment}
+									onAddReply={handleAddReply}
+									onDelete={handleDeleteComment}
+									onEdit={handleEditComment}
+									postId={post.id}
+									{isAuthenticated}
+									{user}
+								/>
+							{/each}
+						</div>
+					{/if}
 				</div>
-			{:else}
-				<!-- Debug indicator -->
 			{/if}
 		</div>
 	</div>

@@ -2,7 +2,7 @@ import { prisma } from '$lib/server/db/prisma';
 import { getUser } from '$lib/server/auth';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import type { PollFeedData, PostData, CommentData, Poll } from '$lib/types';
+import type { PollFeedData, PostData, Poll } from '$lib/types';
 import { userMeetsPostQuizGate } from '$lib/server/quizPermissions';
 
 // Transform DB user fields into frontend display format (no external API calls)
@@ -42,19 +42,13 @@ export const load: PageServerLoad = async (event) => {
 
 	// Look up internal DB user for the authenticated user
 	let dbUserId: string | null = null;
-	if (isAuthenticated && user) {
-		const dbUser = await prisma.user.findUnique({
-			where: { clerkId: user.id },
-			select: { id: true }
-		});
-		dbUserId = dbUser?.id ?? null;
-	}
+	const dbUser = await prisma.user.findUnique({
+		where: { clerkId: user.id },
+		select: { id: true }
+	});
+	dbUserId = dbUser?.id ?? null;
 
-	let voteMap = new Map<string, string>();
-	let postLikeMap = new Map<string, boolean>();
-	let commentLikeMap = new Map<string, boolean>();
-
-	// Fetch user interaction data and posts in parallel
+	// Fetch posts and user interaction data in parallel (no comments — loaded lazily on client)
 	const [posts, ...userMaps] = await Promise.all([
 		prisma.post.findMany({
 			include: {
@@ -66,22 +60,11 @@ export const load: PageServerLoad = async (event) => {
 						}
 					}
 				},
-				comments: {
-					include: {
-						author: { select: authorSelect },
-						replies: {
-							include: {
-								author: { select: authorSelect }
-							}
-						}
-					},
-					orderBy: { createdAt: 'asc' }
-				}
+				_count: { select: { comments: true } }
 			},
 			orderBy: { createdAt: 'desc' },
 			take: 10
 		}),
-		// Fetch user votes, likes, comment likes in parallel (only if authenticated)
 		...(dbUserId
 			? [
 					prisma.vote.findMany({
@@ -91,32 +74,27 @@ export const load: PageServerLoad = async (event) => {
 					prisma.postLike.findMany({
 						where: { userId: dbUserId },
 						select: { postId: true }
-					}),
-					prisma.commentLike.findMany({
-						where: { userId: dbUserId },
-						select: { commentId: true }
 					})
 				]
 			: [])
 	]);
 
-	if (dbUserId && userMaps.length === 3) {
-		const [userVotes, userPostLikes, userCommentLikes] = userMaps as [
+	let voteMap = new Map<string, string>();
+	let postLikeMap = new Map<string, boolean>();
+
+	if (dbUserId && userMaps.length === 2) {
+		const [userVotes, userPostLikes] = userMaps as [
 			{ postId: string; optionId: string }[],
-			{ postId: string }[],
-			{ commentId: string }[]
+			{ postId: string }[]
 		];
 		userVotes.forEach((vote) => voteMap.set(vote.postId, vote.optionId));
 		userPostLikes.forEach((like) => postLikeMap.set(like.postId, true));
-		userCommentLikes.forEach((like) => commentLikeMap.set(like.commentId, true));
 	}
 
-	// Transform posts - no async needed, all data is already loaded
 	const polls: PollFeedData[] = await Promise.all(
 		posts.map(async (post) => {
 			const postAuthor = transformAuthor(post.author);
 
-			// Check quiz gate for authenticated users
 			let quizGateBlocked = false;
 			let quizGateMessage = '';
 			if (dbUserId && post.quizGateType !== 'NONE') {
@@ -128,31 +106,6 @@ export const load: PageServerLoad = async (event) => {
 				quizGateBlocked = !gateResult.allowed;
 				quizGateMessage = gateResult.message;
 			}
-
-			const transformedComments: CommentData[] = post.comments.map((comment) => {
-				const commentAuthor = transformAuthor(comment.author);
-				const transformedReplies: CommentData[] = (comment.replies || []).map((reply) => {
-					const replyAuthor = transformAuthor(reply.author);
-					return {
-						id: reply.id,
-						author: replyAuthor,
-						content: reply.content,
-						timestamp: reply.createdAt.toISOString(),
-						likes: reply.likes,
-						isLiked: commentLikeMap.get(reply.id) || false
-					};
-				});
-
-				return {
-					id: comment.id,
-					author: commentAuthor,
-					content: comment.content,
-					timestamp: comment.createdAt.toISOString(),
-					likes: comment.likes,
-					isLiked: commentLikeMap.get(comment.id) || false,
-					replies: transformedReplies
-				};
-			});
 
 			const pollData: Poll | undefined = post.poll
 				? {
@@ -172,7 +125,7 @@ export const load: PageServerLoad = async (event) => {
 				timestamp: post.createdAt.toISOString(),
 				category: post.category,
 				likes: post.likes,
-				comments: post.comments.length,
+				comments: post._count.comments,
 				isLiked: postLikeMap.get(post.id) || false,
 				isBookmarked: false,
 				tags: post.tags || [],
@@ -181,7 +134,7 @@ export const load: PageServerLoad = async (event) => {
 
 			return {
 				post: transformedPost,
-				comments: transformedComments,
+				comments: [],
 				quizGateBlocked,
 				quizGateMessage
 			};

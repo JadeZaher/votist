@@ -32,11 +32,26 @@ function transformAuthor(author: {
 }
 
 // GET /api/posts/[id]/comments - Get comments for a post
-export const GET: RequestHandler = async ({ params, url }) => {
+export const GET: RequestHandler = async (event) => {
+	const { params, url } = event;
+	const { user, isAuthenticated } = await getUser(event);
+
 	try {
-		const page = parseInt(url.searchParams.get('page') || '1');
-		const limit = parseInt(url.searchParams.get('limit') || '20');
-		const skip = (page - 1) * limit;
+		// Look up DB user for isLiked checks
+		let commentLikeSet = new Set<string>();
+		if (isAuthenticated && user) {
+			const dbUser = await prisma.user.findUnique({
+				where: { clerkId: user.id },
+				select: { id: true }
+			});
+			if (dbUser) {
+				const likes = await prisma.commentLike.findMany({
+					where: { userId: dbUser.id },
+					select: { commentId: true }
+				});
+				likes.forEach((l) => commentLikeSet.add(l.commentId));
+			}
+		}
 
 		const comments = await prisma.comment.findMany({
 			where: {
@@ -45,7 +60,8 @@ export const GET: RequestHandler = async ({ params, url }) => {
 			},
 			include: {
 				author: { select: authorSelect },
-				replies: {
+				// Use threadReplies to get ALL descendants (not just direct children)
+				threadReplies: {
 					include: {
 						author: { select: authorSelect }
 					},
@@ -56,41 +72,29 @@ export const GET: RequestHandler = async ({ params, url }) => {
 			},
 			orderBy: {
 				createdAt: 'desc'
-			},
-			skip,
-			take: limit
-		});
-
-		const transformedComments = comments.map((comment) => {
-			const commentAuthor = transformAuthor(comment.author);
-			const transformedReplies = (comment.replies || []).map((reply) => ({
-				...reply,
-				author: transformAuthor(reply.author)
-			}));
-
-			return {
-				...comment,
-				author: commentAuthor,
-				replies: transformedReplies
-			};
-		});
-
-		const total = await prisma.comment.count({
-			where: {
-				postId: params.id,
-				parentId: null
 			}
 		});
 
-		return json({
-			comments: transformedComments,
-			pagination: {
-				page,
-				limit,
-				total,
-				totalPages: Math.ceil(total / limit)
-			}
-		});
+		const transformedComments = comments.map((comment) => ({
+			id: comment.id,
+			author: transformAuthor(comment.author),
+			content: comment.content,
+			timestamp: comment.createdAt.toISOString(),
+			likes: comment.likes,
+			isLiked: commentLikeSet.has(comment.id),
+			replies: (comment.threadReplies || []).map((reply) => ({
+				id: reply.id,
+				author: transformAuthor(reply.author),
+				content: reply.content,
+				timestamp: reply.createdAt.toISOString(),
+				likes: reply.likes,
+				isLiked: commentLikeSet.has(reply.id),
+				rootCommentId: reply.rootCommentId || undefined,
+				parentId: reply.parentId || undefined
+			}))
+		}));
+
+		return json({ comments: transformedComments });
 	} catch (error: unknown) {
 		let message = 'Unknown error';
 		if (error && typeof error === 'object' && 'message' in error) {
@@ -142,12 +146,26 @@ export const POST: RequestHandler = async (event) => {
 			);
 		}
 
+		// Determine rootCommentId for 2-level threading
+		let rootCommentId: string | null = null;
+		if (data.parentId) {
+			const parentComment = await prisma.comment.findUnique({
+				where: { id: data.parentId },
+				select: { id: true, rootCommentId: true }
+			});
+			if (!parentComment) {
+				return json({ error: 'Parent comment not found' }, { status: 400 });
+			}
+			rootCommentId = parentComment.rootCommentId || parentComment.id;
+		}
+
 		const comment = await prisma.comment.create({
 			data: {
 				content: data.content,
 				authorId: dbUser.id,
-				postId: event.params.id,
-				parentId: data.parentId || null
+				postId: event.params.id!,
+				parentId: data.parentId || null,
+				rootCommentId
 			},
 			include: {
 				author: { select: authorSelect }
@@ -155,8 +173,15 @@ export const POST: RequestHandler = async (event) => {
 		});
 
 		const transformedComment = {
-			...comment,
-			author: transformAuthor(comment.author)
+			id: comment.id,
+			author: transformAuthor(comment.author),
+			content: comment.content,
+			timestamp: comment.createdAt.toISOString(),
+			likes: 0,
+			isLiked: false,
+			replies: [],
+			rootCommentId: comment.rootCommentId || undefined,
+			parentId: comment.parentId || undefined
 		};
 
 		return json({ comment: transformedComment });

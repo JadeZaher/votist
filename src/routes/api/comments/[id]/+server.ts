@@ -1,82 +1,70 @@
 import type { RequestHandler } from '@sveltejs/kit';
-import { PrismaClient } from '@prisma/client';
 import { json } from '@sveltejs/kit';
 import { getUser } from '$lib/server/auth';
-import { clerkClient } from 'svelte-clerk/server';
+import { prisma } from '$lib/server/db/prisma';
 
-const prisma = new PrismaClient();
+const EDIT_WINDOW_MS = 2 * 60 * 1000; // 2 minutes
 
-// Helper function to transform user data for frontend
-async function transformUserData(clerkId: string) {
-	try {
-		const clerkUser = await clerkClient.users.getUser(clerkId);
-		return {
-			name: clerkUser.firstName && clerkUser.lastName 
-				? `${clerkUser.firstName} ${clerkUser.lastName}` 
-				: clerkUser.username || 'Anonymous',
-			avatar: clerkUser.imageUrl || '',
-			username: clerkUser.username || 'user',
-			isVerified: clerkUser.publicMetadata?.role === 'admin'
-		};
-	} catch (error) {
-		console.error('Error fetching clerk user:', error);
-		return {
-			name: 'Anonymous',
-			avatar: '',
-			username: 'user',
-			isVerified: false
-		};
-	}
-}
-
-// PUT /api/comments/[id] - Update a comment
+// PUT /api/comments/[id] - Update a comment (within 2-minute window)
 export const PUT: RequestHandler = async (event) => {
 	const { user, isAuthenticated } = await getUser(event);
 
-	if (!isAuthenticated) {
+	if (!isAuthenticated || !user) {
 		return json({ error: 'Unauthorized' }, { status: 401 });
 	}
 
 	const data = await event.request.json();
+	const content = data.content?.trim();
+
+	if (!content || content.length > 2000) {
+		return json({ error: 'Invalid content' }, { status: 400 });
+	}
 
 	try {
-		// Check if user owns the comment or is admin
+		const dbUser = await prisma.user.findUnique({
+			where: { clerkId: user.id },
+			select: { id: true }
+		});
+
+		if (!dbUser) {
+			return json({ error: 'User not found' }, { status: 404 });
+		}
+
 		const existingComment = await prisma.comment.findUnique({
 			where: { id: event.params.id },
-			select: { authorId: true }
+			select: { authorId: true, createdAt: true }
 		});
 
 		if (!existingComment) {
 			return json({ error: 'Comment not found' }, { status: 404 });
 		}
 
-		if (existingComment.authorId !== user.id && user.publicMetadata?.role !== 'admin') {
+		const isOwner = existingComment.authorId === dbUser.id;
+		const isAdmin = user.publicMetadata?.role === 'admin';
+
+		if (!isOwner && !isAdmin) {
 			return json({ error: 'Forbidden' }, { status: 403 });
+		}
+
+		// Enforce 2-minute edit window for non-admins
+		if (!isAdmin) {
+			const elapsed = Date.now() - existingComment.createdAt.getTime();
+			if (elapsed > EDIT_WINDOW_MS) {
+				return json({ error: 'Edit window has expired (2 minutes)' }, { status: 403 });
+			}
 		}
 
 		const comment = await prisma.comment.update({
 			where: { id: event.params.id },
-			data: {
-				content: data.content
-			},
-			include: {
-				author: {
-					select: {
-						clerkId: true,
-						email: true
-					}
-				}
-			}
+			data: { content }
 		});
 
-		// Transform the author data to match frontend expectations
-		const author = await transformUserData(comment.author.clerkId!);
-		const transformedComment = {
-			...comment,
-			author
-		};
-
-		return json({ comment: transformedComment });
+		return json({
+			comment: {
+				id: comment.id,
+				content: comment.content
+			}
+		});
 	} catch (error: unknown) {
 		let message = 'Unknown error';
 		if (error && typeof error === 'object' && 'message' in error) {
@@ -90,12 +78,20 @@ export const PUT: RequestHandler = async (event) => {
 export const DELETE: RequestHandler = async (event) => {
 	const { user, isAuthenticated } = await getUser(event);
 
-	if (!isAuthenticated) {
+	if (!isAuthenticated || !user) {
 		return json({ error: 'Unauthorized' }, { status: 401 });
 	}
 
 	try {
-		// Check if user owns the comment or is admin
+		const dbUser = await prisma.user.findUnique({
+			where: { clerkId: user.id },
+			select: { id: true }
+		});
+
+		if (!dbUser) {
+			return json({ error: 'User not found' }, { status: 404 });
+		}
+
 		const existingComment = await prisma.comment.findUnique({
 			where: { id: event.params.id },
 			select: { authorId: true }
@@ -105,15 +101,19 @@ export const DELETE: RequestHandler = async (event) => {
 			return json({ error: 'Comment not found' }, { status: 404 });
 		}
 
-		if (existingComment.authorId !== user.id && user.publicMetadata?.role !== 'admin') {
+		const isOwner = existingComment.authorId === dbUser.id;
+		const isAdmin = user.publicMetadata?.role === 'admin';
+
+		if (!isOwner && !isAdmin) {
 			return json({ error: 'Forbidden' }, { status: 403 });
 		}
 
+		// Delete comment and its replies (cascade should handle replies)
 		await prisma.comment.delete({
 			where: { id: event.params.id }
 		});
 
-		return json({ message: 'Comment deleted successfully' });
+		return json({ success: true });
 	} catch (error: unknown) {
 		let message = 'Unknown error';
 		if (error && typeof error === 'object' && 'message' in error) {

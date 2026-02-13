@@ -15,28 +15,47 @@
 	async function handleSubmit() {
 		if (!isAuthenticated || !content.trim() || isSubmitting) return;
 
+		const commentContent = content.trim();
+
+		// Build optimistic comment immediately
+		const optimisticComment: CommentData = {
+			id: `temp-${Date.now()}`,
+			author: {
+				name:
+					user?.firstName && user?.lastName
+						? `${user.firstName} ${user.lastName}`
+						: user?.firstName || 'You',
+				avatar: user?.imageUrl || '',
+				username: user?.email?.split('@')[0] || 'you'
+			},
+			content: commentContent,
+			timestamp: new Date().toISOString(),
+			likes: 0,
+			isLiked: false,
+			replies: []
+		};
+
+		// Show optimistic comment and clear form immediately
+		onAddComment(optimisticComment);
+		content = '';
+		isFocused = false;
 		isSubmitting = true;
 
 		try {
-			const response = await fetch('/api/comments', {
+			const response = await fetch(`/api/posts/${postId}/comments`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
 				},
 				body: JSON.stringify({
-					postId,
-					content: content.trim(),
+					content: commentContent,
 					parentId
 				})
 			});
 
 			const result = await response.json();
 
-			if (response.ok) {
-				onAddComment(result.comment);
-				content = '';
-				isFocused = false;
-			} else {
+			if (!response.ok) {
 				console.error('Failed to add comment:', result.error);
 			}
 		} catch (error) {
