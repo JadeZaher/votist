@@ -1,5 +1,6 @@
 import { prisma } from '$lib/server/db/prisma';
 import { error } from '@sveltejs/kit';
+import QRCode from 'qrcode';
 import type { PageServerLoad } from './$types';
 import type { PostData, CommentData, Poll } from '$lib/types';
 
@@ -30,7 +31,7 @@ const authorSelect = {
 	isAdmin: true
 } as const;
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ params, url }) => {
 	const post = await prisma.post.findUnique({
 		where: { id: params.id },
 		include: {
@@ -106,8 +107,17 @@ export const load: PageServerLoad = async ({ params }) => {
 		poll: pollData
 	};
 
+	const shareUrl = `${url.origin}/post/${params.id}`;
+	const qrCodeDataUrl = await QRCode.toDataURL(shareUrl, {
+		width: 200,
+		margin: 2,
+		color: { dark: '#167b9b', light: '#ffffff' }
+	});
+
 	return {
 		post: transformedPost,
-		comments: transformedComments
+		comments: transformedComments,
+		shareUrl,
+		qrCodeDataUrl
 	};
 };
