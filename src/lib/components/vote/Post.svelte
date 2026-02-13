@@ -5,18 +5,18 @@
 		ArrowUp,
 		MessageCircle,
 		Share,
-		Bookmark,
-		BarChart3
+		BarChart3,
+		Check
 	} from 'lucide-svelte';
 
 	export let post: PostData;
 	export const onLike: () => void = () => {};
-	export let onBookmark: () => void;
 	export let onDiscussionClick: () => void;
 	export let isAuthenticated: boolean;
 	export const user: any = null;
 	export let quizGateBlocked: boolean = false;
 	export let quizGateMessage: string = '';
+	export let readOnly: boolean = false;
 
 	let revertVote: {
 		prevUserVote: string | undefined;
@@ -28,67 +28,70 @@
 	let showQuizRequirementModal: boolean = false;
 	let quizRequirementMessage: string = '';
 	let requiredDifficultyLevel: string = '';
+	let showShareCopied: boolean = false;
 
-	// Debug logging
-	$: console.log('[Post Component] Auth status:', { isAuthenticated, hasUser: !!user });
+	function formatLocaleTime(ts: string) {
+		const date = new Date(ts);
+		const now = new Date();
+		const diffMs = now.getTime() - date.getTime();
+		const diffMin = Math.floor(diffMs / 60000);
+		if (diffMin < 1) return 'just now';
+		if (diffMin < 60) return `${diffMin}m ago`;
+		const diffHours = Math.floor(diffMin / 60);
+		if (diffHours < 24) return `${diffHours}h ago`;
+		const diffDays = Math.floor(diffHours / 24);
+		if (diffDays < 7) return `${diffDays}d ago`;
+		return date.toLocaleDateString(undefined, {
+			month: 'short',
+			day: 'numeric',
+			year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
+			hour: 'numeric',
+			minute: '2-digit'
+		});
+	}
+
+	async function handleShareClick() {
+		const shareUrl = `${window.location.origin}/post/${post.id}`;
+		try {
+			await navigator.clipboard.writeText(shareUrl);
+			showShareCopied = true;
+			setTimeout(() => (showShareCopied = false), 2000);
+		} catch {
+			// Fallback for browsers without clipboard API
+			window.open(shareUrl, '_blank');
+		}
+	}
 
 	async function handleVoteClick(optionId: string) {
-		if (quizGateBlocked) return;
+		if (readOnly || quizGateBlocked) return;
 		if (!post.poll || !isAuthenticated || isVoting) return;
 
-		// Allow vote changes - don't block if user already voted
 		const isChangingVote = !!post.poll.userVote && post.poll.userVote !== optionId;
 		const isNewVote = !post.poll.userVote;
 
-		if (!isNewVote && !isChangingVote) {
-			// User clicked the same option they already voted for
-			return;
-		}
+		if (!isNewVote && !isChangingVote) return;
 
-		// Validate we have all required data
-		if (!post.id || !optionId) {
-			console.error('Missing required vote data:', { postId: post.id, optionId });
-			return;
-		}
+		if (!post.id || !optionId) return;
 
-		// Verify the option exists in the poll
 		const selectedOption = post.poll.options.find((o) => o.id === optionId);
-		if (!selectedOption) {
-			console.error('Selected option not found in poll:', optionId);
-			return;
-		}
+		if (!selectedOption) return;
 
-		// Set voting state
 		isVoting = true;
-		console.log('Submitting vote via API:', {
-			postId: post.id,
-			optionId,
-			optionText: selectedOption.text,
-			isChangingVote
-		});
 
-		// Store revert data for optimistic update
 		revertVote = {
 			prevUserVote: post.poll.userVote,
 			prevTotalVotes: post.poll.totalVotes,
 			prevOptions: post.poll.options.map((o) => ({ ...o }))
 		};
 
-		// Optimistic update - immediately show results
 		if (post.poll) {
 			if (isChangingVote) {
-				// Remove vote from previous option
 				const prevOption = post.poll.options.find((o) => o.id === post.poll!.userVote);
 				if (prevOption) prevOption.votes -= 1;
-
-				// Add vote to new option
 				const newOption = post.poll.options.find((o) => o.id === optionId);
 				if (newOption) newOption.votes += 1;
-
-				// Total votes stay the same when changing
 				post.poll.userVote = optionId;
 			} else {
-				// New vote
 				post.poll.userVote = optionId;
 				post.poll.totalVotes += 1;
 				const option = post.poll.options.find((o) => o.id === optionId);
@@ -97,22 +100,15 @@
 		}
 
 		try {
-			// Call the API
 			const response = await fetch(`/api/posts/${post.id}/vote`, {
 				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					optionId
-				})
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ optionId })
 			});
 
 			const data = await response.json();
-			console.log('API response:', data);
 
 			if (response.ok && data.success) {
-				// Update with server response
 				if (data.poll && post.poll) {
 					post.poll = {
 						...post.poll,
@@ -128,9 +124,7 @@
 						endsAt: data.poll.endsAt || post.poll.endsAt
 					};
 				}
-				console.log('Vote submitted successfully via API');
 			} else if (response.status === 403 && data.error === 'Quiz requirement not met') {
-				// Quiz requirement not met - show modal and redirect
 				if (revertVote && post.poll) {
 					post.poll.userVote = revertVote.prevUserVote;
 					post.poll.totalVotes = revertVote.prevTotalVotes;
@@ -140,22 +134,18 @@
 				requiredDifficultyLevel = data.requiredDifficulty || '';
 				showQuizRequirementModal = true;
 			} else {
-				// Revert optimistic update on failure
 				if (revertVote && post.poll) {
 					post.poll.userVote = revertVote.prevUserVote;
 					post.poll.totalVotes = revertVote.prevTotalVotes;
 					post.poll.options = revertVote.prevOptions;
 				}
-				console.error('Vote failed:', data.error || 'Unknown error');
 			}
-		} catch (error) {
-			// Revert optimistic update on error
+		} catch {
 			if (revertVote && post.poll) {
 				post.poll.userVote = revertVote.prevUserVote;
 				post.poll.totalVotes = revertVote.prevTotalVotes;
 				post.poll.options = revertVote.prevOptions;
 			}
-			console.error('Vote API error:', error);
 		} finally {
 			isVoting = false;
 			revertVote = null;
@@ -196,8 +186,8 @@
 				{/if}
 			</div>
 			<div class="flex items-center gap-1 text-xs text-gray-500 md:gap-2 md:text-sm">
-				<span>{post.timestamp}</span>
-				<span>•</span>
+				<span>{formatLocaleTime(post.timestamp)}</span>
+				<span>&middot;</span>
 				<span class="rounded bg-gray-100 px-1.5 py-0.5 text-xs">{post.category}</span>
 			</div>
 		</div>
@@ -222,14 +212,14 @@
 					<BarChart3 class="h-4 w-4 text-gray-500" />
 					<span class="text-sm font-medium">Poll</span>
 					{#if post.poll.endsAt}
-						<span class="text-xs text-gray-500">• Ends {post.poll.endsAt}</span>
+						<span class="text-xs text-gray-500">&middot; Ends {post.poll.endsAt}</span>
 					{/if}
 				</div>
 
 				<h3 class="mb-4 font-medium">{post.poll.question}</h3>
 
 				<div class="space-y-3">
-					{#if quizGateBlocked}
+					{#if quizGateBlocked && !readOnly}
 						<div class="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
 							<div class="flex items-center gap-2 mb-2">
 								<svg class="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -250,29 +240,22 @@
 					{#each post.poll.options as option}
 						{@const percentage = getPercentage(option.votes, post.poll!.totalVotes)}
 						{@const isSelected = post.poll?.userVote === option.id}
-						{@const hasVoted = !!post.poll?.userVote}
-						{@const canVote = isAuthenticated && !isVoting && !quizGateBlocked}
+						{@const hasVoted = !!post.poll?.userVote || readOnly}
+						{@const canVote = isAuthenticated && !isVoting && !quizGateBlocked && !readOnly}
 						{@const isPollEnded = post.poll.endsAt && new Date() > new Date(post.poll.endsAt)}
 
 						<div class="space-y-2">
 							<button
 								type="button"
 								on:click={() => handleVoteClick(option.id)}
-								class="h-auto w-full justify-start overflow-hidden rounded-md border p-0 transition-all duration-200 {isPollEnded
-									? 'cursor-not-allowed opacity-50'
+								class="h-auto w-full justify-start overflow-hidden rounded-md border p-0 transition-all duration-200 {isPollEnded || readOnly
+									? 'cursor-default'
 									: canVote
 										? 'cursor-pointer hover:bg-gray-50'
 										: 'cursor-not-allowed opacity-50'} {isSelected
 									? 'border-blue-500 bg-blue-50'
 									: 'border-gray-200'} {isVoting ? 'opacity-75' : ''}"
 								disabled={!canVote || !!isPollEnded}
-								title={isPollEnded
-									? 'Poll has ended'
-									: !isAuthenticated
-										? 'Sign in to vote'
-										: isVoting
-											? 'Submitting...'
-											: ''}
 							>
 								<div class="relative w-full p-3">
 									{#if hasVoted}
@@ -290,7 +273,7 @@
 												<span>{percentage}%</span>
 												<span class="text-gray-500">({option.votes})</span>
 											</div>
-										{:else if !isAuthenticated}
+										{:else if !isAuthenticated && !readOnly}
 											<span class="text-xs text-gray-400">Sign in to vote</span>
 										{/if}
 									</div>
@@ -303,7 +286,9 @@
 				<div class="mt-4 border-t border-gray-200 pt-3">
 					<div class="flex items-center justify-between text-sm text-gray-500">
 						<span>{post.poll.totalVotes} {post.poll.totalVotes === 1 ? 'vote' : 'votes'}</span>
-						{#if post.poll.endsAt && new Date() > new Date(post.poll.endsAt)}
+						{#if readOnly}
+							<span>View only</span>
+						{:else if post.poll.endsAt && new Date() > new Date(post.poll.endsAt)}
 							{#if isVoting}
 								<span class="text-blue-600">Submitting vote...</span>
 							{:else}
@@ -332,45 +317,56 @@
 		</div>
 	{/if}
 
-	<div class="flex items-center justify-between">
-		<div class="flex items-center gap-6">
-			<button
-				type="button"
-				on:click={onLike}
-				class="flex items-center gap-2 rounded px-2 py-1 hover:bg-gray-100 {post.isLiked || false
-					? 'text-orange-500'
-					: 'text-gray-500'} {!isAuthenticated ? 'cursor-not-allowed opacity-50' : ''}"
-				disabled={!isAuthenticated}
-			>
-				<ArrowUp class="h-4 w-4 {post.isLiked || false ? 'fill-current' : ''}" />
-				<span>{post.likes}</span>
-			</button>
+	{#if !readOnly}
+		<div class="flex items-center justify-between">
+			<div class="flex items-center gap-6">
+				<button
+					type="button"
+					on:click={onLike}
+					class="flex items-center gap-2 rounded px-2 py-1 hover:bg-gray-100 {post.isLiked || false
+						? 'text-orange-500'
+						: 'text-gray-500'} {!isAuthenticated ? 'cursor-not-allowed opacity-50' : ''}"
+					disabled={!isAuthenticated}
+				>
+					<ArrowUp class="h-4 w-4 {post.isLiked || false ? 'fill-current' : ''}" />
+					<span>{post.likes}</span>
+				</button>
 
-			<button
-				class="flex items-center gap-2 rounded px-2 py-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-				on:click={onDiscussionClick}
-			>
+				<button
+					class="flex items-center gap-2 rounded px-2 py-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+					on:click={onDiscussionClick}
+				>
+					<MessageCircle class="h-4 w-4" />
+					<span>{post.comments}</span>
+				</button>
+			</div>
+
+			<div class="flex items-center gap-2">
+				<button
+					class="relative flex items-center gap-1.5 rounded px-2 py-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+					on:click={handleShareClick}
+				>
+					{#if showShareCopied}
+						<Check class="h-4 w-4 text-green-500" />
+						<span class="text-xs text-green-500">Copied!</span>
+					{:else}
+						<Share class="h-4 w-4" />
+					{/if}
+				</button>
+			</div>
+		</div>
+	{:else}
+		<div class="flex items-center gap-6 text-gray-500">
+			<div class="flex items-center gap-2">
+				<ArrowUp class="h-4 w-4" />
+				<span>{post.likes} likes</span>
+			</div>
+			<div class="flex items-center gap-2">
 				<MessageCircle class="h-4 w-4" />
-				<span>{post.comments}</span>
-			</button>
+				<span>{post.comments} comments</span>
+			</div>
 		</div>
-
-		<div class="flex items-center gap-2">
-			<button class="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700">
-				<Share class="h-4 w-4" />
-			</button>
-
-			<button
-				class="rounded p-1 hover:bg-gray-100 {post.isBookmarked || false
-					? 'text-blue-500'
-					: 'text-gray-500'} {!isAuthenticated ? 'cursor-not-allowed opacity-50' : ''}"
-				on:click={() => onBookmark()}
-				disabled={!isAuthenticated}
-			>
-				<Bookmark class="h-4 w-4 {post.isBookmarked || false ? 'fill-current' : ''}" />
-			</button>
-		</div>
-	</div>
+	{/if}
 </div>
 
 <!-- Quiz Requirement Modal -->

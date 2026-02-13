@@ -74,13 +74,6 @@
 		};
 	}
 
-	function handlePostBookmark() {
-		post = {
-			...post,
-			isBookmarked: !post.isBookmarked
-		};
-	}
-
 	function handleDiscussionClick() {
 		isDiscussionOpen = !isDiscussionOpen;
 	}
@@ -161,7 +154,6 @@
 			{quizGateBlocked}
 			{quizGateMessage}
 			onLike={handlePostLike}
-			onBookmark={handlePostBookmark}
 			onDiscussionClick={handleDiscussionClick}
 		/>
 
