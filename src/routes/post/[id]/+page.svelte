@@ -41,7 +41,7 @@
 		<div class="mx-auto flex max-w-4xl items-center justify-between px-4 py-3 md:px-6">
 			<div class="flex items-center gap-3">
 				<img src={logo} alt="Votist" class="h-7" />
-				<span class="hidden text-sm text-white/90 sm:inline">
+				<span class="hidden text-sm sm:inline">
 					Civic engagement starts with informed participation
 				</span>
 			</div>
