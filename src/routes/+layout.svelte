@@ -530,8 +530,8 @@
 					</a>
 				</div>
 				<div class="navbar-end">
-					<a href="project/san-rafael" class="text-votist-blue mx-5 font-semibold">
-						San Rafeal Project
+					<a href="/san-rafael" class="text-votist-blue mx-5 font-semibold">
+						San Rafael Project
 					</a>
 					<a href="/sign-up" class="btn btn-primary">Register</a>
 					<a href="/sign-in" class="btn btn-ghost">Sign in</a>

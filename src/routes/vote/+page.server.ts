@@ -1,5 +1,6 @@
 import { prisma } from '$lib/server/db/prisma';
 import { getUser } from '$lib/server/auth';
+import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import type { PollFeedData, PostData, CommentData, Poll } from '$lib/types';
 import { userMeetsPostQuizGate } from '$lib/server/quizPermissions';
@@ -34,6 +35,10 @@ const authorSelect = {
 
 export const load: PageServerLoad = async (event) => {
 	const { user, isAuthenticated } = await getUser(event);
+
+	if (!isAuthenticated || !user) {
+		throw redirect(302, '/sign-in');
+	}
 
 	// Look up internal DB user for the authenticated user
 	let dbUserId: string | null = null;

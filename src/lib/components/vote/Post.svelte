@@ -174,31 +174,31 @@
 </script>
 
 <div>
-	<div class="mb-4 flex items-start gap-4">
-		<div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gray-200">
+	<div class="mb-3 flex items-start gap-3 md:mb-4 md:gap-4">
+		<div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gray-200 md:h-12 md:w-12">
 			{#if post.author.avatar}
-				<img src={post.author.avatar} alt={post.author.name} class="h-12 w-12 rounded-full" />
+				<img src={post.author.avatar} alt={post.author.name} class="h-10 w-10 rounded-full md:h-12 md:w-12" />
 			{:else}
-				<span class="text-sm font-medium text-gray-600">
+				<span class="text-xs font-medium text-gray-600 md:text-sm">
 					{post.author.name.slice(0, 2).toUpperCase()}
 				</span>
 			{/if}
 		</div>
 
 		<div class="min-w-0 flex-1">
-			<div class="mb-1 flex items-center gap-2">
-				<h3 class="font-medium">{post.author.name}</h3>
-				<span class="text-sm text-gray-500">@{post.author.username}</span>
+			<div class="mb-1 flex flex-wrap items-center gap-1 md:gap-2">
+				<h3 class="text-sm font-medium md:text-base">{post.author.name}</h3>
+				<span class="text-xs text-gray-500 md:text-sm">@{post.author.username}</span>
 				{#if post.author.isVerified}
 					<div class="flex h-4 w-4 items-center justify-center rounded-full bg-blue-500">
 						<div class="h-2 w-2 rounded-full bg-white"></div>
 					</div>
 				{/if}
 			</div>
-			<div class="flex items-center gap-2 text-sm text-gray-500">
+			<div class="flex items-center gap-1 text-xs text-gray-500 md:gap-2 md:text-sm">
 				<span>{post.timestamp}</span>
 				<span>•</span>
-				<span class="rounded bg-gray-100 px-2 py-1 text-xs">{post.category}</span>
+				<span class="rounded bg-gray-100 px-1.5 py-0.5 text-xs">{post.category}</span>
 			</div>
 		</div>
 
@@ -207,17 +207,17 @@
 		</button>
 	</div>
 
-	<div class="mb-4">
-		<h1 class="mb-3 text-xl font-semibold">{post.title}</h1>
+	<div class="mb-3 md:mb-4">
+		<h1 class="mb-2 text-lg font-semibold md:mb-3 md:text-xl">{post.title}</h1>
 		<div class="prose prose-sm max-w-none">
-			<p class="whitespace-pre-wrap text-gray-700">{post.content}</p>
+			<p class="whitespace-pre-wrap text-sm text-gray-700 md:text-base">{post.content}</p>
 		</div>
 	</div>
 
 	<!-- Poll Section -->
 	{#if post.poll}
-		<div class="mb-4">
-			<div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+		<div class="mb-3 md:mb-4">
+			<div class="rounded-lg border border-gray-200 bg-gray-50 p-3 md:p-4">
 				<div class="mb-4 flex items-center gap-2">
 					<BarChart3 class="h-4 w-4 text-gray-500" />
 					<span class="text-sm font-medium">Poll</span>

@@ -79,83 +79,79 @@
 </script>
 
 {#if passed()}
-	<div class="min-h-screen bg-white py-16">
-		<div class="container mx-auto flex max-w-5xl flex-col items-center px-4">
+	<div class="min-h-screen bg-white px-4 py-8 md:py-16">
+		<div class="mx-auto flex w-full max-w-3xl flex-col items-center">
 			<!-- Main Title -->
-			<h1 class="mb-8 text-center text-5xl font-bold text-cyan-600">
+			<h1 class="mb-6 text-center text-2xl font-bold text-cyan-600 md:mb-8 md:text-5xl">
 				Completed! {data.quiz.title}
 			</h1>
 
 			<!-- You Gain Section -->
-			<div class="mb-8 w-full max-w-3xl">
-				<h2 class="mb-6 text-3xl font-bold text-amber-400">You gain:</h2>
-				<div class="flex flex-col gap-6 md:flex-row md:items-center md:gap-12">
-					<!-- Left: Voting Power & Knowledge -->
-					<div class="flex flex-1 flex-col gap-6">
-						<div class="flex items-center gap-4">
+			<div class="mb-6 w-full md:mb-8">
+				<h2 class="mb-4 text-xl font-bold text-amber-400 md:mb-6 md:text-3xl">You gain:</h2>
+				<div class="flex flex-col gap-4 md:flex-row md:items-center md:gap-12">
+					<div class="flex flex-1 flex-col gap-4 md:gap-6">
+						<div class="flex items-center gap-3">
 							<QuizSuccessIcon size="w-6 h-6" />
-							<span class="text-xl font-medium text-amber-400">+1</span>
-							<span class="text-xl font-medium text-cyan-800">
+							<span class="text-base font-medium text-amber-400 md:text-xl">+1</span>
+							<span class="text-base font-medium text-cyan-800 md:text-xl">
 								Vote {data.quiz.title.includes(':') ? data.quiz.title.split(':')[0] : 'San Rafael'} Housing
 							</span>
 						</div>
-						<div class="flex items-center gap-4">
+						<div class="flex items-center gap-3">
 							<KnowledgeIcon size="w-8 h-8" />
-							<span class="text-xl font-medium text-amber-400">+1</span>
-							<span class="text-xl font-medium text-cyan-800">Knowledge</span>
+							<span class="text-base font-medium text-amber-400 md:text-xl">+1</span>
+							<span class="text-base font-medium text-cyan-800 md:text-xl">Knowledge</span>
 						</div>
 					</div>
-					<!-- Right: Discussion & Status -->
-					<div class="flex flex-1 flex-col gap-6">
-						<div class="flex items-center gap-4">
+					<div class="flex flex-1 flex-col gap-4 md:gap-6">
+						<div class="flex items-center gap-3">
 							<DiscussionIcon size="w-6 h-6" />
-							<span class="text-xl font-medium text-cyan-800">Join the discussions</span>
+							<span class="text-base font-medium text-cyan-800 md:text-xl">Join the discussions</span>
 						</div>
-						<div class="flex items-center gap-4">
+						<div class="flex items-center gap-3">
 							<span
 								class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-gray-400"
 							>
 								<span class="text-xs font-semibold text-white">V</span>
 							</span>
-							<span class="text-xl font-medium text-cyan-800">Votist status</span>
+							<span class="text-base font-medium text-cyan-800 md:text-xl">Votist status</span>
 						</div>
 					</div>
 				</div>
 			</div>
 
 			<!-- Action Buttons + Description Row -->
-			<div class="mb-8 flex w-full max-w-3xl flex-col items-start gap-8 md:flex-row">
-				<!-- Left: Buttons -->
-				<div class="flex flex-col gap-4">
+			<div class="mb-6 flex w-full flex-col items-start gap-6 md:mb-8 md:flex-row md:gap-8">
+				<div class="flex w-full flex-col gap-3 md:w-auto md:gap-4">
 					<button
 						onclick={handleVoteNow}
-						class="btn btn-primary btn-lg flex items-center gap-4 px-10 text-4xl font-medium shadow"
+						class="btn btn-primary btn-md flex items-center gap-3 px-6 text-lg font-medium shadow md:btn-lg md:gap-4 md:px-10 md:text-4xl"
 					>
-						<QuizSuccessIcon size="w-8 h-8" />
+						<QuizSuccessIcon size="w-6 h-6" />
 						Vote
 					</button>
 					{#if data.nextQuiz}
 						<button
 							onclick={handleNextQuiz}
-							class="btn btn-primary btn-lg px-10 text-4xl font-medium shadow"
+							class="btn btn-primary btn-md px-6 text-lg font-medium shadow md:btn-lg md:px-10 md:text-4xl"
 						>
 							Next Quiz
 						</button>
 					{/if}
 				</div>
-				<!-- Right: Descriptive Text -->
-				<div class="flex flex-1 flex-col justify-center gap-4">
-					<div class="text-4xl font-medium text-yellow-500">Vote Now</div>
-					<div class="text-4xl font-medium text-cyan-800">
+				<div class="flex flex-1 flex-col justify-center gap-2 md:gap-4">
+					<div class="text-xl font-medium text-yellow-500 md:text-4xl">Vote Now</div>
+					<div class="text-xl font-medium text-cyan-800 md:text-4xl">
 						Or, keep going to get more voting power.
 					</div>
 				</div>
 			</div>
 
 			<!-- Back to Roadmap Button -->
-			<div class="mt-16 text-center">
+			<div class="mt-8 text-center md:mt-16">
 				<button
-					class="btn btn-outline border-cyan-600 px-8 text-lg text-cyan-600 hover:bg-cyan-600 hover:text-white"
+					class="btn btn-outline border-cyan-600 px-6 text-base text-cyan-600 hover:bg-cyan-600 hover:text-white md:px-8 md:text-lg"
 					onclick={handleBackToRoadmap}
 				>
 					Back to Quiz Roadmap
@@ -164,42 +160,36 @@
 		</div>
 	</div>
 {:else}
-	<div class="min-h-screen bg-white py-16">
-		<div class="container mx-auto flex max-w-7xl flex-col items-start px-4">
-			<div class="flex w-full flex-col items-start justify-start gap-12 lg:flex-row">
-				<!-- Left: Coffee Mug Icon -->
-				<div class="flex flex-shrink-0 flex-col items-start justify-start">
+	<div class="min-h-screen bg-white px-4 py-8 md:py-16">
+		<div class="mx-auto flex w-full max-w-3xl flex-col items-start">
+			<div class="flex w-full flex-col items-start gap-6 md:flex-row md:gap-12">
+				<!-- Coffee Mug Icon (hidden on mobile) -->
+				<div class="hidden flex-shrink-0 md:block">
 					<CoffeeMugIcon size="w-28 h-32" />
 				</div>
-				<!-- Right: Main Content -->
-				<div class="flex flex-1 flex-col gap-8 lg:ml-12">
-					<!-- Good effort & Learn more -->
-					<div class="mb-4 flex flex-col gap-2 text-left">
-						<div class="text-5xl leading-tight font-medium text-black">Good effort</div>
-						<div class="text-4xl font-medium text-cyan-600">
+				<!-- Main Content -->
+				<div class="flex flex-1 flex-col gap-6 md:gap-8">
+					<div class="flex flex-col gap-2">
+						<div class="text-3xl leading-tight font-medium text-black md:text-5xl">Good effort</div>
+						<div class="text-xl font-medium text-cyan-600 md:text-4xl">
 							Learn more about this topic in the Research Tab
 						</div>
 					</div>
 					<!-- Try again -->
-					<div class="relative mb-12 h-40 w-full max-w-2xl rounded-lg text-left">
-						<!-- Start Button -->
-						<button
-							onclick={handleRetakeQuiz}
-							class="btn btn-primary btn-lg absolute top-[99px] left-2 flex h-14 w-40 items-center justify-center rounded-lg px-0 text-[2.5rem] font-bold shadow"
-						>
-							Start
-						</button>
-						<!-- Quiz Title -->
-						<div
-							class="absolute top-[91px] left-[201px] flex h-16 w-[668px] items-center text-left text-6xl font-medium text-cyan-800"
-						>
-							{data.quiz.title}
-						</div>
-						<!-- Try again! -->
-						<div
-							class="absolute top-0 left-0 flex h-11 w-[577px] items-center text-left text-6xl font-medium text-cyan-600 italic"
-						>
+					<div class="flex flex-col gap-3">
+						<div class="text-2xl font-medium text-cyan-600 italic md:text-4xl">
 							Try again!
+						</div>
+						<div class="flex flex-col items-start gap-3 md:flex-row md:items-center md:gap-6">
+							<button
+								onclick={handleRetakeQuiz}
+								class="btn btn-primary btn-md rounded-lg px-8 text-xl font-bold shadow md:btn-lg md:text-3xl"
+							>
+								Start
+							</button>
+							<span class="text-xl font-medium text-cyan-800 md:text-3xl">
+								{data.quiz.title}
+							</span>
 						</div>
 					</div>
 				</div>

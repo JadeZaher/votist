@@ -11,8 +11,8 @@
 	let saving = $state(false);
 </script>
 
-<div class="mx-auto max-w-4xl p-8">
-	<h1 class="mb-8 text-2xl font-bold text-gray-800">Settings</h1>
+<div class="mx-auto max-w-4xl px-4 py-6 md:p-8">
+	<h1 class="mb-6 text-xl font-bold text-gray-800 md:mb-8 md:text-2xl">Settings</h1>
 
 	{#if form?.success}
 		<div class="mb-6 rounded-lg border border-green-200 bg-green-50 p-4">
@@ -26,8 +26,8 @@
 		</div>
 	{/if}
 
-	<div class="rounded-xl border border-gray-200 bg-white p-8 shadow-lg">
-		<h2 class="mb-6 text-lg font-bold text-gray-800">Profile Information</h2>
+	<div class="rounded-xl border border-gray-200 bg-white p-4 shadow-lg md:p-8">
+		<h2 class="mb-4 text-base font-bold text-gray-800 md:mb-6 md:text-lg">Profile Information</h2>
 
 		<form
 			method="POST"
@@ -42,7 +42,7 @@
 		>
 			<div class="space-y-6">
 				<!-- Avatar Preview -->
-				<div class="flex items-center gap-4">
+				<div class="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-4">
 					{#if avatarUrl}
 						<img
 							src={avatarUrl}

@@ -11,6 +11,14 @@ export const PATCH: RequestHandler = async (event: RequestEvent) => {
 			return new Response('Unauthorized', { status: 401 });
 		}
 
+		// Look up internal DB user by Clerk ID
+		const dbUser = await prisma.user.findUnique({
+			where: { clerkId: user.id }
+		});
+		if (!dbUser) {
+			return new Response('User not found', { status: 404 });
+		}
+
 		// Validate quiz ID
 		if (!event.params.quizId) {
 			return new Response('Quiz ID is required', { status: 400 });
@@ -24,7 +32,7 @@ export const PATCH: RequestHandler = async (event: RequestEvent) => {
 		const updatedProgress = await prisma.userProgress.upsert({
 			where: {
 				userId_quizId: {
-					userId: user.id,
+					userId: dbUser.id,
 					quizId: event.params.quizId
 				}
 			},
@@ -36,7 +44,7 @@ export const PATCH: RequestHandler = async (event: RequestEvent) => {
 				materialId: materialId || ''
 			},
 			create: {
-				userId: user.id,
+				userId: dbUser.id,
 				quizId: event.params.quizId,
 				quizScore: quizScore || 0,
 				isCompleted: isCompleted || false,

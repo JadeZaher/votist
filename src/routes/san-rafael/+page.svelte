@@ -78,24 +78,24 @@
 	$: totalQuizzes = quizzes.length;
 </script>
 
-<div class="bg-base-100 flex min-h-screen flex-col items-center py-12">
+<div class="bg-base-100 flex min-h-screen flex-col items-center px-4 py-8 md:px-6 md:py-12">
 	<!-- Header -->
-	<div class="mx-auto mb-8 w-full max-w-4xl">
+	<div class="mx-auto mb-6 w-full max-w-4xl md:mb-8">
 		<div class="flex flex-col items-start gap-2">
-			<div class="flex items-center gap-4">
-				<span class="badge badge-primary badge-lg">Level 01</span>
-				<span class="text-3xl font-semibold text-cyan-700">San Rafael, Location</span>
+			<div class="flex items-center gap-3 md:gap-4">
+				<span class="badge badge-primary badge-md md:badge-lg">Level 01</span>
+				<span class="text-xl font-semibold text-cyan-700 md:text-3xl">San Rafael, Location</span>
 			</div>
-			<div class="mt-2 text-2xl leading-loose font-normal text-stone-900">
+			<div class="mt-2 text-base leading-relaxed font-normal text-stone-900 md:text-2xl md:leading-loose">
 				Votist requires a short quiz before voting to ensure every voice is informed.
 			</div>
-			<div class="text-2xl leading-loose font-normal text-stone-900">
+			<div class="text-base leading-relaxed font-normal text-stone-900 md:text-2xl md:leading-loose">
 				Each quiz you pass increases the power of your vote.
 			</div>
 			<div class="mt-4">
 				<button
 					type="button"
-					class="btn btn-primary btn-lg px-10 text-2xl"
+					class="btn btn-primary btn-md px-8 text-lg md:btn-lg md:px-10 md:text-2xl"
 					onclick={nextAvailableQuiz}
 					aria-label="Start next available quiz"
 				>
@@ -106,8 +106,8 @@
 	</div>
 
 	<!-- Quiz Roadmap Title and Count -->
-	<div class="mx-auto mb-8 w-full max-w-4xl">
-		<h2 class="mb-2 text-3xl font-bold text-cyan-700">Housing Assembly Quiz Roadmap</h2>
+	<div class="mx-auto mb-6 w-full max-w-4xl md:mb-8">
+		<h2 class="mb-2 text-xl font-bold text-cyan-700 md:text-3xl">Housing Assembly Quiz Roadmap</h2>
 		<div class="flex items-center gap-2">
 			<svg
 				width="16"

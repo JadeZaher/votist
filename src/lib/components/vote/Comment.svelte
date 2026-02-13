@@ -101,7 +101,7 @@
 	const shouldIndent = depth > 0;
 </script>
 
-<div class={shouldIndent ? 'ml-6 border-l border-gray-200 pl-4' : ''}>
+<div class={shouldIndent ? 'ml-3 border-l border-gray-200 pl-3 md:ml-6 md:pl-4' : ''}>
 	<div class="flex gap-3 py-4">
 		<div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gray-200">
 			{#if comment.author.avatar}

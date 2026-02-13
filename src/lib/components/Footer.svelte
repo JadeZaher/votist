@@ -20,7 +20,7 @@
 			</div>
 			<!-- Right: Support -->
 			<div class="flex w-full flex-shrink-0 items-center justify-center md:w-auto md:justify-end">
-				<span class="cursor-pointer text-sm text-gray-600 hover:text-gray-900">Support</span>
+				<a href="/support" class="text-sm text-gray-600 hover:text-gray-900">Support</a>
 			</div>
 		</div>
 	</div>

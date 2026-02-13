@@ -8,26 +8,25 @@
 	export let imageOnLeft: boolean = true;
 </script>
 
-<div class="flex min-h-[600px] items-center bg-gray-50 px-8 py-[10vh]">
-	<div class="mx-auto flex max-w-[80vw] items-center gap-12">
+<div class="flex items-center bg-gray-50 px-4 py-12 md:min-h-[500px] md:px-8 md:py-[10vh]">
+	<div class="mx-auto flex w-full max-w-6xl flex-col items-center gap-8 md:flex-row md:gap-12">
 		{#if imageOnLeft}
-			<div class="mr-[10vw] flex-1">
-				<img src={imageUrl} alt={imageAlt} class="w-full max-w-xl rounded-lg shadow-lg" />
+			<div class="w-full md:flex-1">
+				<img src={imageUrl} alt={imageAlt} class="mx-auto w-full max-w-md rounded-lg shadow-lg md:max-w-xl" />
 			</div>
 		{/if}
 
-		<div class="flex-1 space-y-6">
-			<h2 class="text-votist-blue-dark text-3xl font-bold">
+		<div class="w-full space-y-4 md:flex-1 md:space-y-6">
+			<h2 class="text-votist-blue-dark text-2xl font-bold md:text-3xl">
 				{heading}
 			</h2>
-			<p class="text-lg text-gray-700">
+			<p class="text-base text-gray-700 md:text-lg">
 				{content}
 			</p>
-
 			<div>
 				<a href={buttonHref}>
 					<button
-						class="bg-votist-blue hover:bg-votist-blue/90 btn btn-lg rounded-md px-8 py-3 text-lg font-medium text-white transition-colors"
+						class="bg-votist-blue hover:bg-votist-blue/90 btn btn-lg w-full rounded-md px-6 py-3 text-base font-medium text-white transition-colors sm:w-auto md:px-8 md:text-lg"
 					>
 						{buttonText}
 					</button>
@@ -36,8 +35,8 @@
 		</div>
 
 		{#if !imageOnLeft}
-			<div class="ml-[10vw] flex-1">
-				<img src={imageUrl} alt={imageAlt} class="w-full max-w-xl rounded-lg shadow-lg" />
+			<div class="w-full md:flex-1">
+				<img src={imageUrl} alt={imageAlt} class="mx-auto w-full max-w-md rounded-lg shadow-lg md:max-w-xl" />
 			</div>
 		{/if}
 	</div>

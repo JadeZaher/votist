@@ -116,7 +116,7 @@
 			}
 
 			await invalidateAll();
-			goto(`/san-rafael/quiz/${data.quiz.id}/results`);
+			goto('/san-rafael');
 		} catch (error) {
 			if (dev) console.error('Failed to complete quiz:', error);
 			//goto('/san-rafael/quizzes');
@@ -140,11 +140,11 @@
 	});
 </script>
 
-<div class="bg-base-100 min-h-screen py-8">
-	<div class="container mx-auto px-4">
+<div class="bg-base-100 min-h-screen px-4 py-6 md:py-8">
+	<div class="mx-auto w-full max-w-3xl">
 		<div class="flex flex-col items-center justify-center">
 			<!-- Progress Bar -->
-			<div class="mb-6 w-full max-w-2xl">
+			<div class="mb-6 w-full">
 				<div class="text-base-content mb-2 flex justify-between text-sm">
 					<span>Question {currentQuestionIndex + 1} of {data.quiz.questions.length}</span>
 					<span>{Math.round(progressPercentage)}%</span>
@@ -155,13 +155,13 @@
 
 			<!-- Quiz Card -->
 			<div
-				class="card bg-base-100 w-full max-w-5xl p-0 shadow-xl md:p-8"
+				class="card bg-base-100 w-full p-4 shadow-xl md:p-8"
 				style="font-family: Arial, Raleway, sans-serif;"
 			>
-				<div class="relative flex min-h-[600px] w-full flex-col items-center justify-center">
+				<div class="flex w-full flex-col items-center justify-center gap-6">
 					<!-- Question Title -->
 					<div
-						class="mx-auto mt-4 w-full text-center text-2xl leading-[40px] font-bold text-stone-900 md:mt-0 md:w-[924px] md:text-3xl md:leading-[48px]"
+						class="w-full text-center text-lg leading-7 font-bold text-stone-900 md:text-2xl md:leading-10"
 					>
 						{currentQuestion?.text}
 					</div>
@@ -169,20 +169,20 @@
 					<!-- Question Video (if present) -->
 					{#if currentVideoInfo()}
 						{@const videoInfo = currentVideoInfo()!}
-						<div class="mx-auto mt-6 mb-4 w-full max-w-2xl">
+						<div class="w-full">
 							<VideoCard videoId={videoInfo.videoId} service={videoInfo.service} />
 						</div>
 					{/if}
 
 					<!-- Question Image (if present) -->
 					{#if currentQuestion?.imageUrl && !imageLoadError}
-						<div class="mx-auto mt-6 mb-4 w-full max-w-2xl">
+						<div class="w-full">
 							<figure class="w-full">
 								<img
 									src={currentQuestion.imageUrl}
 									alt={currentQuestion.imageAlt ||
 										`Illustration for question ${currentQuestionIndex + 1}`}
-									class="h-auto max-h-80 w-full rounded-lg object-contain shadow-md"
+									class="h-auto max-h-64 w-full rounded-lg object-contain shadow-md md:max-h-80"
 									loading="lazy"
 									onerror={handleImageError}
 								/>
@@ -192,17 +192,18 @@
 
 					<!-- Quiz Description -->
 					<div
-						class="mx-auto mt-2 mb-4 w-full text-center text-base leading-relaxed font-normal text-neutral-600 md:w-[500px]"
+						class="w-full text-center text-sm leading-relaxed font-normal text-neutral-600 md:text-base"
 					>
 						{data.quiz.description}
 					</div>
+
 					<!-- Answer Options -->
-					<div class="flex w-full flex-col items-center gap-3 px-2 pb-3 md:px-80">
+					<div class="flex w-full flex-col gap-3">
 						{#each currentQuestion?.options || [] as option, index}
 							{#if showFeedback}
 								<!-- Feedback state: show correct/incorrect styling -->
 								<div
-									class="inline-flex w-full items-center justify-start gap-6 rounded-md px-2 py-3 text-left outline outline-offset-[-1px] md:w-[872px] md:gap-8 md:px-6"
+									class="flex w-full items-center gap-3 rounded-md px-3 py-3 text-left outline outline-offset-[-1px] md:gap-6 md:px-6"
 									class:bg-cyan-100={option.isCorrect}
 									class:outline-cyan-600={option.isCorrect}
 									class:bg-gray-200={selectedAnswer === option.text && !option.isCorrect}
@@ -214,12 +215,10 @@
 									{:else if selectedAnswer === option.text}
 										<QuizAnswerIncorrectIcon />
 									{/if}
-									<div
-										class="w-full text-base leading-tight font-normal text-stone-900 md:w-[798px]"
-									>
+									<div class="flex-1 text-sm leading-tight font-normal text-stone-900 md:text-base">
 										{option.text}
 										{#if option.isNoOpinion}
-											<span class="text-neutral-content/70 ml-2 text-sm">(No Opinion)</span>
+											<span class="text-neutral-content/70 ml-2 text-xs md:text-sm">(No Opinion)</span>
 										{/if}
 									</div>
 								</div>
@@ -227,7 +226,7 @@
 								<!-- Default state: interactive buttons -->
 								<button
 									type="button"
-									class="inline-flex w-full justify-start gap-6 rounded-md px-4 py-5 text-left text-base leading-tight font-normal text-stone-900 outline-1 outline-offset-[-1px] transition-all duration-150 md:w-[872px] md:gap-12 md:px-11"
+									class="w-full rounded-md px-3 py-4 text-left text-sm leading-tight font-normal text-stone-900 outline-1 outline-offset-[-1px] transition-all duration-150 md:px-6 md:py-5 md:text-base"
 									class:bg-white={selectedAnswer !== option.text}
 									class:bg-primary-10={selectedAnswer === option.text}
 									class:outline-neutral-400={selectedAnswer !== option.text}
@@ -235,19 +234,17 @@
 									onclick={() => selectAnswer(option.text)}
 									disabled={showFeedback}
 								>
-									<div class="w-full justify-center md:w-[798px]">
-										{option.text}
-										{#if option.isNoOpinion}
-											<span class="text-neutral-content/70 ml-2 text-sm">(No Opinion)</span>
-										{/if}
-									</div>
+									{option.text}
+									{#if option.isNoOpinion}
+										<span class="text-neutral-content/70 ml-2 text-xs md:text-sm">(No Opinion)</span>
+									{/if}
 								</button>
 							{/if}
 						{/each}
 					</div>
 
 					<!-- Continue/Submit Button -->
-					<div class="mt-8 flex w-full justify-center">
+					<div class="flex w-full justify-center pt-2">
 						{#if !showFeedback}
 							<button
 								class="btn btn-primary w-full rounded-md px-8 py-2 text-base font-bold text-white md:w-auto"
@@ -255,11 +252,7 @@
 								disabled={!selectedAnswer}
 								type="button"
 							>
-								{#if !selectedAnswer}
-									<span class="loading loading-spinner loading-sm"></span>
-								{:else}
-									Continue
-								{/if}
+								Continue
 							</button>
 						{:else}
 							<button

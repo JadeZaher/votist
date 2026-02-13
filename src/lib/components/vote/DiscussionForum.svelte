@@ -145,7 +145,7 @@
 </script>
 
 <div class="rounded-lg border border-gray-200 bg-white">
-	<div class="p-6">
+	<div class="p-3 sm:p-4 md:p-6">
 		<Post
 			{post}
 			{isAuthenticated}

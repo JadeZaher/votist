@@ -25,7 +25,7 @@
 	</div>
 
 	<!-- Quiz List -->
-	<div class="ml-16 flex flex-col gap-6">
+	<div class="ml-8 flex flex-col gap-4 md:ml-16 md:gap-6">
 		{#each quizzes as quiz}
 			<QuizListItem
 				{quiz}

@@ -35,10 +35,10 @@
 	}
 </script>
 
-<div class="mx-auto max-w-4xl space-y-6 p-4">
-	<div class="mb-8">
-		<h1 class="mb-2 text-3xl font-bold">Community Polls</h1>
-		<p class="text-muted-foreground text-gray-600">
+<div class="mx-auto max-w-4xl space-y-4 px-3 py-4 md:space-y-6 md:px-4">
+	<div class="mb-4 md:mb-8">
+		<h1 class="mb-2 text-2xl font-bold md:text-3xl">Community Polls</h1>
+		<p class="text-muted-foreground text-sm text-gray-600 md:text-base">
 			Engage with the developer community by voting on polls and joining discussions
 		</p>
 	</div>

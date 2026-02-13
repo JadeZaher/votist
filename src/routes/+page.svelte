@@ -16,7 +16,7 @@
 	boldcontent="Here, the more you know, the more impact you have."
 	content=" Votist is a platform for solution-driven civic engagement—where informed participation creates increased influence. The result? Smarter debates, better decisions, and a stronger community."
 	subContent="Ready to shape San Rafael's future? Let's get started."
-	primaryButton={{ text: 'Start', href: '/quiz' }}
+	primaryButton={{ text: 'Start', href: '/san-rafael' }}
 	secondaryButton={{ text: 'Earn Voting Power', href: '/learn-more', icon: earnVote }}
 />
 
@@ -26,7 +26,7 @@
 	imageUrl={knowledgeispower}
 	imageAlt="Quiz interface showing progress"
 	buttonText="Start"
-	buttonHref="/quiz"
+	buttonHref="/san-rafael"
 	imageOnLeft={false}
 />
 
@@ -36,7 +36,7 @@
 	imageUrl={knowledgeispower}
 	imageAlt="Voting interface showing options"
 	buttonText="Start"
-	buttonHref="/quiz"
+	buttonHref="/san-rafael"
 	imageOnLeft={true}
 />
 
@@ -45,7 +45,7 @@
 	level="Level 01"
 	location="San Rafael, Location"
 	buttonText="Start"
-	buttonHref="/quiz"
+	buttonHref="/san-rafael"
 	backgroundImage={sanRafael}
 />
 

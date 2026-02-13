@@ -1,4 +1,5 @@
 import { env } from '$env/dynamic/private';
+import { redirect } from '@sveltejs/kit';
 import { fetchCategories, formatCategory, formatPost } from '$lib/wordpress';
 
 // Fallback data when WordPress API fails
@@ -20,7 +21,12 @@ const getFallbackData = () => ({
 	categories: [{ name: 'General' }, { name: 'Policy' }, { name: 'Analysis' }]
 });
 
-export const load = async ({ fetch }: { fetch: typeof globalThis.fetch }) => {
+export const load = async ({ fetch, locals }: { fetch: typeof globalThis.fetch; locals: any }) => {
+	const { userId } = await locals.auth();
+	if (!userId) {
+		throw redirect(302, '/sign-in');
+	}
+
 	console.log('Research +page.server.ts load function called');
 
 	// Check if environment variables are available

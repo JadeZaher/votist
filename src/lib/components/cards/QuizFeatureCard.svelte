@@ -7,27 +7,23 @@
 	export let buttonHref: string;
 </script>
 
-<div class="relative mx-auto my-16 max-w-[90vw] overflow-hidden rounded-lg shadow-lg">
-	<!-- Background Image with Overlay -->
-	<div class="relative h-96">
+<div class="relative mx-auto my-8 max-w-6xl overflow-hidden rounded-lg shadow-lg md:my-16">
+	<div class="relative h-64 md:h-96">
 		<img src={backgroundImage} alt="Quiz background" class="h-full w-full object-cover" />
-		<!-- Dark overlay for better text readability -->
 		<div class="bg-votist-blue/15 absolute inset-0"></div>
-
-		<!-- Content -->
-		<div class="absolute inset-0 flex flex-col items-center justify-center text-center text-white">
-			<h2 class="mb-2 text-2xl font-light tracking-wide">
+		<div class="absolute inset-0 flex flex-col items-center justify-center px-4 text-center text-white">
+			<h2 class="mb-2 text-lg font-light tracking-wide md:text-2xl">
 				{title}
 			</h2>
-			<p class="mb-6 text-lg font-medium">
+			<p class="mb-4 text-base font-medium md:mb-6 md:text-lg">
 				{level}
 			</p>
-			<h1 class="mb-8 text-4xl font-bold">
+			<h1 class="mb-6 text-2xl font-bold md:mb-8 md:text-4xl">
 				{location}
 			</h1>
 			<a href={buttonHref}>
 				<button
-					class="rounded-lg bg-yellow-400 px-12 py-4 text-xl font-semibold text-black transition-colors hover:bg-yellow-300"
+					class="rounded-lg bg-yellow-400 px-8 py-3 text-base font-semibold text-black transition-colors hover:bg-yellow-300 md:px-12 md:py-4 md:text-xl"
 				>
 					{buttonText}
 				</button>
